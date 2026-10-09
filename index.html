@@ -1,0 +1,272 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Emergency Radar</title>
+  <meta name="description" content="Monitoreo de emergencias reportadas en redes sociales en Ecuador.">
+  <link rel="icon" type="image/svg+xml" href="favicon.svg">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Nunito+Sans:opsz,wght@6..12,400;6..12,600;6..12,700;6..12,800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="assets/vendor/leaflet/leaflet.css">
+  <link rel="stylesheet" href="assets/vendor/leaflet/MarkerCluster.css">
+  <link rel="stylesheet" href="assets/css/styles.css">
+</head>
+<body>
+  <header class="topbar">
+    <a class="brand" href="#/principal" aria-label="Emergency Radar, inicio">
+      <img src="assets/img/logo-mark.svg" alt="" width="46" height="46">
+      <span class="brand-text"><b>emergency</b><i>radar</i></span>
+    </a>
+
+    <nav class="tabs" aria-label="Secciones">
+      <a href="#/principal" data-route="principal">Principal</a>
+      <a href="#/historico" data-route="historico">Histórico</a>
+      <a href="#/estadisticas" data-route="estadisticas">Estadísticas</a>
+    </nav>
+
+    <div class="topbar-actions">
+      <button id="btnLive" class="btn-live is-on" type="button" aria-pressed="true" title="Activar o pausar la transmisión en vivo">
+        <span class="live-dot"></span><span class="live-label">En Vivo</span>
+      </button>
+
+      <div class="popover-anchor">
+        <button id="btnRango" class="date-range" type="button" aria-haspopup="dialog">
+          <span id="rangoDesde">----/--/--</span>
+          <span class="ic-wrap" data-icon="arrow-right"></span>
+          <span id="rangoHasta">----/--/--</span>
+          <span class="ic-wrap cal" data-icon="calendar-event"></span>
+        </button>
+        <div id="popRango" class="popover popover-right" hidden>
+          <div class="pop-title">Rango de fechas</div>
+          <div class="presets">
+            <button type="button" data-preset="hoy">Hoy</button>
+            <button type="button" data-preset="7">Últimos 7 días</button>
+            <button type="button" data-preset="30">Últimos 30 días</button>
+            <button type="button" data-preset="mes">Este mes</button>
+          </div>
+          <label class="field"><span>Desde</span><input type="date" id="inDesde"></label>
+          <label class="field"><span>Hasta</span><input type="date" id="inHasta"></label>
+          <div class="pop-actions">
+            <button type="button" class="btn-ghost" data-close>Cancelar</button>
+            <button type="button" class="btn-primary" id="btnAplicarRango">Aplicar</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="popover-anchor">
+        <button id="btnMenu" class="icon-btn" type="button" aria-label="Menú" aria-haspopup="menu">
+          <span class="ic-wrap" data-icon="menu-2"></span>
+        </button>
+        <div id="popMenu" class="popover popover-right menu" hidden role="menu">
+          <a href="#/principal" role="menuitem"><span class="ic-wrap" data-icon="map-2"></span>Principal</a>
+          <a href="#/historico" role="menuitem"><span class="ic-wrap" data-icon="clock"></span>Histórico</a>
+          <a href="#/estadisticas" role="menuitem"><span class="ic-wrap" data-icon="chart-bar"></span>Estadísticas</a>
+          <hr>
+          <button type="button" role="menuitem" data-soon><span class="ic-wrap" data-icon="settings"></span>Configuración</button>
+          <button type="button" role="menuitem" id="btnAcerca"><span class="ic-wrap" data-icon="info-circle"></span>Acerca de</button>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <main id="app">
+    <!-- ============ PRINCIPAL ============ -->
+    <section class="view view-principal" data-view="principal">
+      <div class="col-main">
+        <article class="card card-map">
+          <div class="card-toolbar">
+            <div class="toolbar-left">
+              <span class="toolbar-label">Visualización</span>
+              <div class="segmented" role="tablist">
+                <button type="button" class="active" data-modo="geo" role="tab" aria-selected="true">Geolocalización</button>
+                <button type="button" data-modo="calor" role="tab" aria-selected="false">Mapa de Calor</button>
+              </div>
+            </div>
+            <div class="toolbar-right">
+              <span class="toolbar-label">Estas viendo</span>
+              <div class="popover-anchor">
+                <div class="chips-box" id="chipsBox">
+                  <div class="chips" id="chips"></div>
+                  <button type="button" class="icon-btn small" id="btnFiltroMapa" aria-label="Filtrar categorías">
+                    <span class="ic-wrap" data-icon="filter"></span>
+                  </button>
+                </div>
+                <div id="popFiltroMapa" class="popover popover-right" hidden>
+                  <div class="pop-title">Categorías</div>
+                  <div id="listaCatFiltro" class="check-list"></div>
+                  <div class="pop-title">Fuentes</div>
+                  <div class="check-list">
+                    <label><input type="checkbox" name="fuente" value="twitter" checked><span class="ic-wrap tw" data-icon="brand-twitter"></span>Twitter</label>
+                    <label><input type="checkbox" name="fuente" value="facebook" checked><span class="ic-wrap fb" data-icon="brand-facebook"></span>Facebook</label>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div id="map" class="map" aria-label="Mapa de incidentes"></div>
+          <div class="map-legend" id="mapLegend"></div>
+        </article>
+
+        <article class="card card-freq">
+          <div class="card-head">
+            <h2>Frecuencia de Tweets</h2>
+            <div class="legend">
+              <span><i class="sw sw-line"></i>Periodo seleccionado</span>
+              <span><i class="sw sw-line prev"></i>Periodo anterior</span>
+            </div>
+          </div>
+          <div class="chart-box"><canvas id="chartFreq" aria-label="Frecuencia de publicaciones por hora del día"></canvas><div class="chart-tip" id="tipFreq" hidden></div></div>
+        </article>
+      </div>
+
+      <div class="col-side">
+        <article class="card card-tweets">
+          <div class="card-head">
+            <h2>Tweets recientes</h2>
+            <button type="button" class="btn-soft" id="btnVerTodo">Ver todo</button>
+          </div>
+          <div class="tweets-wrap">
+            <button type="button" class="pill-new" id="pillNuevos" hidden></button>
+            <div class="tweets" id="tweets"></div>
+          </div>
+        </article>
+
+        <article class="card card-alerts">
+          <div class="card-head">
+            <h2>Pre Alertas</h2>
+            <div class="popover-anchor">
+              <button type="button" class="btn-soft" id="btnFiltrosAlertas">Filtros</button>
+              <div id="popAlertas" class="popover popover-right" hidden>
+                <label class="field"><span>Ciudad</span><select id="selCiudadAlertas"></select></label>
+                <label class="field"><span>Fuente</span>
+                  <select id="selFuenteAlertas">
+                    <option value="">Todas</option>
+                    <option value="twitter">Twitter</option>
+                    <option value="facebook">Facebook</option>
+                  </select>
+                </label>
+                <p class="hint">Las tendencias comparan el periodo seleccionado con el periodo anterior de igual duración.</p>
+              </div>
+            </div>
+          </div>
+          <table class="alerts">
+            <thead>
+              <tr>
+                <th><button type="button" class="sort" data-sort="nombre">Categoría <span class="ic-wrap" data-icon="selector"></span></button></th>
+                <th class="num"><button type="button" class="sort" data-sort="menciones">Menciones <span class="ic-wrap" data-icon="selector"></span></button></th>
+              </tr>
+            </thead>
+            <tbody id="alertsBody"></tbody>
+          </table>
+        </article>
+      </div>
+    </section>
+
+    <!-- ============ HISTÓRICO ============ -->
+    <section class="view view-historico" data-view="historico" hidden>
+      <article class="card">
+        <div class="card-head">
+          <h2>Publicaciones por día</h2>
+          <div class="legend" id="legendHist"></div>
+        </div>
+        <div class="chart-box tall"><canvas id="chartHist" aria-label="Publicaciones por día y categoría"></canvas></div>
+      </article>
+
+      <article class="card">
+        <div class="card-head wrap">
+          <h2>Registro de publicaciones</h2>
+          <div class="filters">
+            <label class="search"><span class="ic-wrap" data-icon="search"></span><input type="search" id="histBuscar" placeholder="Buscar texto, autor o ciudad"></label>
+            <select id="histCategoria" aria-label="Categoría"></select>
+            <select id="histFuente" aria-label="Fuente">
+              <option value="">Todas las fuentes</option>
+              <option value="twitter">Twitter</option>
+              <option value="facebook">Facebook</option>
+            </select>
+            <select id="histCiudad" aria-label="Ciudad"></select>
+            <button type="button" class="btn-soft" id="histExportar"><span class="ic-wrap" data-icon="download"></span>CSV</button>
+          </div>
+        </div>
+        <div class="table-scroll">
+          <table class="data-table">
+            <thead>
+              <tr><th>Fecha</th><th>Categoría</th><th>Ciudad</th><th>Fuente</th><th>Autor</th><th>Publicación</th></tr>
+            </thead>
+            <tbody id="histBody"></tbody>
+          </table>
+        </div>
+        <div class="pager">
+          <span id="histInfo"></span>
+          <div>
+            <button type="button" class="icon-btn small" id="histPrev" aria-label="Página anterior"><span class="ic-wrap" data-icon="chevron-left"></span></button>
+            <button type="button" class="icon-btn small" id="histNext" aria-label="Página siguiente"><span class="ic-wrap" data-icon="chevron-right"></span></button>
+          </div>
+        </div>
+      </article>
+    </section>
+
+    <!-- ============ ESTADÍSTICAS ============ -->
+    <section class="view view-estadisticas" data-view="estadisticas" hidden>
+      <div class="kpis" id="kpis"></div>
+      <div class="grid-2">
+        <article class="card">
+          <div class="card-head"><h2>Distribución por categoría</h2></div>
+          <div class="donut-row">
+            <div class="chart-box donut"><canvas id="chartCat" aria-label="Distribución por categoría"></canvas></div>
+            <ul class="donut-legend" id="legendCat"></ul>
+          </div>
+        </article>
+        <article class="card">
+          <div class="card-head"><h2>Ciudades con más reportes</h2></div>
+          <div class="chart-box tall"><canvas id="chartCiudades" aria-label="Ciudades con más reportes"></canvas></div>
+        </article>
+      </div>
+      <article class="card">
+        <div class="card-head">
+          <h2>Actividad por día y hora</h2>
+          <div class="seq-legend"><span>Menos</span><i></i><span>Más</span></div>
+        </div>
+        <div class="heatgrid" id="heatgrid"></div>
+      </article>
+      <div class="grid-2">
+        <article class="card">
+          <div class="card-head"><h2>Publicaciones por fuente</h2></div>
+          <div class="source-bars" id="sourceBars"></div>
+        </article>
+        <article class="card">
+          <div class="card-head"><h2>Autores más activos</h2></div>
+          <ol class="rank" id="rankAutores"></ol>
+        </article>
+      </div>
+    </section>
+  </main>
+
+  <!-- Modal genérico -->
+  <div class="modal" id="modal" hidden>
+    <div class="modal-backdrop" data-close></div>
+    <div class="modal-dialog" role="dialog" aria-modal="true" aria-labelledby="modalTitle">
+      <div class="modal-head">
+        <h2 id="modalTitle"></h2>
+        <button type="button" class="icon-btn" data-close aria-label="Cerrar"><span class="ic-wrap" data-icon="x"></span></button>
+      </div>
+      <div class="modal-body" id="modalBody"></div>
+    </div>
+  </div>
+
+  <div class="toast" id="toast" hidden></div>
+
+  <script src="assets/vendor/leaflet/leaflet.js"></script>
+  <script src="assets/vendor/leaflet/leaflet.markercluster.js"></script>
+  <script src="assets/vendor/leaflet/leaflet-heat.js"></script>
+  <script src="assets/vendor/chartjs/chart.umd.js"></script>
+  <script src="assets/js/icons.js"></script>
+  <script src="assets/js/data.js"></script>
+  <script src="assets/js/app.js"></script>
+  <script src="assets/js/principal.js"></script>
+  <script src="assets/js/historico.js"></script>
+  <script src="assets/js/estadisticas.js"></script>
+  <script>ER.iniciar();</script>
+</body>
+</html>

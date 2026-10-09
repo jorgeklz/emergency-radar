@@ -1,0 +1,155 @@
+/*
+ * Emergency Radar · vista Histórico
+ * Publicaciones por día (barras apiladas por categoría) y registro paginado con exportación CSV.
+ */
+(function () {
+  "use strict";
+
+  var D = window.ER_DATA;
+  var ER = window.ER;
+  var POR_PAGINA = 15;
+  var st = { pagina: 0, resultados: [] };
+  var chart;
+
+  function val(id) { return document.getElementById(id).value; }
+
+  function filtrar() {
+    return D.filtrar({
+      desde: ER.estado.desde,
+      hasta: ER.estado.hasta,
+      texto: val("histBuscar").trim(),
+      categorias: val("histCategoria") ? [val("histCategoria")] : null,
+      fuentes: val("histFuente") ? [val("histFuente")] : null,
+      ciudad: val("histCiudad") || null
+    });
+  }
+
+  function pintarGrafico(posts) {
+    var dias = [], indice = {};
+    for (var d = ER.inicioDia(ER.estado.desde); d <= ER.estado.hasta; d = ER.sumarDias(d, 1)) {
+      indice[ER.isoDia(d)] = dias.length;
+      dias.push(new Date(d));
+    }
+    var series = D.CATEGORIAS.map(function () { return new Array(dias.length).fill(0); });
+    var pos = {};
+    D.CATEGORIAS.forEach(function (c, i) { pos[c.id] = i; });
+    posts.forEach(function (p) {
+      var k = indice[ER.isoDia(p.fecha)];
+      if (k !== undefined) series[pos[p.categoria]][k]++;
+    });
+    chart.data.labels = dias.map(function (x) { return ER.pad(x.getDate()) + "/" + ER.pad(x.getMonth() + 1); });
+    chart.data.datasets = D.CATEGORIAS.map(function (c, i) {
+      return {
+        label: c.nombre, data: series[i], backgroundColor: c.color,
+        borderColor: "#ffffff", borderWidth: { top: 2 }, borderSkipped: false,
+        borderRadius: i === D.CATEGORIAS.length - 1 ? { topLeft: 4, topRight: 4 } : 0,
+        maxBarThickness: 28
+      };
+    });
+    chart.update();
+  }
+
+  function pintarTabla() {
+    var r = st.resultados;
+    var total = r.length;
+    var paginas = Math.max(1, Math.ceil(total / POR_PAGINA));
+    st.pagina = Math.min(st.pagina, paginas - 1);
+    var ini = st.pagina * POR_PAGINA;
+    var filas = r.slice(ini, ini + POR_PAGINA);
+    document.getElementById("histBody").innerHTML = filas.length ? filas.map(function (p) {
+      var c = D.categoria(p.categoria);
+      return "<tr>" +
+        '<td class="nowrap">' + ER.fmtFechaCorta(p.fecha) + "<br><small style=\"color:#8a90a2\">" + ER.fmtHora(p.fecha) + "</small></td>" +
+        '<td><span class="tag-cat"><i style="background:' + c.color + '"></i>' + c.nombre + "</span></td>" +
+        '<td class="nowrap">' + ER.escapar(p.ciudad) + (p.lat === null ? "" : ' <span title="Geolocalizada" style="color:#2f7be5">' + window.icon("map-pin", "") + "</span>") + "</td>" +
+        '<td class="nowrap">' + (p.fuente === "twitter" ? "Twitter" : "Facebook") + "</td>" +
+        '<td class="nowrap">' + ER.escapar(p.autor.nombre) + '<br><small style="color:#8a90a2">@' + ER.escapar(p.autor.usuario) + "</small></td>" +
+        '<td class="txt">' + ER.escapar(p.texto) + "</td></tr>";
+    }).join("") : '<tr><td colspan="6" class="empty">No hay publicaciones para los filtros seleccionados.</td></tr>';
+    document.querySelectorAll("#histBody .ic").forEach(function (i) { i.style.width = i.style.height = "14px"; });
+    document.getElementById("histInfo").textContent = total
+      ? (ini + 1) + "–" + Math.min(ini + POR_PAGINA, total) + " de " + ER.fmtNum(total) + " publicaciones"
+      : "0 publicaciones";
+    document.getElementById("histPrev").disabled = st.pagina === 0;
+    document.getElementById("histNext").disabled = st.pagina >= paginas - 1;
+  }
+
+  function pintarTodo() {
+    st.resultados = filtrar();
+    pintarGrafico(st.resultados);
+    pintarTabla();
+  }
+
+  function exportarCSV() {
+    var cab = ["id", "fecha", "categoria", "ciudad", "lat", "lng", "fuente", "autor", "usuario", "texto"];
+    var lineas = [cab.join(",")].concat(st.resultados.map(function (p) {
+      return [p.id, p.fecha.toISOString(), D.categoria(p.categoria).nombre, p.ciudad, p.lat === null ? "" : p.lat.toFixed(5),
+        p.lng === null ? "" : p.lng.toFixed(5), p.fuente, p.autor.nombre, p.autor.usuario, p.texto]
+        .map(function (v) { return '"' + String(v).replace(/"/g, '""') + '"'; }).join(",");
+    }));
+    var blob = new Blob(["﻿" + lineas.join("\n")], { type: "text/csv;charset=utf-8" });
+    var a = document.createElement("a");
+    a.href = URL.createObjectURL(blob);
+    a.download = "emergency-radar_" + ER.isoDia(ER.estado.desde) + "_" + ER.isoDia(ER.estado.hasta) + ".csv";
+    document.body.appendChild(a); a.click(); a.remove();
+    setTimeout(function () { URL.revokeObjectURL(a.href); }, 1000);
+    ER.toast("Se exportaron " + ER.fmtNum(st.resultados.length) + " publicaciones");
+  }
+
+  ER.registrarVista("historico", {
+    iniciar: function () {
+      document.getElementById("histCategoria").innerHTML = '<option value="">Todas las categorías</option>' +
+        D.CATEGORIAS.map(function (c) { return '<option value="' + c.id + '">' + c.nombre + "</option>"; }).join("");
+      document.getElementById("histCiudad").innerHTML = '<option value="">Todas las ciudades</option>' +
+        D.CIUDADES.slice().sort(function (a, b) { return a.nombre.localeCompare(b.nombre, "es"); })
+          .map(function (c) { return '<option value="' + c.nombre + '">' + c.nombre + "</option>"; }).join("");
+      document.getElementById("legendHist").innerHTML = D.CATEGORIAS.map(function (c) {
+        return '<span><i class="sw" style="background:' + c.color + '"></i>' + c.nombre + "</span>";
+      }).join("");
+
+      chart = new Chart(document.getElementById("chartHist"), {
+        type: "bar",
+        data: { labels: [], datasets: [] },
+        options: {
+          responsive: true, maintainAspectRatio: false, animation: { duration: 300 },
+          interaction: { mode: "index", intersect: false },
+          plugins: {
+            legend: { display: false },
+            tooltip: {
+              backgroundColor: "#fff", titleColor: "#1d2130", bodyColor: "#4a5063", borderColor: "#e2e5ee", borderWidth: 1,
+              padding: 10, boxPadding: 4, usePointStyle: true,
+              callbacks: {
+                footer: function (items) {
+                  var t = items.reduce(function (s, i) { return s + i.parsed.y; }, 0);
+                  return "Total: " + ER.fmtNum(t);
+                }
+              },
+              footerColor: "#1d2130"
+            }
+          },
+          scales: {
+            x: { stacked: true, grid: { display: false }, border: { display: false }, ticks: { maxRotation: 0, autoSkipPadding: 12 } },
+            y: { stacked: true, beginAtZero: true, border: { display: false }, grid: { color: "#eef0f5" }, ticks: { maxTicksLimit: 6 } }
+          }
+        }
+      });
+
+      var reiniciar = function () { st.pagina = 0; pintarTodo(); };
+      var t;
+      document.getElementById("histBuscar").addEventListener("input", function () { clearTimeout(t); t = setTimeout(reiniciar, 200); });
+      ["histCategoria", "histFuente", "histCiudad"].forEach(function (id) { document.getElementById(id).addEventListener("change", reiniciar); });
+      document.getElementById("histPrev").addEventListener("click", function () { st.pagina--; pintarTabla(); });
+      document.getElementById("histNext").addEventListener("click", function () { st.pagina++; pintarTabla(); });
+      document.getElementById("histExportar").addEventListener("click", exportarCSV);
+      pintarTodo();
+    },
+    mostrar: function () {
+      if (this._pendiente) { this._pendiente = false; pintarTodo(); }
+    },
+    actualizar: function (tipo) {
+      // Las publicaciones en vivo no reinician la página que el usuario está leyendo.
+      if (tipo === "nueva") { clearTimeout(this._t); this._t = setTimeout(function () { st.resultados = filtrar(); pintarGrafico(st.resultados); pintarTabla(); }, 800); }
+      else pintarTodo();
+    }
+  });
+})();
