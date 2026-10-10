@@ -1,0 +1,12 @@
+name: Diagnóstico del contador de visitas
+on:
+  workflow_dispatch:
+jobs:
+  probar:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Consultar resumen_visitas (no registra visitas)
+        run: |
+          curl -sS -X POST "https://syglkptimygybufswhmd.supabase.co/rest/v1/rpc/resumen_visitas" \
+            -H "apikey: sb_publishable_Y8spfv16sNIBd-bVk6lE6A_wuEITxvP" \
+            -H "Content-Type: application/json" -d '{}' -w "\nHTTP %{http_code}\n"
