@@ -1,6 +1,7 @@
 -- Emergency Radar · contador de visitas
 -- ------------------------------------------------------------------
--- Ejecuta este archivo una sola vez en Supabase (SQL Editor → New query → Run).
+-- Ejecuta este archivo en Supabase (SQL Editor → New query → Run). Se puede volver a
+-- ejecutar sin perder datos: solo crea lo que falta y actualiza las funciones.
 --
 -- Cómo cuenta:
 --   * La IP se toma del encabezado x-forwarded-for que pone Supabase, en el servidor,
@@ -68,7 +69,8 @@ returns json
 language plpgsql
 volatile
 security definer
-set search_path = public
+-- En Supabase, pgcrypto (digest) vive en el esquema "extensions".
+set search_path = public, extensions
 as $$
 declare
   hdrs json := coalesce(nullif(current_setting('request.headers', true), ''), '{}')::json;

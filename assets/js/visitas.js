@@ -33,7 +33,7 @@
       headers: cabeceras,
       body: JSON.stringify(cuerpo || {})
     }).then(function (r) {
-      if (!r.ok) throw new Error("HTTP " + r.status);
+      if (!r.ok) return r.text().then(function (t) { throw new Error(nombre + ": HTTP " + r.status + " " + t); });
       return r.json();
     });
   }
@@ -122,7 +122,7 @@
     geolocalizar()
       .then(function (geo) { return rpc("registrar_visita", geo); })
       .then(function (r) { datos = r; pintar(); })
-      .catch(function () { /* sin servicio: el contador queda oculto */ });
+      .catch(function (e) { if (window.console) console.warn("Contador de visitas:", e.message); });
     setInterval(refrescar, REFRESCO_MS);
     document.addEventListener("visibilitychange", function () { if (!document.hidden) refrescar(); });
   }

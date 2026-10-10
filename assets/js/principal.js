@@ -784,35 +784,27 @@
     pintarDetalleFranja();
   }
 
-  // Tarjetas de picos: franja, total, cuántas veces supera lo normal, gravedad y qué se reporta.
+  // Lista de picos: una fila por pico con la franja, la categoría principal y el total.
   function htmlPicos(paso) {
     var media = freq.media || 0;
     var unidad = paso >= 1440 ? "día" : paso >= 60 ? (paso === 60 ? "hora" : "franja de " + paso / 60 + " h") : "franja de " + paso + " min";
     var cab = '<div class="picos-cab"><span class="pop-title">' + window.icon("chart-line") + "Picos detectados</span>" +
-      '<small>Lo normal: ' + ER.fmtNum(Math.round(media * 10) / 10) + " posts por " + unidad + "</small></div>";
-    var tarjetas = freq.picos.map(function (k) {
+      "<small>Lo normal: " + ER.fmtNum(Math.round(media * 10) / 10) + " posts por " + unidad + "</small></div>";
+    var filas = freq.picos.map(function (k) {
       var b = freq.bins[k], cat = categoriaPrincipal(b.porCat);
-      var ciudades = {};
-      b.posts.forEach(function (p) { if (p.ciudad && p.ciudad !== "Sin ubicación") ciudades[p.ciudad] = (ciudades[p.ciudad] || 0) + 1; });
-      var ciudad = Object.keys(ciudades).sort(function (x, y) { return ciudades[y] - ciudades[x]; })[0];
       var veces = media > 0 ? b.total / media : null;
       var d = b.desde, dia = d.getDate() + " " + MESES_C[d.getMonth()];
       var hora = paso >= 1440 ? dia : ER.fmtHora(d) + "–" + ER.fmtHora(b.hasta);
-      var barra = ["alta", "media", "baja"].map(function (n) {
-        return b[n] ? '<i style="width:' + (b[n] / b.total * 100) + "%;background:" + COL[n] + '" title="' + b[n] + " de gravedad " + n + '"></i>' : "";
-      }).join("");
-      return '<button type="button" class="pico-card' + (freq.sel === k ? " sel" : "") + '" data-pico="' + k + '" aria-pressed="' + (freq.sel === k) + '">' +
-        '<span class="pc-hora"><b>' + hora + "</b>" + (paso >= 1440 ? "" : "<small>" + dia + "</small>") + "</span>" +
-        '<span class="pc-num"><b>' + ER.fmtNum(b.total) + "</b> posts" +
-        (veces ? '<em title="Veces sobre lo normal en este intervalo">× ' + veces.toFixed(1).replace(".", ",") + "</em>" : "") + "</span>" +
-        '<span class="pc-barra">' + barra + "</span>" +
-        '<span class="pc-que">' + (cat ? window.icon(cat.icono) + "<b>" + cat.nombre + "</b>" : "") + (ciudad ? '<span class="pc-ciudad">· ' + ER.escapar(ciudad) + "</span>" : "") + "</span>" +
-        (b.alta ? '<span class="pc-grave">' + b.alta + " de gravedad alta</span>" : "") +
-        "</button>";
+      return '<li><button type="button" class="pico-fila' + (freq.sel === k ? " sel" : "") + '" data-pico="' + k + '" aria-pressed="' + (freq.sel === k) + '">' +
+        '<span class="pf-hora"><b>' + hora + "</b>" + (paso >= 1440 ? "" : "<small>" + dia + "</small>") + "</span>" +
+        '<span class="pf-cat">' + (cat ? window.icon(cat.icono) + "<span>" + cat.nombre + "</span>" : "") + "</span>" +
+        '<span class="pf-num"><b>' + ER.fmtNum(b.total) + "</b> posts" +
+        (veces ? '<em title="Veces sobre lo normal">× ' + veces.toFixed(1).replace(".", ",") + "</em>" : "") + "</span>" +
+        window.icon("chevron-right", "pf-ir") + "</button></li>";
     }).join("");
-    // Con un solo pico la tarjeta ocupa todo el ancho del panel, en una sola fila.
-    return cab + '<div class="picos-lista' + (freq.picos.length === 1 ? " uno" : "") + '">' + tarjetas + "</div>";
+    return cab + '<ul class="picos-lista">' + filas + "</ul>";
   }
+
 
   function pintarDetalleFranja() {
     var el = document.getElementById("freqDetalle");
