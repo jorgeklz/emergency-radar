@@ -372,15 +372,15 @@
       ER.abrirModal("Acerca de",
         "<p><b>Emergency Radar</b> lee publicaciones de X y muestra en el mapa las emergencias que se reportan en Ecuador.</p>" +
         "<p class='acerca-sub'>Categorías</p><ul class='acerca-cats'>" + D.CATEGORIAS.map(function (c) {
-          return "<li>" + window.icon(c.icono) + c.nombre + "</li>";
+          return "<li>" + window.icon(c.icono) + "<div><b>" + c.nombre + "</b><span>" + ER.escapar(c.descripcion || "") + "</span></div></li>";
         }).join("") + "</ul>" +
         "<p>Los posts se capturan cada 30 minutos. Un modelo decide si cada uno es una emergencia y se ubica por la ciudad que menciona.</p>" +
+        "<p class='acerca-nota'>Visitas: cada persona cuenta una vez cada 6 horas. No se guarda la IP, solo una huella cifrada, el país y la ciudad aproximados.</p>" +
+        "<p class='acerca-nota'>Mapas © OpenStreetMap, HOT y Esri. Banderas de flagcdn.com. Íconos Tabler Icons. Gráficos Chart.js.</p>" +
         "<div class='acerca-paper'><p>Implementa el modelo propuesto en:</p>" +
         "<p>Parraga-Alava, J., Rodas-Silva, J., Franco, J. y Vélez, M.-J. (2026). <i>A graph-based semi-supervised approach for automatic text corpus " +
         "emergency events labelling in X (Twitter)</i>. Big Data Research, 45, 100630.</p>" +
-        "<p>DOI: <a href='https://doi.org/10.1016/j.bdr.2026.100630' target='_blank' rel='noopener'>https://doi.org/10.1016/j.bdr.2026.100630</a></p></div>" +
-        "<p class='acerca-nota'>Visitas: cada persona cuenta una vez cada 6 horas. No se guarda la IP, solo una huella cifrada, el país y la ciudad aproximados.</p>" +
-        "<p class='acerca-nota'>Mapas © OpenStreetMap, HOT y Esri. Banderas de flagcdn.com. Íconos Tabler Icons. Gráficos Chart.js.</p>");
+        "<p>DOI: <a href='https://doi.org/10.1016/j.bdr.2026.100630' target='_blank' rel='noopener'>https://doi.org/10.1016/j.bdr.2026.100630</a></p></div>");
     });
     document.querySelectorAll("#modal [data-close]").forEach(function (b) { b.addEventListener("click", ER.cerrarModal); });
     document.addEventListener("click", cerrarPopovers);

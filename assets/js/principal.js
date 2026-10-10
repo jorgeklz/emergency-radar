@@ -155,6 +155,16 @@
       '<span class="mini-hace">' + ER.haceCorto(p.fecha) + "</span>";
   }
 
+  // Etiqueta fija de un grupo: el ícono es el de la categoría más reportada en el grupo
+  // (no el del último post) y el tiempo es el del reporte más reciente.
+  function etiquetaGrupo(info) {
+    if (!info.total || info.total < 2) return etiquetaMini(info.post);
+    var id = Object.keys(info.porCat).sort(function (a, b) { return info.porCat[b] - info.porCat[a]; })[0];
+    var c = D.categoria(id), g = ER.severidad(info.post).nivel;
+    return '<span class="mini-ic" style="--g:' + g.color + '" title="Más reportado: ' + c.nombre + " (" + info.porCat[id] + " de " + info.total + ')">' +
+      window.icon(c.icono) + "</span>" + '<span class="mini-hace">' + ER.haceCorto(info.post.fecha) + "</span>";
+  }
+
   // Al pasar por un punto: categoría, hace cuánto y la confianza del modelo, en una línea.
   function etiquetaPunto(p) {
     var g = ER.severidad(p).nivel, gc = ER.CALOR[g.id].color, c = D.categoria(p.categoria);
@@ -166,7 +176,8 @@
   // Detalle compacto de un grupo: total, conteo por categoría con íconos y una línea del último post.
   function tarjeta(p, total, porCat) {
     var g = ER.severidad(p).nivel, gc = ER.CALOR[g.id].color;
-    var chips = D.CATEGORIAS.filter(function (x) { return porCat && porCat[x.id]; }).map(function (x) {
+    // Categorías de mayor a menor cantidad.
+    var chips = D.CATEGORIAS.filter(function (x) { return porCat && porCat[x.id]; }).sort(function (a, b) { return porCat[b.id] - porCat[a.id]; }).map(function (x) {
       return '<span class="chip-cat" title="' + x.nombre + '" style="--k:' + x.color + '">' + window.icon(x.icono) + porCat[x.id] + "</span>";
     }).join("");
     return '<div class="g-cab"><b>' + total + " reportes</b><span>último " + ER.haceCorto(p.fecha) + "</span></div>" +
@@ -248,7 +259,7 @@
       if (choca) continue;
       var info = ultimoDe(padre);
       // Las tarjetas fijas van compactas; el desglose por categoría se ve al pasar el cursor.
-      padre.bindTooltip(etiquetaMini(info.post), {
+      padre.bindTooltip(etiquetaGrupo(info), {
         permanent: true, direction: "top", className: "er-mini er-fija", offset: [0, -28], interactive: false
       }).openTooltip();
       padre._erSpot = true;
@@ -339,7 +350,7 @@
       c.unbindTooltip();
       if (c._erSpot) {
         var info = ultimoDe(c);
-        c.bindTooltip(etiquetaMini(info.post), { permanent: true, direction: "top", className: "er-mini er-fija", offset: [0, -28] }).openTooltip();
+        c.bindTooltip(etiquetaGrupo(info), { permanent: true, direction: "top", className: "er-mini er-fija", offset: [0, -28] }).openTooltip();
       }
     });
     capaGrupos.on("animationend", programarSpotlights);
@@ -677,7 +688,7 @@
         (b.total ? '<div class="tip-grav"><span><i style="background:' + COL.alta + '"></i>' + b.alta + ' alta</span><span><i style="background:' + COL.media + '"></i>' + b.media +
           ' media</span><span><i style="background:' + COL.baja + '"></i>' + b.baja + " baja</span></div>" : "") +
         (b.nProb ? '<div class="v prev">Confianza media del modelo: ' + Math.round(b.prob / b.nProb * 100) + " %</div>" : "") +
-        (cat ? '<div class="v prev">Más reportado: ' + cat.nombre + "</div>" : "") +
+        (cat ? '<div class="v prev">Más reportado: ' + cat.nombre + " (" + b.porCat[cat.id] + " de " + b.total + ")</div>" : "") +
         (b.total ? '<div class="v prev tip-ayuda">Clic para ver los posts</div>' : "");
     tip.innerHTML = html;
     var x = ctx.chart.canvas.offsetLeft + t.caretX;
@@ -728,6 +739,7 @@
 
   function seleccionarFranja(k) {
     freq.sel = freq.sel === k ? null : k;
+    freq.catDetalle = null;
     chart.update("none");
     document.querySelectorAll("#freqPicos [data-pico]").forEach(function (b) {
       var sel = +b.getAttribute("data-pico") === freq.sel;
@@ -750,7 +762,8 @@
       var hora = paso >= 1440 ? dia : ER.fmtHora(d) + "–" + ER.fmtHora(b.hasta);
       return '<li><button type="button" class="pico-fila' + (freq.sel === k ? " sel" : "") + '" data-pico="' + k + '" aria-pressed="' + (freq.sel === k) + '">' +
         '<span class="pf-hora"><b>' + hora + "</b>" + (paso >= 1440 ? "" : "<small>" + dia + "</small>") + "</span>" +
-        '<span class="pf-cat">' + (cat ? window.icon(cat.icono) + "<span>" + cat.nombre + "</span>" : "") + "</span>" +
+        '<span class="pf-cat" title="Categoría más reportada en esta franja">' + (cat ? window.icon(cat.icono) + "<span>" + cat.nombre +
+          ' <small>' + b.porCat[cat.id] + " de " + b.total + "</small></span>" : "") + "</span>" +
         '<span class="pf-num"><b>' + ER.fmtNum(b.total) + "</b> posts" +
         (veces ? '<em title="Veces sobre lo normal">× ' + veces.toFixed(1).replace(".", ",") + "</em>" : "") + "</span>" +
         window.icon("chevron-right", "pf-ir") + "</button></li>";
@@ -759,16 +772,31 @@
   }
 
 
+  // Detalle de una franja: cuántos posts hay de cada categoría y la lista completa,
+  // con la categoría más reportada primero (antes se mostraban solo los 5 más graves y
+  // eso podía contradecir la categoría principal del pico).
   function pintarDetalleFranja() {
     var el = document.getElementById("freqDetalle");
     var b = freq.sel !== null ? freq.bins[freq.sel] : null;
-    if (!b || !b.total) { el.hidden = true; el.innerHTML = ""; return; }
-    var lista = b.posts.slice().sort(function (x, y) { return ER.severidad(y).score - ER.severidad(x).score || y.fecha - x.fecha; }).slice(0, 5);
+    if (!b || !b.total) { el.hidden = true; el.innerHTML = ""; freq.catDetalle = null; return; }
+    var orden = Object.keys(b.porCat).sort(function (x, y) { return b.porCat[y] - b.porCat[x]; });
+    if (freq.catDetalle && !b.porCat[freq.catDetalle]) freq.catDetalle = null;
+    var lista = b.posts.filter(function (p) { return !freq.catDetalle || p.categoria === freq.catDetalle; })
+      .sort(function (x, y) { return orden.indexOf(x.categoria) - orden.indexOf(y.categoria) || y.fecha - x.fecha; });
+    var chip = function (id, icono, nombre, n) {
+      var on = (freq.catDetalle || null) === id;
+      return '<button type="button" class="fd-cat' + (on ? " on" : "") + '" data-fdcat="' + (id || "") + '" aria-pressed="' + on + '">' +
+        (icono ? window.icon(icono) : "") + nombre + " <b>" + n + "</b></button>";
+    };
     el.innerHTML = '<div class="fd-cab"><b>' + fmtFranja(b, freq.paso) + "</b> · " + b.total + (b.total === 1 ? " post" : " posts") +
-      (b.total > 5 ? " (los 5 más graves)" : "") + '<button type="button" class="icon-btn small" id="fdCerrar" aria-label="Cerrar">' + window.icon("x") + "</button></div>" +
+      '<button type="button" class="icon-btn small" id="fdCerrar" aria-label="Cerrar">' + window.icon("x") + "</button></div>" +
+      '<div class="fd-cats">' + (orden.length > 1 ? chip(null, null, "Todas", b.total) : "") + orden.map(function (id) {
+        var c = D.categoria(id);
+        return chip(id, c.icono, c.nombre, b.porCat[id]);
+      }).join("") + "</div>" +
       "<ul>" + lista.map(function (p) {
         var g = ER.severidad(p).nivel, c = D.categoria(p.categoria);
-        return '<li><span class="mini-ic" style="--g:' + g.color + '" title="' + g.nombre + '">' + window.icon(c.icono) + "</span>" +
+        return '<li><span class="mini-ic" style="--g:' + g.color + '" title="Gravedad ' + g.nombre.toLowerCase() + '">' + window.icon(c.icono) + "</span>" +
           '<div><span class="fd-meta"><b>' + c.nombre + "</b> · " + ER.escapar(p.ciudad) + " · " + ER.htmlHace(p.fecha) +
           (typeof p.prob === "number" ? " · " + Math.round(p.prob * 100) + " %" : "") + "</span>" +
           '<span class="fd-texto">' + ER.escapar(p.texto.length > 160 ? p.texto.slice(0, 160) + "…" : p.texto) + "</span></div>" +
@@ -776,6 +804,9 @@
       }).join("") + "</ul>";
     el.hidden = false;
     document.getElementById("fdCerrar").addEventListener("click", function () { seleccionarFranja(freq.sel); });
+    el.querySelectorAll("[data-fdcat]").forEach(function (btn) {
+      btn.addEventListener("click", function () { freq.catDetalle = btn.getAttribute("data-fdcat") || null; pintarDetalleFranja(); });
+    });
   }
 
   function iniciarFrecuencia() {

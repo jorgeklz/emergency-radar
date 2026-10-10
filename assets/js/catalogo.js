@@ -11,18 +11,22 @@
   var CATEGORIAS = [
     {
       id: "asaltos", nombre: "Asaltos", icono: "run", color: "#2a78d6",
+      descripcion: "Robos, atracos, asaltos, extorsiones, secuestros y sicariato.",
       claves: ["asalt", "rob(o|aron|ando|an)\\b", "atraco", "delincuen", "extorsi", "secuestr", "sicari", "banda(s)? delictiva", "arranch"]
     },
     {
       id: "incendios", nombre: "Incendios", icono: "flame", color: "#c2569b",
+      descripcion: "Incendios en viviendas, locales, vehículos o zonas forestales, conatos y salidas de bomberos.",
       claves: ["incendi", "se quema", "en llamas", "fuego", "humareda", "conato", "bomberos"]
     },
     {
       id: "accidentes", nombre: "Accidente vehicular", icono: "car-crash", color: "#6250d6",
+      descripcion: "Choques, colisiones, volcamientos, atropellos y otros siniestros de tránsito.",
       claves: ["accidente", "choque", "chocaron", "colisi", "volcamiento", "se volc", "atropell", "siniestro de transito", "motociclista"]
     },
     {
       id: "desastres", nombre: "Desastres naturales", icono: "tornado", color: "#0e9fb3",
+      descripcion: "Sismos, temblores y terremotos, inundaciones, deslaves y derrumbes, desbordes de ríos, aguajes, lluvias fuertes y erupciones.",
       claves: ["inundaci", "se inund", "desliz", "deslave", "sismo", "temblor", "terremoto", "aguaje", "desbord", "lluvias? fuerte", "fuertes lluvias", "erupci", "derrumbe"]
     }
   ];
