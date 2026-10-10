@@ -6,7 +6,7 @@
  * Los datos son publicaciones reales de X que el recolector
  * (collector/x-collector.mjs, ejecutado por GitHub Actions) guarda en
  * data/posts.json. La app lee ese archivo al iniciar y lo vuelve a leer
- * cada minuto mientras el modo "En Vivo" está activo. La API key de X
+ * cada minuto mientras el modo "En vivo" está activo. La API key de X
  * nunca llega al navegador.
  *
  * Publicacion {

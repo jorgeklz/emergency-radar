@@ -1,5 +1,5 @@
 /*
- * Emergency Radar · motor de pre alertas
+ * Emergency Radar · motor de pre-alertas
  * ------------------------------------------------------------------
  * Compara lo que se reporta en la ventana actual (1, 6 o 24 horas) con lo
  * habitual y asigna un nivel a cada categoría y a cada zona.

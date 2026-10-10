@@ -8,23 +8,23 @@ Todo lo que muestra el sitio son **publicaciones reales de X** que un recolector
 
 ## Secciones
 
-**Principal.** Resumen animado de las últimas 24 horas (emergencias y su tendencia, última hora, categoría y zona más activas, cuántos posts filtró el modelo). Mapa con dos modos (Geolocalización con agrupación de reportes y Mapa de Calor), cuatro mapas base (Humanitario por defecto, Calles, Gris y Satélite), puntos con el color de su categoría, filtro por categorías ("Estás viendo"), posts recientes de las últimas 24 horas con aviso de publicaciones nuevas, Pre Alertas (ver abajo) y Frecuencia de posts, con una línea de tiempo por gravedad en intervalos de 6 h, 24 h, 3 días, 7 días o el periodo elegido, picos detectados automáticamente (franjas por encima de la media más dos desviaciones) y los posts de cada franja al hacer clic; o el patrón por hora del día frente al periodo anterior y la frecuencia de publicaciones por franja de 30 minutos comparada con el periodo anterior.
+**Principal.** Resumen animado de las últimas 24 horas (emergencias y su tendencia, última hora, categoría y zona más activas, cuántos posts filtró el modelo). Mapa con dos modos (Geolocalización con agrupación de reportes y Mapa de Calor), cuatro mapas base (Humanitario por defecto, Calles, Gris y Satélite), puntos con el color de su categoría, filtro por categorías ("Estás viendo"), posts recientes de las últimas 24 horas con aviso de publicaciones nuevas, Pre-alertas (ver abajo) y Frecuencia de posts, con una línea de tiempo por gravedad en intervalos de 6 h, 24 h, 3 días, 7 días o el periodo elegido, picos detectados automáticamente (franjas por encima de la media más dos desviaciones) y los posts de cada franja al hacer clic; o el patrón por hora del día frente al periodo anterior y la frecuencia de publicaciones por franja de 30 minutos comparada con el periodo anterior.
 
 **Histórico.** Publicaciones por día apiladas por categoría y un registro de 10 en 10 con búsqueda, filtros, resultado del modelo, enlace a cada publicación en X y exportación a CSV.
 
-Los filtros (categorías, ciudad y clasificación del modelo) son los mismos en las tres pestañas: lo que eliges en "Estás viendo", en Pre Alertas o en Histórico se aplica en todo el sitio, y el mapa se centra en los resultados.
+Los filtros (categorías, ciudad y clasificación del modelo) son los mismos en las tres pestañas: lo que eliges en "Estás viendo", en Pre-alertas o en Histórico se aplica en todo el sitio, y el mapa se centra en los resultados.
 
 **Estadísticas.** Indicadores generales, distribución por categoría, ciudades con más reportes, actividad por día y hora, cuántas publicaciones se pudieron ubicar, autores más activos y el desempeño del modelo de clasificación.
 
-En la barra superior están la hora de la última captura, el botón **En Vivo** (cada minuto revisa si el recolector dejó posts nuevos y los suma al mapa, al resumen, a Pre Alertas y a Frecuencia, con un aviso; en pausa la pantalla queda fija para analizarla, y la captura en X sigue corriendo igual), el selector de rango de fechas (por defecto, los últimos 7 días) y el menú.
+En la barra superior están la hora de la última captura, el botón **En vivo** (cada minuto revisa si el recolector dejó posts nuevos y los suma al mapa, al resumen, a Pre-alertas y a Frecuencia, con un aviso; en pausa la pantalla queda fija para analizarla, y la captura en X sigue corriendo igual), el selector de rango de fechas (por defecto, los últimos 7 días) y el menú.
 
 ## Colores
 
-- **Gravedad (rojo, amarillo, verde):** el rojo indica más emergencia, el amarillo una gravedad media y el verde menos. Se usa en los puntos y grupos del mapa, en el borde y la etiqueta de cada post, en la línea de tiempo de Frecuencia y en los niveles de Pre Alertas. La gravedad de un post combina la probabilidad del modelo con un plus si menciona heridos o fallecidos; la de un grupo del mapa sigue la cantidad de reportes (verde menos de 5, amarillo de 5 a 14, rojo 15 o más). Siempre va acompañada de texto o ícono.
+- **Gravedad (rojo, amarillo, verde):** el rojo indica más emergencia, el amarillo una gravedad media y el verde menos. Se usa en los puntos y grupos del mapa, en el borde y la etiqueta de cada post, en la línea de tiempo de Frecuencia y en los niveles de Pre-alertas. La gravedad de un post combina la probabilidad del modelo con un plus si menciona heridos o fallecidos; la de un grupo del mapa sigue la cantidad de reportes (verde menos de 5, amarillo de 5 a 14, rojo 15 o más). Siempre va acompañada de texto o ícono.
 - **Mapas de calor (blanco, amarillo, anaranjado, rojo):** el modo Mapa de Calor y la actividad por día y hora van de blanco (sin peligro) a amarillo (medio), anaranjado (alto) y rojo (extremo).
 - **Categorías (azul, magenta, violeta, cian):** identifican el tipo de emergencia y a propósito no usan rojo, amarillo ni verde, para no confundirse con la gravedad. La paleta pasa las pruebas de separación para daltonismo y de contraste.
 
-## Pre Alertas
+## Pre-alertas
 
 Funcionan como alerta temprana. Para la ventana elegida (1, 6 o 24 horas) comparan cuántos posts hay de cada categoría con **lo habitual**: la misma franja horaria de los días anteriores (hasta 7) o, si todavía no hay días previos, la ventana inmediatamente anterior. Con eso asignan un nivel:
 
@@ -162,8 +162,8 @@ La navegación usa rutas con `#` (`#/principal`, `#/historico`, `#/estadisticas`
 index.html                  Maquetación de las tres vistas
 assets/css/styles.css       Estilos (línea gráfica del diseño)
 assets/js/catalogo.js       Categorías (palabras clave) y ciudades, compartido con el recolector
-assets/js/data.js           Capa de datos: lee data/posts.json y lo vuelve a leer en modo En Vivo
-assets/js/app.js            Estado global, navegación, rango de fechas, modo En Vivo
+assets/js/data.js           Capa de datos: lee data/posts.json y lo vuelve a leer en modo En vivo
+assets/js/app.js            Estado global, navegación, rango de fechas, modo En vivo
 assets/js/principal.js      Vista Principal
 assets/js/historico.js      Vista Histórico
 assets/js/estadisticas.js   Vista Estadísticas

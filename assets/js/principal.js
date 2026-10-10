@@ -1,7 +1,7 @@
 /*
  * Emergency Radar · vista Principal
  * Mapa (geolocalización / mapa de calor), posts recientes,
- * pre alertas y frecuencia de publicaciones por hora del día.
+ * pre-alertas y frecuencia de publicaciones por hora del día.
  */
 (function () {
   "use strict";
@@ -142,14 +142,14 @@
   // ================= Mapa =================
   // Etiqueta fija: solo el ícono de la categoría (con su color de gravedad) y hace cuánto.
   function etiquetaMini(p) {
-    var g = ER.severidad(p).nivel, c = D.categoria(p.categoria);
+    var g = ER.severidad(p).nivel, gc = ER.CALOR[g.id].color, c = D.categoria(p.categoria);
     return '<span class="mini-ic" style="--g:' + g.color + '" title="' + c.nombre + " · " + g.nombre + '">' + window.icon(c.icono) + "</span>" +
       '<span class="mini-hace">' + ER.haceCorto(p.fecha) + "</span>";
   }
 
   // Al pasar por un punto: categoría, hace cuánto y la confianza del modelo, en una línea.
   function etiquetaPunto(p) {
-    var g = ER.severidad(p).nivel, c = D.categoria(p.categoria);
+    var g = ER.severidad(p).nivel, gc = ER.CALOR[g.id].color, c = D.categoria(p.categoria);
     return '<span class="mini-ic" style="--g:' + g.color + '">' + window.icon(c.icono) + "</span><b>" + c.nombre + "</b>" +
       '<span class="mini-hace">' + ER.haceCorto(p.fecha) + "</span>" +
       (typeof p.prob === "number" ? '<span class="mini-prob" style="--g:' + g.color + '">' + Math.round(p.prob * 100) + " %</span>" : "");
@@ -157,13 +157,13 @@
 
   // Detalle compacto de un grupo: total, conteo por categoría con íconos y una línea del último post.
   function tarjeta(p, total, porCat) {
-    var g = ER.severidad(p).nivel;
+    var g = ER.severidad(p).nivel, gc = ER.CALOR[g.id].color;
     var chips = D.CATEGORIAS.filter(function (x) { return porCat && porCat[x.id]; }).map(function (x) {
       return '<span class="chip-cat" title="' + x.nombre + '" style="--k:' + x.color + '">' + window.icon(x.icono) + porCat[x.id] + "</span>";
     }).join("");
     return '<div class="g-cab"><b>' + total + " reportes</b><span>último " + ER.haceCorto(p.fecha) + "</span></div>" +
       (chips ? '<div class="g-chips">' + chips + "</div>" : "") +
-      '<div class="extracto"><span class="mini-dot" style="background:' + g.color + '"></span>' +
+      '<div class="extracto"><span class="mini-dot" style="background:' + gc + '"></span>' +
       ER.escapar(p.texto.length > 70 ? p.texto.slice(0, 70) + "…" : p.texto) + "</div>";
   }
 
@@ -347,7 +347,7 @@
     total = pintarLeyendaMapa._t || 0;
     var el = document.getElementById("mapLegend");
     var base = "<span>" + ER.fmtNum(total) + " publicaciones geolocalizadas en el periodo</span>";
-    var G = ER.GRAVEDAD;
+    var G = ER.CALOR;
     var escala = '<span class="ley-grav"><b>Gravedad</b>' + [G.baja, G.media, G.alta].map(function (g) {
       return '<span><i class="dot-grav" style="background:' + g.color + '"></i>' + g.corto + "</span>";
     }).join("") + "</span>";
@@ -355,7 +355,7 @@
       return '<span title="' + c.nombre + '">' + window.icon(c.icono) + c.nombre + "</span>";
     }).join("") + "</span>";
     el.innerHTML = st.modo === "geo"
-      ? escala + cats + '<span class="ley-grupos">Grupos: verde menos de 5 reportes, amarillo de 5 a 14, rojo 15 o más</span>' + base
+      ? escala + cats + '<span class="ley-grupos">Grupos: amarillo menos de 5 reportes, naranja de 5 a 14, rojo 15 o más</span>' + base
       : '<span class="ley-calor"><b>Peligro</b><span class="ramp-calor"><i></i></span><span class="ramp-etq"><span>Sin peligro</span><span>Medio</span><span>Alto</span><span>Extremo</span></span></span>' + base;
   }
 
@@ -524,7 +524,7 @@
       }).join("") : '<li class="d-vacio">Sin posts en ' + nombreVentana(horas) + ".</li>";
       return '<li class="alerta-fila alerta-' + c.nivel.id + (abierta ? " abierta" : "") + '" data-cat="' + c.categoria.id + '">' +
         '<button type="button" class="alerta-cabecera" aria-expanded="' + abierta + '">' +
-          '<span class="alerta-icono" style="color:' + c.categoria.color + '">' + window.icon(c.categoria.icono) + "</span>" +
+          '<span class="alerta-icono" title="' + c.categoria.nombre + '">' + window.icon(c.categoria.icono) + "</span>" +
           '<span class="alerta-nombre"><b>' + c.categoria.nombre + '</b><small>' + meta.join(" · ") + "</small></span>" +
           sparkline(c.serie, c.categoria.color, horas) +
           '<span class="alerta-n">' + ER.fmtNum(c.observado) + "<small>posts</small></span>" +

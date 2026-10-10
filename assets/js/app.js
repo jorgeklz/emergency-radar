@@ -1,7 +1,7 @@
 /*
  * Emergency Radar · núcleo de la aplicación
  * Estado global, navegación por hash (compatible con GitHub Pages),
- * barra superior, popovers, modal, notificaciones y modo "En Vivo".
+ * barra superior, popovers, modal, notificaciones y modo "En vivo".
  */
 (function () {
   "use strict";
@@ -28,7 +28,7 @@
 
     // ---------- filtros globales ----------
     // Un solo estado para toda la app: lo que se elige en "Estás viendo",
-    // en Pre Alertas o en Histórico aplica en las tres pestañas.
+    // en Pre-alertas o en Histórico aplica en las tres pestañas.
     filtros: {
       categorias: D.CATEGORIAS.map(function (c) { return c.id; }),
       ciudad: "",
@@ -174,15 +174,15 @@
     pintarRango();
   }
 
-  // ---------- Modo En Vivo ----------
+  // ---------- Modo En vivo ----------
   var vivoTimer = null;
   function recibir(p) {
     // Si el rango termina hoy, se extiende para incluir la nueva publicación.
     if (ER.isoDia(ER.estado.hasta) === ER.isoDia(p.fecha)) ER.estado.hasta = finDia(p.fecha);
     ER.emitir("nueva", p);
   }
-  // En Vivo: cada minuto se vuelve a leer data/posts.json (que el recolector actualiza cada
-  // 30 minutos) y lo nuevo entra al mapa, al resumen, a Pre Alertas, a Frecuencia y a la
+  // En vivo: cada minuto se vuelve a leer data/posts.json (que el recolector actualiza cada
+  // 30 minutos) y lo nuevo entra al mapa, al resumen, a Pre-alertas, a Frecuencia y a la
   // píldora "N posts nuevos". En pausa la pantalla queda fija para analizarla con calma.
   // No afecta la captura en X, que corre en GitHub Actions de todos modos.
   var proximaRevision = null;
@@ -207,7 +207,7 @@
     var b = document.getElementById("btnLive");
     b.classList.toggle("is-on", ER.estado.enVivo);
     b.setAttribute("aria-pressed", String(ER.estado.enVivo));
-    b.querySelector(".live-label").textContent = ER.estado.enVivo ? "En Vivo" : "Pausado";
+    b.querySelector(".live-label").textContent = ER.estado.enVivo ? "En vivo" : "Pausado";
     var seg = proximaRevision ? Math.max(0, Math.round((proximaRevision - Date.now()) / 1000)) : null;
     b.title = ER.estado.enVivo
       ? "En vivo: revisa si hay posts nuevos cada minuto (próxima revisión en " + seg + " s). Clic para pausar y dejar la pantalla fija."
@@ -227,7 +227,7 @@
         });
       } else {
         programarVivo();
-        ER.toast("Pausado: la pantalla queda fija hasta que reactives En Vivo");
+        ER.toast("Pausado: la pantalla queda fija hasta que vuelvas a activar En vivo");
       }
       ER.emitir("vivo");
     });
@@ -267,6 +267,12 @@
     score = Math.max(0, Math.min(1, score));
     var nivel = score >= 0.75 ? ER.GRAVEDAD.alta : score >= 0.5 ? ER.GRAVEDAD.media : ER.GRAVEDAD.baja;
     return { score: score, nivel: nivel };
+  };
+  // En el mapa se usa la línea del mapa de calor (sin verde): amarillo, naranja y rojo.
+  ER.CALOR = {
+    baja: { id: "baja", corto: "Baja", color: "#ffc400" },
+    media: { id: "media", corto: "Media", color: "#ff8c00" },
+    alta: { id: "alta", corto: "Alta", color: "#e03131" }
   };
   // Grupos del mapa: el color sigue la cantidad de reportes, como un mapa de calor.
   ER.nivelPorCantidad = function (n) {
@@ -366,9 +372,13 @@
       ER.abrirModal("Acerca de Emergency Radar",
         "<p><b>Emergency Radar</b> monitorea publicaciones de redes sociales para detectar " +
         "y ubicar emergencias (asaltos, incendios, accidentes de tránsito y desastres naturales) en Ecuador.</p>" +
-        "<p>Las publicaciones provienen de la API de X. Se capturan cada 30 minutos, se clasifican por palabras clave " +
-        "y se ubican por las coordenadas, el lugar etiquetado o la ciudad mencionada en el texto.</p>" +
-        "<p style='font-size:12px;color:#8a90a2'>Mapa base © colaboradores de OpenStreetMap. Íconos Tabler Icons. Gráficos Chart.js.</p>");
+        "<p>Las publicaciones provienen de la API de X y se capturan cada 30 minutos. La categoría se asigna por palabras clave, " +
+        "la ubicación por las coordenadas, el lugar etiquetado o la ciudad mencionada, y un modelo decide si cada post es una emergencia.</p>" +
+        "<div class='acerca-paper'><p>Esta app implementa el modelo semisupervisado de grafo kNN para etiquetar emergencias en X propuesto en:</p>" +
+        "<p>Parraga-Alava, J., Rodas-Silva, J., Franco, J. y Vélez, M.-J. (2026). <i>A graph-based semi-supervised approach for automatic text corpus " +
+        "emergency events labelling in X (Twitter)</i>. Big Data Research, 45, 100630.</p>" +
+        "<p>DOI: <a href='https://doi.org/10.1016/j.bdr.2026.100630' target='_blank' rel='noopener'>https://doi.org/10.1016/j.bdr.2026.100630</a></p></div>" +
+        "<p style='font-size:12px;color:#8a90a2'>Mapas © colaboradores de OpenStreetMap, HOT y Esri. Íconos Tabler Icons. Gráficos Chart.js.</p>");
     });
     document.querySelectorAll("#modal [data-close]").forEach(function (b) { b.addEventListener("click", ER.cerrarModal); });
     document.addEventListener("click", cerrarPopovers);
