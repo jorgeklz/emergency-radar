@@ -401,7 +401,8 @@
         "<div class='acerca-paper'><p>Implementa el modelo propuesto en:</p>" +
         "<p>Parraga-Alava, J., Rodas-Silva, J., Franco, J. y Vélez, M.-J. (2026). <i>A graph-based semi-supervised approach for automatic text corpus " +
         "emergency events labelling in X (Twitter)</i>. Big Data Research, 45, 100630.</p>" +
-        "<p>DOI: <a href='https://doi.org/10.1016/j.bdr.2026.100630' target='_blank' rel='noopener'>https://doi.org/10.1016/j.bdr.2026.100630</a></p></div>");
+        "<p>DOI: <a href='https://doi.org/10.1016/j.bdr.2026.100630' target='_blank' rel='noopener'>https://doi.org/10.1016/j.bdr.2026.100630</a></p></div>" +
+        "<p class='acerca-autor'>Jorge Párraga-Álava, Ph.D.</p>");
     });
     document.querySelectorAll("#modal [data-close]").forEach(function (b) { b.addEventListener("click", ER.cerrarModal); });
     document.addEventListener("click", cerrarPopovers);
