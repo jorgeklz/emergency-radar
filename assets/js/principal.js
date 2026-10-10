@@ -584,7 +584,6 @@
 
   // ================= Frecuencia =================
   // Línea de tiempo por gravedad, con detección de picos. El patrón por hora del día vive en Estadísticas.
-  var MESES_C = ["ene", "feb", "mar", "abr", "may", "jun", "jul", "ago", "sep", "oct", "nov", "dic"];
   var RANGOS = { "6h": { horas: 6, paso: 15 }, "24h": { horas: 24, paso: 60 }, "3d": { horas: 72, paso: 180 }, "7d": { horas: 168, paso: 360 } };
   var COL = { alta: "#d03b3b", media: "#f0a400", baja: "#2f9e44" };
   var freq = { rango: "24h", sel: null, bins: [], picos: [], paso: 60 };
@@ -602,8 +601,9 @@
   // Agrupa los posts en franjas de `paso` minutos con su desglose por gravedad.
   function agrupar(posts, ini, fin, paso) {
     var ms = paso * 60000;
-    // Las franjas empiezan en múltiplos del paso (13:00, 13:15...) para que se lean fácil.
-    var inicio = Math.floor(ini / ms) * ms, n = Math.ceil((fin - inicio) / ms);
+    // Las franjas empiezan en múltiplos del paso en hora de Ecuador (13:00, 13:15... y los
+    // días a medianoche de Ecuador) para que se lean fácil.
+    var inicio = Math.floor((+ini + ER.DESFASE) / ms) * ms - ER.DESFASE, n = Math.ceil((fin - inicio) / ms);
     var bins = [];
     for (var k = 0; k < n; k++) bins.push({ desde: new Date(inicio + k * ms), hasta: new Date(inicio + (k + 1) * ms), alta: 0, media: 0, baja: 0, total: 0, prob: 0, nProb: 0, porCat: {}, posts: [] });
     posts.forEach(function (p) {
@@ -633,7 +633,7 @@
 
   function fmtFranja(b, paso) {
     var d = b.desde, h = b.hasta;
-    var dia = d.getDate() + " " + MESES_C[d.getMonth()];
+    var dia = ER.fmtDiaMes(d);
     if (paso >= 1440) return dia;
     return dia + " " + ER.fmtHora(d) + "–" + ER.fmtHora(h);
   }
@@ -641,9 +641,9 @@
   function etiquetasEje(bins, paso) {
     return bins.map(function (b, k) {
       var d = b.desde;
-      if (paso >= 1440) return d.getDate() + " " + MESES_C[d.getMonth()];
-      var cambioDia = k === 0 || d.getDate() !== bins[k - 1].desde.getDate();
-      return cambioDia ? [ER.fmtHora(d), d.getDate() + " " + MESES_C[d.getMonth()]] : ER.fmtHora(d);
+      if (paso >= 1440) return ER.fmtDiaMes(d);
+      var cambioDia = k === 0 || ER.ec(d).d !== ER.ec(bins[k - 1].desde).d;
+      return cambioDia ? [ER.fmtHora(d), ER.fmtDiaMes(d)] : ER.fmtHora(d);
     });
   }
 
@@ -758,7 +758,7 @@
     var filas = freq.picos.map(function (k) {
       var b = freq.bins[k], cat = categoriaPrincipal(b.porCat);
       var veces = media > 0 ? b.total / media : null;
-      var d = b.desde, dia = d.getDate() + " " + MESES_C[d.getMonth()];
+      var d = b.desde, dia = ER.fmtDiaMes(d);
       var hora = paso >= 1440 ? dia : ER.fmtHora(d) + "–" + ER.fmtHora(b.hasta);
       return '<li><button type="button" class="pico-fila' + (freq.sel === k ? " sel" : "") + '" data-pico="' + k + '" aria-pressed="' + (freq.sel === k) + '">' +
         '<span class="pf-hora"><b>' + hora + "</b>" + (paso >= 1440 ? "" : "<small>" + dia + "</small>") + "</span>" +

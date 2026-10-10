@@ -46,7 +46,7 @@
       var k = indice[ER.isoDia(p.fecha)];
       if (k !== undefined) series[pos[p.categoria]][k]++;
     });
-    chart.data.labels = dias.map(function (x) { return ER.pad(x.getDate()) + "/" + ER.pad(x.getMonth() + 1); });
+    chart.data.labels = dias.map(function (x) { var e = ER.ec(x); return ER.pad(e.d) + "/" + ER.pad(e.m + 1); });
     chart.data.datasets = D.CATEGORIAS.map(function (c, i) {
       return {
         label: c.nombre, data: series[i], backgroundColor: c.color,

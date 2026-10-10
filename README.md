@@ -18,6 +18,10 @@ Los filtros (categorías, ciudad y clasificación del modelo) se comparten entre
 
 En la barra superior están la hora de la última captura, el botón **En vivo** (cada minuto revisa si el recolector dejó posts nuevos y los suma al mapa, al resumen, a Pre-alertas y a Frecuencia, con un aviso; en pausa la pantalla queda fija para analizarla, y la captura en X sigue corriendo igual), el selector de rango de fechas (por defecto, los últimos 7 días) y el menú.
 
+## Hora
+
+Todas las fechas y horas (posts, gráficos, picos, filtros, histórico y estadísticas) se muestran y agrupan en hora de Ecuador continental (GMT-5), sin importar la zona horaria del navegador de quien visita. Ecuador no usa horario de verano, así que el desfase es fijo (`DESFASE` en `assets/js/app.js`).
+
 ## Colores
 
 - **Gravedad (rojo, amarillo, verde):** el rojo indica más emergencia, el amarillo una gravedad media y el verde menos. Se usa en los puntos y grupos del mapa, en el borde y la etiqueta de cada post, en la línea de tiempo de Frecuencia y en los niveles de Pre-alertas. La gravedad de un post combina la probabilidad del modelo con un plus si menciona heridos o fallecidos; la de un grupo del mapa sigue la cantidad de reportes (verde menos de 5, amarillo de 5 a 14, rojo 15 o más). Siempre va acompañada de texto o ícono.

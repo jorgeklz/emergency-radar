@@ -81,7 +81,7 @@
   // Cuadrícula de actividad: horas en filas y días en columnas.
   function pintarHeatgrid(posts) {
     var g = DIAS.map(function () { return new Array(24).fill(0); });
-    posts.forEach(function (p) { g[(p.fecha.getDay() + 6) % 7][p.fecha.getHours()]++; });
+    posts.forEach(function (p) { var e = ER.ec(p.fecha); g[(e.dow + 6) % 7][e.h]++; });
     var max = Math.max.apply(null, g.map(function (r) { return Math.max.apply(null, r); })) || 1;
     var html = "<table><thead><tr><th></th>";
     DIAS.forEach(function (dia) { html += "<th>" + dia + "</th>"; });
@@ -195,9 +195,14 @@
     return o;
   }
   function aLocal(d) {
-    return d.getFullYear() + "-" + ER.pad(d.getMonth() + 1) + "-" + ER.pad(d.getDate()) + "T" + ER.pad(d.getHours()) + ":" + ER.pad(d.getMinutes());
+    var e = ER.ec(d);
+    return e.y + "-" + ER.pad(e.m + 1) + "-" + ER.pad(e.d) + "T" + ER.pad(e.h) + ":" + ER.pad(e.mi);
   }
-  function deLocal(v) { var d = v ? new Date(v) : null; return d && !isNaN(d) ? d : null; }
+  // "AAAA-MM-DDTHH:MM" del campo se interpreta siempre como hora de Ecuador.
+  function deLocal(v) {
+    var m = /^(\d{4})-(\d{2})-(\d{2})T(\d{2}):(\d{2})/.exec(v || "");
+    return m ? ER.desdeEc(+m[1], m[2] - 1, +m[3], +m[4], +m[5]) : null;
+  }
 
   function pintarControles() {
     var r = rangoActual();
@@ -241,7 +246,7 @@
     var r = rangoActual();
     var f = function (d) { return ER.fmtFechaCorta(d) + " " + ER.fmtHora(d); };
     document.getElementById("resumenFiltros").innerHTML = "<b>" + ER.fmtNum(total) + (total === 1 ? " publicación" : " publicaciones") +
-      "</b> entre el " + f(r.desde) + " y el " + f(r.hasta) + ". Estos filtros solo aplican en Estadísticas.";
+      "</b> entre el " + f(r.desde) + " y el " + f(r.hasta) + ", " + ER.ZONA + ". Estos filtros solo aplican en Estadísticas.";
   }
 
   function pintarTodo() {

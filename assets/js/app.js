@@ -10,9 +10,23 @@
   var MESES = ["ene", "feb", "mar", "abr", "may", "jun", "jul", "ago", "sep", "oct", "nov", "dic"];
 
   function pad(n) { return (n < 10 ? "0" : "") + n; }
-  function inicioDia(d) { var x = new Date(d); x.setHours(0, 0, 0, 0); return x; }
-  function finDia(d) { var x = new Date(d); x.setHours(23, 59, 59, 999); return x; }
-  function sumarDias(d, n) { var x = new Date(d); x.setDate(x.getDate() + n); return x; }
+
+  // ---------- Hora de Ecuador ----------
+  // Todas las fechas y horas se muestran y agrupan en hora de Ecuador continental (GMT-5),
+  // sin importar la zona horaria del navegador. Ecuador no usa horario de verano, así que
+  // el desfase es fijo.
+  var DESFASE = -5 * 3600000;
+  var DIA_MS = 86400000;
+  // Partes de la fecha en hora de Ecuador: año, mes (0-11), día, hora, minuto y día de la semana (0 = domingo).
+  function ec(d) {
+    var x = new Date(+d + DESFASE);
+    return { y: x.getUTCFullYear(), m: x.getUTCMonth(), d: x.getUTCDate(), h: x.getUTCHours(), mi: x.getUTCMinutes(), dow: x.getUTCDay() };
+  }
+  // Fecha (instante real) que corresponde a una hora de Ecuador.
+  function desdeEc(y, m, d, h, mi, s, ms) { return new Date(Date.UTC(y, m, d, h || 0, mi || 0, s || 0, ms || 0) - DESFASE); }
+  function inicioDia(d) { var p = ec(d); return desdeEc(p.y, p.m, p.d); }
+  function finDia(d) { var p = ec(d); return desdeEc(p.y, p.m, p.d, 23, 59, 59, 999); }
+  function sumarDias(d, n) { return new Date(+d + n * DIA_MS); }
 
   var hoy = new Date();
   var ER = {
@@ -56,13 +70,20 @@
     inicioDia: inicioDia,
     finDia: finDia,
     sumarDias: sumarDias,
-    fmtFecha: function (d) { return d.getFullYear() + "/" + pad(d.getMonth() + 1) + "/" + pad(d.getDate()); },
-    fmtFechaCorta: function (d) { return pad(d.getDate()) + "/" + pad(d.getMonth() + 1) + "/" + d.getFullYear(); },
-    fmtHoraH: function (d) { return pad(d.getHours()) + "h" + pad(d.getMinutes()); },
-    fmtHora: function (d) { return pad(d.getHours()) + ":" + pad(d.getMinutes()); },
-    fmtLarga: function (d) { return pad(d.getHours()) + ":" + pad(d.getMinutes()) + " · " + d.getDate() + " " + MESES[d.getMonth()] + " " + d.getFullYear(); },
+    ec: ec,
+    desdeEc: desdeEc,
+    DESFASE: DESFASE,
+    ZONA: "hora de Ecuador (GMT-5)",
+    fmtFecha: function (d) { var p = ec(d); return p.y + "/" + pad(p.m + 1) + "/" + pad(p.d); },
+    fmtFechaCorta: function (d) { var p = ec(d); return pad(p.d) + "/" + pad(p.m + 1) + "/" + p.y; },
+    fmtDiaMes: function (d) { var p = ec(d); return p.d + " " + MESES[p.m]; },
+    fmtHoraH: function (d) { var p = ec(d); return pad(p.h) + "h" + pad(p.mi); },
+    fmtHora: function (d) { var p = ec(d); return pad(p.h) + ":" + pad(p.mi); },
+    fmtLarga: function (d) { var p = ec(d); return pad(p.h) + ":" + pad(p.mi) + " · " + p.d + " " + MESES[p.m] + " " + p.y; },
     fmtNum: function (n) { return n.toLocaleString("es-EC"); },
-    isoDia: function (d) { return d.getFullYear() + "-" + pad(d.getMonth() + 1) + "-" + pad(d.getDate()); },
+    isoDia: function (d) { var p = ec(d); return p.y + "-" + pad(p.m + 1) + "-" + pad(p.d); },
+    // Texto "AAAA-MM-DD" (de un <input type="date">) a medianoche de Ecuador.
+    deIsoDia: function (v) { var a = v.split("-"); return desdeEc(+a[0], a[1] - 1, +a[2]); },
     escapar: function (s) {
       return String(s).replace(/[&<>"']/g, function (c) {
         return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c];
@@ -160,7 +181,7 @@
         var p = b.getAttribute("data-preset");
         var h = new Date(), d;
         if (p === "hoy") d = h;
-        else if (p === "mes") d = new Date(h.getFullYear(), h.getMonth(), 1);
+        else if (p === "mes") { var hp = ec(h); d = desdeEc(hp.y, hp.m, 1); }
         else d = sumarDias(h, -(parseInt(p, 10) - 1));
         inDesde.value = ER.isoDia(d);
         inHasta.value = ER.isoDia(h);
@@ -168,8 +189,7 @@
     });
     document.getElementById("btnAplicarRango").addEventListener("click", function () {
       if (!inDesde.value || !inHasta.value) { ER.toast("Selecciona ambas fechas"); return; }
-      var a = inDesde.value.split("-"), b = inHasta.value.split("-");
-      aplicarRango(new Date(+a[0], a[1] - 1, +a[2]), new Date(+b[0], b[1] - 1, +b[2]));
+      aplicarRango(ER.deIsoDia(inDesde.value), ER.deIsoDia(inHasta.value));
       cerrarPopovers();
     });
     pintarRango();
@@ -374,9 +394,10 @@
         "<p class='acerca-sub'>Categorías</p><ul class='acerca-cats'>" + D.CATEGORIAS.map(function (c) {
           return "<li>" + window.icon(c.icono) + "<div><b>" + c.nombre + "</b><span>" + ER.escapar(c.descripcion || "") + "</span></div></li>";
         }).join("") + "</ul>" +
-        "<p>Los posts se capturan cada 30 minutos. Un modelo decide si cada uno es una emergencia y se ubica por la ciudad que menciona.</p>" +
-        "<p class='acerca-nota'>Visitas: cada persona cuenta una vez cada 6 horas. No se guarda la IP, solo una huella cifrada, el país y la ciudad aproximados.</p>" +
-        "<p class='acerca-nota'>Mapas © OpenStreetMap, HOT y Esri. Banderas de flagcdn.com. Íconos Tabler Icons. Gráficos Chart.js.</p>" +
+        "<p>Los posts se capturan cada 30 minutos. Un modelo decide si cada uno es una emergencia y se ubica por la ciudad que menciona. " +
+        "Todas las fechas y horas están en hora de Ecuador (GMT-5).</p>" +
+        "<p class='acerca-sub'>Visitas</p>" +
+        "<p class='acerca-nota'>Cada persona cuenta una vez cada 6 horas. No se guarda la IP, solo una huella cifrada, el país y la ciudad aproximados.</p>" +
         "<div class='acerca-paper'><p>Implementa el modelo propuesto en:</p>" +
         "<p>Parraga-Alava, J., Rodas-Silva, J., Franco, J. y Vélez, M.-J. (2026). <i>A graph-based semi-supervised approach for automatic text corpus " +
         "emergency events labelling in X (Twitter)</i>. Big Data Research, 45, 100630.</p>" +
