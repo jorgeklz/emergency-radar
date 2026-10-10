@@ -10,9 +10,11 @@ Todo lo que muestra el sitio son **publicaciones reales de X** que un recolector
 
 **Principal.** Mapa con dos modos (Geolocalización con agrupación de reportes y Mapa de Calor), filtro por categorías ("Estás viendo"), tweets recientes con aviso de publicaciones nuevas, Pre Alertas de las últimas 24 horas con tendencia frente a las 24 horas previas y la frecuencia de publicaciones por franja de 30 minutos comparada con el periodo anterior.
 
-**Histórico.** Publicaciones por día apiladas por categoría y un registro paginado con búsqueda, filtros por categoría y ciudad (las ciudades salen de los datos capturados), enlace a cada publicación en X y exportación a CSV.
+**Histórico.** Publicaciones por día apiladas por categoría y un registro de 10 en 10 con búsqueda, filtros, resultado del modelo, enlace a cada publicación en X y exportación a CSV.
 
-**Estadísticas.** Indicadores generales, distribución por categoría, ciudades con más reportes, actividad por día y hora, cuántas publicaciones se pudieron ubicar y autores más activos.
+Los filtros (categorías, ciudad y clasificación del modelo) son los mismos en las tres pestañas: lo que eliges en "Estás viendo", en Pre Alertas o en Histórico se aplica en todo el sitio, y el mapa se centra en los resultados.
+
+**Estadísticas.** Indicadores generales, distribución por categoría, ciudades con más reportes, actividad por día y hora, cuántas publicaciones se pudieron ubicar, autores más activos y el desempeño del modelo de clasificación.
 
 En la barra superior están la hora de la última captura, el botón **En Vivo** (relee los datos cada minuto y avisa de las publicaciones nuevas; un clic lo pausa), el selector de rango de fechas (por defecto, los últimos 7 días) y el menú.
 
@@ -51,7 +53,8 @@ La frecuencia se cambia en el `cron` de `.github/workflows/collect.yml`. Cada ej
 ### Cómo se procesa cada publicación
 
 - **Categoría:** por palabras clave definidas en `assets/js/catalogo.js`. Si no coincide con ninguna categoría, se descarta.
-- **Ubicación:** primero las coordenadas exactas (si las tiene), luego el lugar etiquetado en X y por último la ciudad mencionada en el texto. Si no hay ninguna, queda como "Sin ubicación" y no aparece en el mapa, pero sí en las listas y estadísticas.
+- **¿Es una emergencia?** Lo decide el modelo LSI + kNN (ver la sección "Modelo de clasificación").
+- **Ubicación:** primero las coordenadas exactas (si las tiene), luego el lugar etiquetado en X y por último la ciudad mencionada en el texto. Si no hay ninguna, queda como "Sin ubicación" y no aparece en el mapa, pero sí en las listas y estadísticas. Los nombres que también son palabras comunes (Quito, Cuenca, Milagro, Manta, Salinas, La Libertad) solo cuentan escritos con mayúscula: así "le quitó" o "un milagro" no se ubican en esas ciudades.
 
 ### Sobre el "tiempo real"
 
@@ -65,6 +68,46 @@ node --test collector/*.test.mjs                          # pruebas, sin red
 ```
 
 No guardes el token en archivos del repositorio. Si usas un `.env`, ya está en `.gitignore`.
+
+## Modelo de clasificación
+
+Cada publicación capturada pasa por el modelo del paper *A graph-based semi-supervised approach for automatic text corpus emergency events labelling in X (Twitter)* (Parraga-Alava, Rodas-Silva, Franco y Vélez, Big Data Research 45, 2026). Para cada publicación nueva se buscan las *k* publicaciones más parecidas de un corpus etiquetado y se le asigna, por mayoría, su etiqueta: **emergencia** o **no emergencia**. Por defecto el sitio muestra solo las emergencias; con el filtro "Clasificación del modelo" se pueden ver también las descartadas.
+
+Este enfoque es interpretable: el sitio muestra, por ejemplo, "Emergencia 78 %", y al pasar el cursor, cuántos de los vecinos son emergencias.
+
+### Corpus
+
+`modelo/corpus/anotados_800.csv` tiene 797 publicaciones en español de Ecuador (366 emergencias y 431 no emergencias), etiquetadas por 9 anotadores humanos. Salen de las planillas del repositorio del paper (`jorgeklz/paper-labelling`). La etiqueta final es la de la mayoría de los anotadores, como en el paper. El corpus UrbangEnCy no está en ese repositorio; para sumarlo basta con dejar un CSV con las columnas `texto` y `etiqueta` (1/0) en la misma carpeta.
+
+### Resultados (validación cruzada estratificada, 5 folds x 5 repeticiones)
+
+| Configuración | Exactitud | Precisión | Sensibilidad | Especificidad | F1 | Kappa con anotadores |
+|---|---|---|---|---|---|---|
+| **LSI, k = 9, 300 dimensiones, voto ponderado (en uso)** | **0,870** | 0,861 | **0,856** | 0,883 | **0,858** | **0,785** |
+| LSI, k = 7, 100 dimensiones (configuración del paper) | 0,853 | 0,838 | 0,843 | 0,862 | 0,840 | 0,777 |
+| SVM lineal sobre TF-IDF (referencia) | 0,878 | 0,875 | 0,857 | 0,896 | 0,866 | 0,786 |
+| Regresión logística sobre TF-IDF (referencia) | 0,870 | 0,894 | 0,814 | 0,918 | 0,852 | 0,780 |
+
+El kappa de Light entre los 9 anotadores es 0,797 (acuerdo fuerte), así que el modelo coincide con las personas casi tanto como ellas entre sí. En este corpus el SVM queda apenas por encima; se mantiene el kNN porque es el enfoque del paper y permite explicar cada alerta. El detalle de las 60 configuraciones probadas está en `modelo/resultados/evaluacion.json`.
+
+### De los scripts originales al código del proyecto
+
+| Original | En el proyecto | Cambios principales |
+|---|---|---|
+| `data_features.py` | `modelo/preprocesamiento.py` | Español en lugar de inglés: stopwords en español (incluidas en el repo) y stemmer Snowball en lugar de WordNet y pycontractions, sin descargar modelos. Se conserva la palabra de los hashtags. |
+| `iniciador.py` / `knn.py` del paper | `modelo/lsi_knn.py` | Medidas Coseno, TF-IDF y LSI; regla de umbral 0,20 del código original; operaciones vectorizadas; voto ponderado opcional; `explicar()` devuelve los vecinos. |
+| `kappa.R` | `modelo/evaluacion.py` | Kappa de Light (promedio de kappa de Cohen por pares) más las métricas del paper, SVM y regresión logística de referencia, y selección automática de la mejor configuración. |
+| `data_get_synonim.R` | `modelo/palabras_clave.py` | Palabras asociadas a emergencias por chi cuadrado en el corpus, cruzadas con las 14 listas del paper, y una consulta lista para la API v2 de X. Es una sugerencia: para usarla, cópiala en la variable `X_QUERY`. |
+
+### Comandos
+
+```bash
+pip install -r modelo/requirements.txt
+python -m modelo.clasificar          # clasifica data/posts.json (lo hace el workflow en cada captura)
+python -m modelo.evaluacion          # repite la validación y actualiza modelo/resultados/config.json (~6 min)
+python -m modelo.palabras_clave      # sugiere palabras clave y una consulta para X
+python -m unittest modelo.test_modelo
+```
 
 ## Ejecutarlo en local
 
@@ -99,6 +142,7 @@ assets/js/estadisticas.js   Vista Estadísticas
 assets/js/icons.js          Íconos SVG (Tabler Icons)
 assets/vendor/              Leaflet, Leaflet.markercluster, Leaflet.heat y Chart.js
 collector/                  Recolector de X (Node 20, sin dependencias) y sus pruebas
+modelo/                     Modelo LSI + kNN en Python: corpus, preprocesamiento, evaluación y clasificación
 data/posts.json             Publicaciones capturadas (lo actualiza GitHub Actions)
 .github/workflows/          collect.yml (captura) y pages.yml (publicación desde main)
 ```

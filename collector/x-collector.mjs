@@ -30,8 +30,8 @@ export const MAX_PUBLICACIONES = 5000;
 export const CONSULTA_POR_DEFECTO =
   "(asalto OR robo OR atraco OR incendio OR accidente OR choque OR volcamiento OR atropellado " +
   "OR inundación OR deslave OR sismo OR temblor OR aguaje) " +
-  "(Ecuador OR Guayaquil OR Quito OR Manta OR Portoviejo OR Durán OR Machala OR Cuenca " +
-  "OR Babahoyo OR Milagro OR Daule OR \"Santa Elena\") lang:es -is:retweet";
+  "(Ecuador OR Guayaquil OR Quito OR Portoviejo OR Durán OR Machala OR Cuenca " +
+  "OR Babahoyo OR Daule OR \"Santa Elena\") lang:es -is:retweet";
 
 export function normalizar(t) {
   return String(t || "").toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g, "");
@@ -60,9 +60,15 @@ function dispersion(id, radio) {
   return [Math.sin(a) * r, Math.cos(a) * r];
 }
 
+// Nombres que también son palabras comunes: solo valen con mayúscula inicial.
+const ESCRITURA_PROPIA = new Map(
+  CIUDADES.filter((c) => c.ambiguo).map((c) => [c.nombre, new RegExp(`(^|[^\\p{L}])#?${c.nombre}(?=$|[^\\p{L}])`, "u")])
+);
+
 function ciudadEnTexto(texto) {
   const t = " " + normalizar(texto).replace(/[^a-z0-9#@ ]/g, " ") + " ";
   for (const c of CIUDADES) {
+    if (c.ambiguo && !ESCRITURA_PROPIA.get(c.nombre).test(String(texto || ""))) continue;
     for (const alias of c.alias) {
       if (t.includes(" " + alias + " ") || t.includes("#" + alias.replace(/ /g, "") + " ")) return c;
     }

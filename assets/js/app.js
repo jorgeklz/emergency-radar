@@ -26,6 +26,31 @@
     vistas: {},
     _oyentes: [],
 
+    // ---------- filtros globales ----------
+    // Un solo estado para toda la app: lo que se elige en "Estás viendo",
+    // en Pre Alertas o en Histórico aplica en las tres pestañas.
+    filtros: {
+      categorias: D.CATEGORIAS.map(function (c) { return c.id; }),
+      ciudad: "",
+      clasificacion: "emergencias"
+    },
+    cambiarFiltros: function (cambios) {
+      Object.keys(cambios).forEach(function (k) { ER.filtros[k] = cambios[k]; });
+      // Se conserva el orden original de las categorías.
+      ER.filtros.categorias = D.CATEGORIAS.map(function (c) { return c.id; }).filter(function (id) {
+        return ER.filtros.categorias.indexOf(id) >= 0;
+      });
+      ER.emitir("filtros");
+    },
+    // Opciones para D.filtrar con el rango de fechas y los filtros globales.
+    // `extra` permite sobrescribir algo puntual (otro rango, otra categoría...).
+    consulta: function (extra) {
+      var f = ER.filtros;
+      var o = { desde: ER.estado.desde, hasta: ER.estado.hasta, categorias: f.categorias, ciudad: f.ciudad || null, clasificacion: f.clasificacion };
+      Object.keys(extra || {}).forEach(function (k) { o[k] = extra[k]; });
+      return o;
+    },
+
     // ---------- utilidades compartidas ----------
     pad: pad,
     inicioDia: inicioDia,
@@ -165,7 +190,7 @@
       D.sincronizar().then(function (nuevas) {
         nuevas.forEach(recibir);
         pintarFuente();
-        if (antes !== "ok" && D.estado() === "ok") ER.emitir("rango");
+        if ((antes !== "ok" && D.estado() === "ok") || nuevas.reetiquetadas) ER.emitir("rango");
         programarVivo();
       });
     }, D.INTERVALO_MS);

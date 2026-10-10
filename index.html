@@ -96,6 +96,9 @@
                 <div id="popFiltroMapa" class="popover popover-right" hidden>
                   <div class="pop-title">Categorías</div>
                   <div id="listaCatFiltro" class="check-list"></div>
+                  <label class="field field-pop"><span>Ciudad</span><select id="selCiudadMapa"></select></label>
+                  <label class="field field-pop"><span>Clasificación del modelo</span><select id="selClaseMapa"></select></label>
+                  <p class="hint">Estos filtros aplican en Principal, Histórico y Estadísticas.</p>
                 </div>
               </div>
             </div>
@@ -135,7 +138,7 @@
               <button type="button" class="btn-soft" id="btnFiltrosAlertas">Filtros</button>
               <div id="popAlertas" class="popover popover-right" hidden>
                 <label class="field"><span>Ciudad</span><select id="selCiudadAlertas"></select></label>
-                <p class="hint">Las flechas comparan las últimas 24 horas con las 24 horas anteriores. Las ciudades salen de las publicaciones capturadas.</p>
+                <p class="hint">Las flechas comparan las últimas 24 horas con las 24 horas anteriores. La ciudad elegida aplica en toda la app.</p>
               </div>
             </div>
           </div>
@@ -169,13 +172,18 @@
             <label class="search"><span class="ic-wrap" data-icon="search"></span><input type="search" id="histBuscar" placeholder="Buscar texto, autor o ciudad"></label>
             <select id="histCategoria" aria-label="Categoría"></select>
             <select id="histCiudad" aria-label="Ciudad"></select>
+            <select id="histClase" aria-label="Clasificación del modelo">
+              <option value="emergencias">Solo emergencias</option>
+              <option value="todas">Todas</option>
+              <option value="descartadas">Solo descartadas</option>
+            </select>
             <button type="button" class="btn-soft" id="histExportar"><span class="ic-wrap" data-icon="download"></span>CSV</button>
           </div>
         </div>
         <div class="table-scroll">
           <table class="data-table">
             <thead>
-              <tr><th>Fecha</th><th>Categoría</th><th>Ciudad</th><th>Autor</th><th>Publicación</th><th></th></tr>
+              <tr><th>Fecha</th><th>Categoría</th><th>Ciudad</th><th>Autor</th><th>Publicación</th><th>Modelo</th><th></th></tr>
             </thead>
             <tbody id="histBody"></tbody>
           </table>
@@ -184,6 +192,7 @@
           <span id="histInfo"></span>
           <div>
             <button type="button" class="icon-btn small" id="histPrev" aria-label="Página anterior"><span class="ic-wrap" data-icon="chevron-left"></span></button>
+            <span id="histPaginas" class="paginas"></span>
             <button type="button" class="icon-btn small" id="histNext" aria-label="Página siguiente"><span class="ic-wrap" data-icon="chevron-right"></span></button>
           </div>
         </div>
@@ -192,6 +201,7 @@
 
     <!-- ============ ESTADÍSTICAS ============ -->
     <section class="view view-estadisticas" data-view="estadisticas" hidden>
+      <p class="resumen-filtros" id="resumenFiltros"></p>
       <div class="kpis" id="kpis"></div>
       <div class="grid-2">
         <article class="card">
@@ -223,6 +233,10 @@
           <ol class="rank" id="rankAutores"></ol>
         </article>
       </div>
+      <article class="card">
+        <div class="card-head"><h2>Modelo de clasificación</h2><span class="hint" style="margin:0">Grafo kNN semisupervisado sobre similitud LSI</span></div>
+        <div class="modelo-info" id="modeloInfo"></div>
+      </article>
     </section>
   </main>
 

@@ -25,8 +25,19 @@ jobs:
         with:
           node-version: 20
 
-      - name: Probar el recolector
-        run: node --test collector/*.test.mjs
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+          cache-dependency-path: modelo/requirements.txt
+
+      - name: Instalar el modelo
+        run: pip install -r modelo/requirements.txt
+
+      - name: Probar el recolector y el modelo
+        run: |
+          node --test collector/*.test.mjs
+          python -m unittest modelo.test_modelo
 
       - name: Capturar publicaciones
         env:
@@ -36,6 +47,11 @@ jobs:
           X_MAX_PAGES: ${{ vars.X_MAX_PAGES }}
           X_RETENCION_DIAS: ${{ vars.X_RETENCION_DIAS }}
         run: node collector/x-collector.mjs
+
+      # Grafo kNN sobre similitud LSI (Parraga-Alava et al., 2026): marca cada
+      # publicación como emergencia o no emergencia según sus vecinos del corpus.
+      - name: Clasificar con el modelo
+        run: python -m modelo.clasificar
 
       - name: Guardar datos
         id: guardar

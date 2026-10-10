@@ -1,0 +1,587 @@
+{
+  "emergencia": [
+    {
+      "palabra": "accidente",
+      "chi2": 115.39,
+      "en_emergencias": 0.352,
+      "en_no_emergencias": 0.03
+    },
+    {
+      "palabra": "transito",
+      "chi2": 100.49,
+      "en_emergencias": 0.268,
+      "en_no_emergencias": 0.012
+    },
+    {
+      "palabra": "via",
+      "chi2": 41.22,
+      "en_emergencias": 0.139,
+      "en_no_emergencias": 0.016
+    },
+    {
+      "palabra": "sector",
+      "chi2": 36.1,
+      "en_emergencias": 0.104,
+      "en_no_emergencias": 0.007
+    },
+    {
+      "palabra": "incendio",
+      "chi2": 27.08,
+      "en_emergencias": 0.063,
+      "en_no_emergencias": 0.0
+    },
+    {
+      "palabra": "atencion",
+      "chi2": 25.99,
+      "en_emergencias": 0.107,
+      "en_no_emergencias": 0.019
+    },
+    {
+      "palabra": "sur",
+      "chi2": 25.25,
+      "en_emergencias": 0.066,
+      "en_no_emergencias": 0.002
+    },
+    {
+      "palabra": "trafico",
+      "chi2": 22.9,
+      "en_emergencias": 0.06,
+      "en_no_emergencias": 0.002
+    },
+    {
+      "palabra": "vehiculo",
+      "chi2": 22.72,
+      "en_emergencias": 0.134,
+      "en_no_emergencias": 0.037
+    },
+    {
+      "palabra": "conductor",
+      "chi2": 22.37,
+      "en_emergencias": 0.052,
+      "en_no_emergencias": 0.0
+    },
+    {
+      "palabra": "siniestro",
+      "chi2": 20.57,
+      "en_emergencias": 0.055,
+      "en_no_emergencias": 0.002
+    },
+    {
+      "palabra": "norte",
+      "chi2": 20.29,
+      "en_emergencias": 0.082,
+      "en_no_emergencias": 0.014
+    },
+    {
+      "palabra": "habitual",
+      "chi2": 19.4,
+      "en_emergencias": 0.052,
+      "en_no_emergencias": 0.002
+    },
+    {
+      "palabra": "lento",
+      "chi2": 19.4,
+      "en_emergencias": 0.052,
+      "en_no_emergencias": 0.002
+    },
+    {
+      "palabra": "avanzando",
+      "chi2": 19.4,
+      "en_emergencias": 0.052,
+      "en_no_emergencias": 0.002
+    },
+    {
+      "palabra": "traficobogota",
+      "chi2": 19.4,
+      "en_emergencias": 0.052,
+      "en_no_emergencias": 0.002
+    },
+    {
+      "palabra": "guayaquil",
+      "chi2": 19.05,
+      "en_emergencias": 0.074,
+      "en_no_emergencias": 0.012
+    },
+    {
+      "palabra": "dos",
+      "chi2": 19.05,
+      "en_emergencias": 0.074,
+      "en_no_emergencias": 0.012
+    },
+    {
+      "palabra": "atminforma",
+      "chi2": 18.95,
+      "en_emergencias": 0.063,
+      "en_no_emergencias": 0.007
+    },
+    {
+      "palabra": "calle",
+      "chi2": 17.82,
+      "en_emergencias": 0.06,
+      "en_no_emergencias": 0.007
+    },
+    {
+      "palabra": "registro",
+      "chi2": 17.07,
+      "en_emergencias": 0.046,
+      "en_no_emergencias": 0.002
+    },
+    {
+      "palabra": "sentido",
+      "chi2": 16.71,
+      "en_emergencias": 0.057,
+      "en_no_emergencias": 0.007
+    },
+    {
+      "palabra": "sitio",
+      "chi2": 16.49,
+      "en_emergencias": 0.038,
+      "en_no_emergencias": 0.0
+    },
+    {
+      "palabra": "presenta",
+      "chi2": 16.49,
+      "en_emergencias": 0.038,
+      "en_no_emergencias": 0.0
+    },
+    {
+      "palabra": "personas",
+      "chi2": 15.69,
+      "en_emergencias": 0.079,
+      "en_no_emergencias": 0.019
+    },
+    {
+      "palabra": "coordino",
+      "chi2": 14.13,
+      "en_emergencias": 0.033,
+      "en_no_emergencias": 0.0
+    },
+    {
+      "palabra": "moto",
+      "chi2": 13.58,
+      "en_emergencias": 0.038,
+      "en_no_emergencias": 0.002
+    },
+    {
+      "palabra": "quito",
+      "chi2": 13.38,
+      "en_emergencias": 0.044,
+      "en_no_emergencias": 0.005
+    },
+    {
+      "palabra": "portuseguridad",
+      "chi2": 13.38,
+      "en_emergencias": 0.044,
+      "en_no_emergencias": 0.005
+    },
+    {
+      "palabra": "cerca",
+      "chi2": 12.95,
+      "en_emergencias": 0.03,
+      "en_no_emergencias": 0.0
+    },
+    {
+      "palabra": "cierre",
+      "chi2": 12.95,
+      "en_emergencias": 0.03,
+      "en_no_emergencias": 0.0
+    },
+    {
+      "palabra": "cali",
+      "chi2": 12.42,
+      "en_emergencias": 0.036,
+      "en_no_emergencias": 0.002
+    },
+    {
+      "palabra": "motocicleta",
+      "chi2": 12.42,
+      "en_emergencias": 0.036,
+      "en_no_emergencias": 0.002
+    },
+    {
+      "palabra": "presento",
+      "chi2": 11.78,
+      "en_emergencias": 0.027,
+      "en_no_emergencias": 0.0
+    },
+    {
+      "palabra": "fallecio",
+      "chi2": 11.78,
+      "en_emergencias": 0.027,
+      "en_no_emergencias": 0.0
+    },
+    {
+      "palabra": "capta",
+      "chi2": 10.6,
+      "en_emergencias": 0.025,
+      "en_no_emergencias": 0.0
+    },
+    {
+      "palabra": "sicariato",
+      "chi2": 10.6,
+      "en_emergencias": 0.025,
+      "en_no_emergencias": 0.0
+    },
+    {
+      "palabra": "herida",
+      "chi2": 10.6,
+      "en_emergencias": 0.025,
+      "en_no_emergencias": 0.0
+    },
+    {
+      "palabra": "personal",
+      "chi2": 10.6,
+      "en_emergencias": 0.025,
+      "en_no_emergencias": 0.0
+    },
+    {
+      "palabra": "ojos",
+      "chi2": 10.6,
+      "en_emergencias": 0.025,
+      "en_no_emergencias": 0.0
+    }
+  ],
+  "no_emergencia": [
+    {
+      "palabra": "ayuda",
+      "chi2": 35.15,
+      "en_emergencias": 0.036,
+      "en_no_emergencias": 0.176
+    },
+    {
+      "palabra": "muerte",
+      "chi2": 29.75,
+      "en_emergencias": 0.027,
+      "en_no_emergencias": 0.144
+    },
+    {
+      "palabra": "ladron",
+      "chi2": 21.07,
+      "en_emergencias": 0.003,
+      "en_no_emergencias": 0.065
+    },
+    {
+      "palabra": "amor",
+      "chi2": 19.53,
+      "en_emergencias": 0.0,
+      "en_no_emergencias": 0.053
+    },
+    {
+      "palabra": "solo",
+      "chi2": 13.18,
+      "en_emergencias": 0.008,
+      "en_no_emergencias": 0.056
+    },
+    {
+      "palabra": "cada",
+      "chi2": 10.19,
+      "en_emergencias": 0.0,
+      "en_no_emergencias": 0.028
+    },
+    {
+      "palabra": "pena",
+      "chi2": 9.59,
+      "en_emergencias": 0.005,
+      "en_no_emergencias": 0.039
+    },
+    {
+      "palabra": "feliz",
+      "chi2": 9.31,
+      "en_emergencias": 0.003,
+      "en_no_emergencias": 0.032
+    },
+    {
+      "palabra": "mejor",
+      "chi2": 8.49,
+      "en_emergencias": 0.0,
+      "en_no_emergencias": 0.023
+    },
+    {
+      "palabra": "millones",
+      "chi2": 8.49,
+      "en_emergencias": 0.0,
+      "en_no_emergencias": 0.023
+    },
+    {
+      "palabra": "gente",
+      "chi2": 7.99,
+      "en_emergencias": 0.005,
+      "en_no_emergencias": 0.035
+    },
+    {
+      "palabra": "ver",
+      "chi2": 7.64,
+      "en_emergencias": 0.0,
+      "en_no_emergencias": 0.021
+    },
+    {
+      "palabra": "mismo",
+      "chi2": 7.64,
+      "en_emergencias": 0.0,
+      "en_no_emergencias": 0.021
+    },
+    {
+      "palabra": "usted",
+      "chi2": 7.64,
+      "en_emergencias": 0.0,
+      "en_no_emergencias": 0.021
+    },
+    {
+      "palabra": "bien",
+      "chi2": 6.95,
+      "en_emergencias": 0.008,
+      "en_no_emergencias": 0.037
+    },
+    {
+      "palabra": "ministra",
+      "chi2": 6.79,
+      "en_emergencias": 0.0,
+      "en_no_emergencias": 0.019
+    },
+    {
+      "palabra": "decir",
+      "chi2": 6.79,
+      "en_emergencias": 0.0,
+      "en_no_emergencias": 0.019
+    },
+    {
+      "palabra": "puede",
+      "chi2": 6.41,
+      "en_emergencias": 0.005,
+      "en_no_emergencias": 0.03
+    },
+    {
+      "palabra": "asi",
+      "chi2": 6.41,
+      "en_emergencias": 0.005,
+      "en_no_emergencias": 0.03
+    },
+    {
+      "palabra": "muerto",
+      "chi2": 6.25,
+      "en_emergencias": 0.022,
+      "en_no_emergencias": 0.058
+    },
+    {
+      "palabra": "vida",
+      "chi2": 6.08,
+      "en_emergencias": 0.014,
+      "en_no_emergencias": 0.044
+    },
+    {
+      "palabra": "debe",
+      "chi2": 5.94,
+      "en_emergencias": 0.0,
+      "en_no_emergencias": 0.016
+    },
+    {
+      "palabra": "nunca",
+      "chi2": 5.94,
+      "en_emergencias": 0.0,
+      "en_no_emergencias": 0.016
+    },
+    {
+      "palabra": "politica",
+      "chi2": 5.94,
+      "en_emergencias": 0.0,
+      "en_no_emergencias": 0.016
+    },
+    {
+      "palabra": "quieren",
+      "chi2": 5.94,
+      "en_emergencias": 0.0,
+      "en_no_emergencias": 0.016
+    },
+    {
+      "palabra": "mientras",
+      "chi2": 5.94,
+      "en_emergencias": 0.0,
+      "en_no_emergencias": 0.016
+    },
+    {
+      "palabra": "gobierno",
+      "chi2": 5.94,
+      "en_emergencias": 0.0,
+      "en_no_emergencias": 0.016
+    },
+    {
+      "palabra": "hijo",
+      "chi2": 5.1,
+      "en_emergencias": 0.0,
+      "en_no_emergencias": 0.014
+    },
+    {
+      "palabra": "hacer",
+      "chi2": 5.1,
+      "en_emergencias": 0.0,
+      "en_no_emergencias": 0.014
+    },
+    {
+      "palabra": "muchas",
+      "chi2": 5.1,
+      "en_emergencias": 0.0,
+      "en_no_emergencias": 0.014
+    },
+    {
+      "palabra": "niños",
+      "chi2": 5.1,
+      "en_emergencias": 0.0,
+      "en_no_emergencias": 0.014
+    },
+    {
+      "palabra": "pais",
+      "chi2": 5.1,
+      "en_emergencias": 0.0,
+      "en_no_emergencias": 0.014
+    },
+    {
+      "palabra": "condicion",
+      "chi2": 5.1,
+      "en_emergencias": 0.0,
+      "en_no_emergencias": 0.014
+    },
+    {
+      "palabra": "perpetua",
+      "chi2": 5.1,
+      "en_emergencias": 0.0,
+      "en_no_emergencias": 0.014
+    },
+    {
+      "palabra": "dios",
+      "chi2": 5.1,
+      "en_emergencias": 0.0,
+      "en_no_emergencias": 0.014
+    },
+    {
+      "palabra": "plata",
+      "chi2": 5.1,
+      "en_emergencias": 0.0,
+      "en_no_emergencias": 0.014
+    },
+    {
+      "palabra": "ahi",
+      "chi2": 5.1,
+      "en_emergencias": 0.0,
+      "en_no_emergencias": 0.014
+    },
+    {
+      "palabra": "ahora",
+      "chi2": 4.88,
+      "en_emergencias": 0.005,
+      "en_no_emergencias": 0.026
+    },
+    {
+      "palabra": "ser",
+      "chi2": 4.77,
+      "en_emergencias": 0.014,
+      "en_no_emergencias": 0.039
+    },
+    {
+      "palabra": "tan",
+      "chi2": 4.39,
+      "en_emergencias": 0.003,
+      "en_no_emergencias": 0.019
+    }
+  ],
+  "palabras_paper_confirmadas": [
+    "accidente",
+    "transito",
+    "sector",
+    "incendio",
+    "atencion",
+    "trafico",
+    "vehiculo",
+    "siniestro",
+    "sicariato",
+    "herida",
+    "policia",
+    "precaucion",
+    "acudieron",
+    "vehiculos",
+    "reportado",
+    "explosion",
+    "heridos",
+    "emergencia",
+    "ambulancia",
+    "herido",
+    "accidentes",
+    "muertos",
+    "bomberos",
+    "atendio",
+    "asistencia",
+    "heridas",
+    "bomba",
+    "operativo",
+    "reportan",
+    "urgente",
+    "vehicular",
+    "impacto",
+    "choque",
+    "colision",
+    "calles",
+    "delito",
+    "fallecieron",
+    "atropellada",
+    "armada",
+    "aprehendidos",
+    "tragico",
+    "precauciones",
+    "volcamiento",
+    "perdio",
+    "sufrio",
+    "afectadas",
+    "armado",
+    "acribillaron",
+    "emergencias",
+    "estrello",
+    "deslizamiento",
+    "reportaron",
+    "controlado",
+    "fractura",
+    "conducir",
+    "medica",
+    "atropellado",
+    "ataque",
+    "homicidio",
+    "implicado",
+    "disparos",
+    "victimas",
+    "armas",
+    "movilizaban",
+    "arma",
+    "fuego",
+    "delincuentes",
+    "grave",
+    "seguridad",
+    "asesinato",
+    "agentes",
+    "dispararon",
+    "tiros",
+    "lesiones",
+    "salud",
+    "robado",
+    "cometer",
+    "caida",
+    "incidente",
+    "asesinados",
+    "sangre",
+    "graves",
+    "alerta",
+    "alias",
+    "inseguridad",
+    "secuestro",
+    "combustible",
+    "contaminacion",
+    "crimen",
+    "criminal",
+    "quemaduras",
+    "policias",
+    "bombero",
+    "perdido",
+    "golpes",
+    "mataron",
+    "llama",
+    "ladrones"
+  ],
+  "consulta_x": "(accidente OR transito OR sector OR incendio OR atencion OR trafico OR vehiculo OR siniestro OR sicariato OR herida OR policia OR precaucion OR acudieron OR vehiculos OR reportado OR explosion OR heridos OR emergencia OR ambulancia OR herido OR accidentes OR muertos OR bomberos OR atendio OR asistencia OR heridas OR bomba OR operativo OR reportan OR urgente OR vehicular) (Ecuador OR Guayaquil OR Quito OR Portoviejo OR Durán OR Machala OR Cuenca OR Babahoyo OR Daule OR \"Santa Elena\") lang:es -is:retweet"
+}

@@ -23,6 +23,12 @@ test("ubica por ciudad mencionada, lugar o coordenadas", () => {
   assert.deepEqual([c.lat, c.lng], [-2.2, -79.9]);
   assert.equal(ubicar({ id: "4", text: "Incendio" }, null).lat, null);
   assert.equal(ubicar({ id: "5", text: "Robo en #Guayaquil hoy" }, null).ciudad, "Guayaquil");
+  // Nombres ambiguos: solo cuentan con mayúscula inicial.
+  assert.equal(ubicar({ id: "6", text: "Sismo fuerte, es un milagro que no haya víctimas" }, null).ciudad, "Sin ubicación");
+  assert.equal(ubicar({ id: "7", text: "Choque en la vía a Milagro esta mañana" }, null).ciudad, "Milagro");
+  assert.equal(ubicar({ id: "8", text: "Incendio en #Manta, bomberos en camino" }, null).ciudad, "Manta");
+  assert.equal(ubicar({ id: "9", text: "Le quitó la comida y me quito el sombrero" }, null).ciudad, "Sin ubicación");
+  assert.equal(ubicar({ id: "10", text: "Operativo en Quito: aprehenden a sospechoso" }, null).ciudad, "Quito");
 });
 
 const RESPUESTA = {

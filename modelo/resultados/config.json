@@ -1,0 +1,16 @@
+{
+  "medida": "lsi",
+  "k": 9,
+  "componentes": 300,
+  "ponderado": true,
+  "descripcion": "LSI, k=9, 300 dimensiones, voto ponderado",
+  "metricas": {
+    "accuracy": 0.8703,
+    "precision": 0.8609,
+    "recall": 0.8557,
+    "specificity": 0.8826,
+    "f1": 0.8583,
+    "log_loss": 0.351
+  },
+  "kappa_light": 0.7854
+}

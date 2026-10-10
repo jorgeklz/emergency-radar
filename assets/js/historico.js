@@ -1,26 +1,36 @@
 /*
  * Emergency Radar · vista Histórico
  * Publicaciones por día (barras apiladas por categoría) y registro paginado con exportación CSV.
+ * Categoría, ciudad y clasificación son los filtros globales (ER.filtros); la búsqueda es propia de esta vista.
  */
 (function () {
   "use strict";
 
   var D = window.ER_DATA;
   var ER = window.ER;
-  var POR_PAGINA = 15;
+  var POR_PAGINA = 10;
   var st = { pagina: 0, resultados: [] };
   var chart;
 
   function val(id) { return document.getElementById(id).value; }
 
   function filtrar() {
-    return D.filtrar({
-      desde: ER.estado.desde,
-      hasta: ER.estado.hasta,
-      texto: val("histBuscar").trim(),
-      categorias: val("histCategoria") ? [val("histCategoria")] : null,
-      ciudad: val("histCiudad") || null
-    });
+    return D.filtrar(ER.consulta({ texto: val("histBuscar").trim() }));
+  }
+
+  // Refleja los filtros globales en los selectores de esta vista.
+  function sincronizarSelectores() {
+    var f = ER.filtros;
+    var selCat = document.getElementById("histCategoria");
+    var parcial = selCat.querySelector('option[value="__sel"]');
+    if (f.categorias.length === D.CATEGORIAS.length) selCat.value = "";
+    else if (f.categorias.length === 1) selCat.value = f.categorias[0];
+    else {
+      parcial.textContent = f.categorias.length + " categorías elegidas";
+      selCat.value = "__sel";
+    }
+    parcial.hidden = selCat.value !== "__sel";
+    document.getElementById("histClase").value = f.clasificacion;
   }
 
   function pintarGrafico(posts) {
@@ -63,38 +73,58 @@
         '<td class="nowrap">' + ER.escapar(p.ciudad) + (p.lat === null ? "" : ' <span title="Geolocalizada" style="color:#2f7be5">' + window.icon("map-pin", "") + "</span>") + "</td>" +
         '<td class="nowrap">' + ER.escapar(p.autor.nombre) + '<br><small style="color:#8a90a2">@' + ER.escapar(p.autor.usuario) + "</small></td>" +
         '<td class="txt">' + ER.escapar(p.texto) + "</td>" +
+        '<td class="nowrap">' + (ER.etiquetaModelo(p) || '<span class="modelo">Sin clasificar</span>') + "</td>" +
         '<td class="nowrap">' + (p.url ? '<a class="link-x" href="' + ER.escapar(p.url) + '" target="_blank" rel="noopener">' + window.icon("brand-x") + "Ver en X</a>" : "") + "</td></tr>";
-    }).join("") : '<tr><td colspan="6" class="empty">' + ER.mensajeSinDatos("No hay publicaciones para los filtros seleccionados.") + "</td></tr>";
+    }).join("") : '<tr><td colspan="7" class="empty">' + ER.mensajeSinDatos("No hay publicaciones para los filtros seleccionados.") + "</td></tr>";
     document.querySelectorAll("#histBody .ic").forEach(function (i) { i.style.width = i.style.height = "14px"; });
     document.getElementById("histInfo").textContent = total
       ? (ini + 1) + "–" + Math.min(ini + POR_PAGINA, total) + " de " + ER.fmtNum(total) + " publicaciones"
       : "0 publicaciones";
     document.getElementById("histPrev").disabled = st.pagina === 0;
     document.getElementById("histNext").disabled = st.pagina >= paginas - 1;
+    pintarPaginas(paginas);
+  }
+
+  // Números de página: la primera, la última y dos a cada lado de la actual.
+  function pintarPaginas(paginas) {
+    var actual = st.pagina, html = [], anterior = -1;
+    for (var i = 0; i < paginas; i++) {
+      if (i !== 0 && i !== paginas - 1 && Math.abs(i - actual) > 2) continue;
+      if (anterior >= 0 && i - anterior > 1) html.push('<span class="pag-sep">…</span>');
+      html.push('<button type="button" class="pag' + (i === actual ? " activa" : "") + '" data-pag="' + i + '"' +
+        (i === actual ? ' aria-current="page"' : "") + ">" + (i + 1) + "</button>");
+      anterior = i;
+    }
+    var cont = document.getElementById("histPaginas");
+    cont.innerHTML = paginas > 1 ? html.join("") : "";
+    cont.querySelectorAll("[data-pag]").forEach(function (b) {
+      b.addEventListener("click", function () { st.pagina = +b.getAttribute("data-pag"); pintarTabla(); });
+    });
   }
 
   // Las ciudades del filtro salen de los datos capturados, con su número de publicaciones.
   function opcionesCiudad() {
     var sel = document.getElementById("histCiudad");
-    var actual = sel.value;
     sel.innerHTML = '<option value="">Todas las ciudades</option>' + D.ciudadesPresentes().map(function (c) {
       return '<option value="' + ER.escapar(c.nombre) + '">' + ER.escapar(c.nombre) + " (" + c.total + ")</option>";
     }).join("");
-    sel.value = actual;
+    sel.value = ER.filtros.ciudad;
   }
 
   function pintarTodo() {
     opcionesCiudad();
+    sincronizarSelectores();
     st.resultados = filtrar();
     pintarGrafico(st.resultados);
     pintarTabla();
   }
 
   function exportarCSV() {
-    var cab = ["id", "fecha", "categoria", "ciudad", "lat", "lng", "autor", "usuario", "texto", "url"];
+    var cab = ["id", "fecha", "categoria", "ciudad", "lat", "lng", "autor", "usuario", "texto", "url", "emergencia_modelo", "prob_emergencia"];
     var lineas = [cab.join(",")].concat(st.resultados.map(function (p) {
       return [p.id, p.fecha.toISOString(), D.categoria(p.categoria).nombre, p.ciudad, p.lat === null ? "" : p.lat.toFixed(5),
-        p.lng === null ? "" : p.lng.toFixed(5), p.autor.nombre, p.autor.usuario, p.texto, p.url || ""]
+        p.lng === null ? "" : p.lng.toFixed(5), p.autor.nombre, p.autor.usuario, p.texto, p.url || "",
+        p.emergencia === null ? "" : (p.emergencia ? "si" : "no"), p.prob === null ? "" : p.prob]
         .map(function (v) { return '"' + String(v).replace(/"/g, '""') + '"'; }).join(",");
     }));
     var blob = new Blob(["﻿" + lineas.join("\n")], { type: "text/csv;charset=utf-8" });
@@ -109,7 +139,8 @@
   ER.registrarVista("historico", {
     iniciar: function () {
       document.getElementById("histCategoria").innerHTML = '<option value="">Todas las categorías</option>' +
-        D.CATEGORIAS.map(function (c) { return '<option value="' + c.id + '">' + c.nombre + "</option>"; }).join("");
+        D.CATEGORIAS.map(function (c) { return '<option value="' + c.id + '">' + c.nombre + "</option>"; }).join("") +
+        '<option value="__sel" hidden></option>';
       document.getElementById("legendHist").innerHTML = D.CATEGORIAS.map(function (c) {
         return '<span><i class="sw" style="background:' + c.color + '"></i>' + c.nombre + "</span>";
       }).join("");
@@ -144,7 +175,14 @@
       var reiniciar = function () { st.pagina = 0; pintarTodo(); };
       var t;
       document.getElementById("histBuscar").addEventListener("input", function () { clearTimeout(t); t = setTimeout(reiniciar, 200); });
-      ["histCategoria", "histCiudad"].forEach(function (id) { document.getElementById(id).addEventListener("change", reiniciar); });
+      // Estos selectores cambian los filtros globales: aplican también en Principal y Estadísticas.
+      document.getElementById("histCategoria").addEventListener("change", function () {
+        var v = this.value;
+        if (v === "__sel") return;
+        ER.cambiarFiltros({ categorias: v ? [v] : D.CATEGORIAS.map(function (c) { return c.id; }) });
+      });
+      document.getElementById("histCiudad").addEventListener("change", function () { ER.cambiarFiltros({ ciudad: this.value }); });
+      document.getElementById("histClase").addEventListener("change", function () { ER.cambiarFiltros({ clasificacion: this.value }); });
       document.getElementById("histPrev").addEventListener("click", function () { st.pagina--; pintarTabla(); });
       document.getElementById("histNext").addEventListener("click", function () { st.pagina++; pintarTabla(); });
       document.getElementById("histExportar").addEventListener("click", exportarCSV);
@@ -156,7 +194,7 @@
     actualizar: function (tipo) {
       // Las publicaciones en vivo no reinician la página que el usuario está leyendo.
       if (tipo === "nueva") { clearTimeout(this._t); this._t = setTimeout(function () { opcionesCiudad(); st.resultados = filtrar(); pintarGrafico(st.resultados); pintarTabla(); }, 800); }
-      else pintarTodo();
+      else { st.pagina = 0; pintarTodo(); }
     }
   });
 })();

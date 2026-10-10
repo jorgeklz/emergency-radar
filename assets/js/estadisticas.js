@@ -136,10 +136,50 @@
     }
   };
 
+  // Desempeño del modelo (validación cruzada sobre el corpus) y lo que decidió en el periodo.
+  function pintarModelo() {
+    var m = D.modelo();
+    var el = document.getElementById("modeloInfo");
+    if (!m) {
+      el.innerHTML = '<p class="hint" style="max-width:none">' + ER.mensajeSinDatos("Las publicaciones todavía no se clasificaron con el modelo.") + "</p>";
+      return;
+    }
+    var todas = D.filtrar(ER.consulta({ clasificacion: "todas" }));
+    var emerg = todas.filter(function (p) { return p.emergencia === true; }).length;
+    var desc = todas.filter(function (p) { return p.emergencia === false; }).length;
+    var met = m.metricas || {};
+    var fmt = function (v) { return typeof v === "number" ? (v * 100).toFixed(1).replace(".", ",") + " %" : "–"; };
+    var tiles = [
+      ["Exactitud", fmt(met.accuracy)], ["Precisión", fmt(met.precision)], ["Sensibilidad", fmt(met.recall)],
+      ["Especificidad", fmt(met.specificity)], ["F1", typeof met.f1 === "number" ? met.f1.toFixed(3).replace(".", ",") : "–"],
+      ["Kappa con anotadores", typeof m.kappa_light === "number" ? m.kappa_light.toFixed(2).replace(".", ",") : "–"]
+    ];
+    el.innerHTML =
+      '<p class="modelo-desc"><b>' + ER.escapar(m.descripcion || "") + "</b> · corpus de " + ER.fmtNum(m.corpus || 0) +
+      " publicaciones etiquetadas por 9 anotadores · validación cruzada 5 × 5</p>" +
+      '<div class="modelo-tiles">' + tiles.map(function (t) {
+        return '<div><span>' + t[0] + "</span><b>" + t[1] + "</b></div>";
+      }).join("") + "</div>" +
+      '<p class="modelo-desc">En el periodo y con los filtros actuales, el modelo marcó <b>' + ER.fmtNum(emerg) +
+      "</b> publicaciones como emergencia y descartó <b>" + ER.fmtNum(desc) + "</b>.</p>";
+  }
+
+  // Qué filtros globales están activos (se cambian en Principal o en Histórico).
+  function pintarResumenFiltros() {
+    var f = ER.filtros;
+    var cats = f.categorias.length === D.CATEGORIAS.length ? "Todas las categorías"
+      : f.categorias.map(function (id) { return D.categoria(id).nombre; }).join(", ") || "Ninguna categoría";
+    var clase = { emergencias: "solo emergencias", todas: "incluye descartadas", descartadas: "solo descartadas" }[f.clasificacion];
+    document.getElementById("resumenFiltros").innerHTML = "<b>Filtros:</b> " + ER.escapar(cats) + " · " +
+      ER.escapar(f.ciudad || "todas las ciudades") + " · " + clase + ' · <a href="#/principal">cambiar</a>';
+  }
+
   function pintarTodo() {
-    var posts = D.filtrar({ desde: ER.estado.desde, hasta: ER.estado.hasta });
+    var posts = D.filtrar(ER.consulta());
     var ant = ER.periodoAnterior();
-    var previos = D.filtrar({ desde: ant.desde, hasta: ant.hasta });
+    var previos = D.filtrar(ER.consulta({ desde: ant.desde, hasta: ant.hasta }));
+    pintarModelo();
+    pintarResumenFiltros();
     pintarKpis(posts, previos);
     pintarCategorias(posts);
     pintarCiudades(posts);
@@ -185,9 +225,10 @@
     mostrar: function () {
       if (this._pendiente) { this._pendiente = false; pintarTodo(); }
     },
-    actualizar: function () {
+    actualizar: function (tipo) {
       clearTimeout(this._t);
-      this._t = setTimeout(pintarTodo, 600);
+      if (tipo === "nueva") this._t = setTimeout(pintarTodo, 600);
+      else pintarTodo();
     }
   });
 })();

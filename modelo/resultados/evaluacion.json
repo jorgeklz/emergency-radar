@@ -1,0 +1,1047 @@
+{
+  "corpus": {
+    "publicaciones": 797,
+    "emergencias": 366,
+    "no_emergencias": 431
+  },
+  "validacion": {
+    "folds": 5,
+    "repeticiones": 5
+  },
+  "kappa_entre_anotadores": 0.7969756534973228,
+  "mejor": {
+    "config": {
+      "medida": "lsi",
+      "k": 9,
+      "componentes": 300,
+      "ponderado": true
+    },
+    "descripcion": "LSI, k=9, 300 dimensiones, voto ponderado",
+    "accuracy": 0.8702634880803011,
+    "precision": 0.8608991209288064,
+    "recall": 0.8557377049180328,
+    "specificity": 0.8825986078886311,
+    "f1": 0.8582973731311458,
+    "log_loss": 0.35104563984270476,
+    "segundos": 2.760116031799998,
+    "kappa_light": 0.7853583864857212
+  },
+  "configuracion_paper": {
+    "config": {
+      "medida": "lsi",
+      "k": 7,
+      "componentes": 100
+    },
+    "descripcion": "LSI, k=7, 100 dimensiones",
+    "accuracy": 0.8529485570890841,
+    "precision": 0.8380467091367552,
+    "recall": 0.8426229508196721,
+    "specificity": 0.8617169373549883,
+    "f1": 0.8403155974302411,
+    "log_loss": 0.43491819331010584,
+    "segundos": 0.9949639597999976,
+    "kappa_light": 0.776719653507557
+  },
+  "resultados": [
+    {
+      "config": {
+        "baseline": "svm"
+      },
+      "descripcion": "SVM lineal (TF-IDF)",
+      "accuracy": 0.8780426599749059,
+      "precision": 0.8751261193045515,
+      "recall": 0.8568306010928961,
+      "specificity": 0.8960556844547563,
+      "f1": 0.8658276972183853,
+      "log_loss": 0.466539214133713,
+      "segundos": 0.12041782679998506,
+      "kappa_light": 0.7862688401752086
+    },
+    {
+      "config": {
+        "medida": "lsi",
+        "k": 9,
+        "componentes": 300,
+        "ponderado": true
+      },
+      "descripcion": "LSI, k=9, 300 dimensiones, voto ponderado",
+      "accuracy": 0.8702634880803011,
+      "precision": 0.8608991209288064,
+      "recall": 0.8557377049180328,
+      "specificity": 0.8825986078886311,
+      "f1": 0.8582973731311458,
+      "log_loss": 0.35104563984270476,
+      "segundos": 2.760116031799998,
+      "kappa_light": 0.7853583864857212
+    },
+    {
+      "config": {
+        "medida": "lsi",
+        "k": 11,
+        "componentes": 300,
+        "ponderado": true
+      },
+      "descripcion": "LSI, k=11, 300 dimensiones, voto ponderado",
+      "accuracy": 0.8687578419071519,
+      "precision": 0.8593518001259642,
+      "recall": 0.8540983606557377,
+      "specificity": 0.8812064965197216,
+      "f1": 0.8566838664015342,
+      "log_loss": 0.34284425407267366,
+      "segundos": 2.723151692200008,
+      "kappa_light": 0.7845366240656929
+    },
+    {
+      "config": {
+        "medida": "lsi",
+        "k": 11,
+        "componentes": 200,
+        "ponderado": true
+      },
+      "descripcion": "LSI, k=11, 200 dimensiones, voto ponderado",
+      "accuracy": 0.8667503136762861,
+      "precision": 0.8563167121044156,
+      "recall": 0.8530054644808743,
+      "specificity": 0.8784222737819025,
+      "f1": 0.8546015555784978,
+      "log_loss": 0.3430134573634353,
+      "segundos": 1.556495049799969,
+      "kappa_light": 0.7800640018551059
+    },
+    {
+      "config": {
+        "medida": "lsi",
+        "k": 7,
+        "componentes": 300,
+        "ponderado": true
+      },
+      "descripcion": "LSI, k=7, 300 dimensiones, voto ponderado",
+      "accuracy": 0.8647427854454204,
+      "precision": 0.8552342523740535,
+      "recall": 0.8491803278688526,
+      "specificity": 0.8779582366589327,
+      "f1": 0.8521806587823431,
+      "log_loss": 0.37021628810766155,
+      "segundos": 2.3567421946000193,
+      "kappa_light": 0.7814770779397766
+    },
+    {
+      "config": {
+        "baseline": "lr"
+      },
+      "descripcion": "Regresión logística (TF-IDF)",
+      "accuracy": 0.8702634880803013,
+      "precision": 0.8943040586459036,
+      "recall": 0.8136612021857923,
+      "specificity": 0.9183294663573086,
+      "f1": 0.8520696479539627,
+      "log_loss": 0.42222514865216115,
+      "segundos": 0.12651306759998987,
+      "kappa_light": 0.7798865820415044
+    },
+    {
+      "config": {
+        "medida": "lsi",
+        "k": 7,
+        "componentes": 200
+      },
+      "descripcion": "LSI, k=7, 200 dimensiones",
+      "accuracy": 0.8639899623588457,
+      "precision": 0.8558942434785696,
+      "recall": 0.8464480874316939,
+      "specificity": 0.8788863109048723,
+      "f1": 0.8510236061975119,
+      "log_loss": 0.39043507244962844,
+      "segundos": 1.4428368466000165,
+      "kappa_light": 0.7764827296716472
+    },
+    {
+      "config": {
+        "medida": "lsi",
+        "k": 7,
+        "componentes": 200,
+        "ponderado": true
+      },
+      "descripcion": "LSI, k=7, 200 dimensiones, voto ponderado",
+      "accuracy": 0.8634880803011293,
+      "precision": 0.8529268716322862,
+      "recall": 0.8491803278688526,
+      "specificity": 0.8756380510440834,
+      "f1": 0.8509823572349815,
+      "log_loss": 0.38510296270550415,
+      "segundos": 1.6456306894000137,
+      "kappa_light": 0.7768918566993528
+    },
+    {
+      "config": {
+        "medida": "lsi",
+        "k": 5,
+        "componentes": 300,
+        "ponderado": true
+      },
+      "descripcion": "LSI, k=5, 300 dimensiones, voto ponderado",
+      "accuracy": 0.8619824341279798,
+      "precision": 0.8486196691335005,
+      "recall": 0.8513661202185793,
+      "specificity": 0.870997679814385,
+      "f1": 0.849942697813726,
+      "log_loss": 0.41916236701846377,
+      "segundos": 2.5266966883999884,
+      "kappa_light": 0.7768974666187792
+    },
+    {
+      "config": {
+        "medida": "lsi",
+        "k": 9,
+        "componentes": 200,
+        "ponderado": true
+      },
+      "descripcion": "LSI, k=9, 200 dimensiones, voto ponderado",
+      "accuracy": 0.8619824341279798,
+      "precision": 0.8524786137596442,
+      "recall": 0.8459016393442622,
+      "specificity": 0.8756380510440834,
+      "f1": 0.8491231055118276,
+      "log_loss": 0.35380644420795504,
+      "segundos": 1.4923997108000093,
+      "kappa_light": 0.7782421919165333
+    },
+    {
+      "config": {
+        "medida": "lsi",
+        "k": 5,
+        "componentes": 300
+      },
+      "descripcion": "LSI, k=5, 300 dimensiones",
+      "accuracy": 0.8614805520702635,
+      "precision": 0.85037716679022,
+      "recall": 0.8475409836065573,
+      "specificity": 0.8733178654292344,
+      "f1": 0.8489141147039712,
+      "log_loss": 0.42434496919820763,
+      "segundos": 2.495311234399992,
+      "kappa_light": 0.7780416039756217
+    },
+    {
+      "config": {
+        "medida": "lsi",
+        "k": 7,
+        "componentes": 300
+      },
+      "descripcion": "LSI, k=7, 300 dimensiones",
+      "accuracy": 0.8624843161856963,
+      "precision": 0.8596819173519744,
+      "recall": 0.8371584699453551,
+      "specificity": 0.8839907192575407,
+      "f1": 0.848244889723589,
+      "log_loss": 0.3784898434911812,
+      "segundos": 2.5080140681999863,
+      "kappa_light": 0.7788949462706076
+    },
+    {
+      "config": {
+        "medida": "lsi",
+        "k": 11,
+        "componentes": 200
+      },
+      "descripcion": "LSI, k=11, 200 dimensiones",
+      "accuracy": 0.8617314930991217,
+      "precision": 0.8554723394751427,
+      "recall": 0.840983606557377,
+      "specificity": 0.8793503480278423,
+      "f1": 0.8481122572928836,
+      "log_loss": 0.3539927189065622,
+      "segundos": 1.5205526534,
+      "kappa_light": 0.7770934732763588
+    },
+    {
+      "config": {
+        "medida": "lsi",
+        "k": 9,
+        "componentes": 300
+      },
+      "descripcion": "LSI, k=9, 300 dimensiones",
+      "accuracy": 0.860978670012547,
+      "precision": 0.8596413879645592,
+      "recall": 0.8333333333333334,
+      "specificity": 0.8844547563805104,
+      "f1": 0.8462672142076038,
+      "log_loss": 0.3645945941196965,
+      "segundos": 2.797223939000014,
+      "kappa_light": 0.7804908006432184
+    },
+    {
+      "config": {
+        "medida": "lsi",
+        "k": 9,
+        "componentes": 200
+      },
+      "descripcion": "LSI, k=9, 200 dimensiones",
+      "accuracy": 0.8592220828105395,
+      "precision": 0.8519127412568028,
+      "recall": 0.839344262295082,
+      "specificity": 0.8761020881670534,
+      "f1": 0.8455393119085468,
+      "log_loss": 0.36148280220352047,
+      "segundos": 1.4841237905999833,
+      "kappa_light": 0.776530834607546
+    },
+    {
+      "config": {
+        "medida": "lsi",
+        "k": 11,
+        "componentes": 100,
+        "ponderado": true
+      },
+      "descripcion": "LSI, k=11, 100 dimensiones, voto ponderado",
+      "accuracy": 0.8577164366373902,
+      "precision": 0.8445019255311179,
+      "recall": 0.8459016393442622,
+      "specificity": 0.8677494199535962,
+      "f1": 0.8451881701152271,
+      "log_loss": 0.3837942438757674,
+      "segundos": 1.0793823323999732,
+      "kappa_light": 0.77732254246018
+    },
+    {
+      "config": {
+        "medida": "lsi",
+        "k": 7,
+        "componentes": 100,
+        "ponderado": true
+      },
+      "descripcion": "LSI, k=7, 100 dimensiones, voto ponderado",
+      "accuracy": 0.8557089084065244,
+      "precision": 0.839387969439327,
+      "recall": 0.8480874316939889,
+      "specificity": 0.8621809744779583,
+      "f1": 0.8436958164655239,
+      "log_loss": 0.4314456193875144,
+      "segundos": 0.9818662816000142,
+      "kappa_light": 0.7768556678576368
+    },
+    {
+      "config": {
+        "medida": "lsi",
+        "k": 5,
+        "componentes": 200
+      },
+      "descripcion": "LSI, k=5, 200 dimensiones",
+      "accuracy": 0.8569636135508155,
+      "precision": 0.8492218588368233,
+      "recall": 0.8371584699453551,
+      "specificity": 0.8737819025522041,
+      "f1": 0.8431279499812254,
+      "log_loss": 0.42363333540596537,
+      "segundos": 1.5183555004000027,
+      "kappa_light": 0.776534306826614
+    },
+    {
+      "config": {
+        "medida": "lsi",
+        "k": 5,
+        "componentes": 200,
+        "ponderado": true
+      },
+      "descripcion": "LSI, k=5, 200 dimensiones, voto ponderado",
+      "accuracy": 0.8564617314930991,
+      "precision": 0.8475244669536071,
+      "recall": 0.8382513661202186,
+      "specificity": 0.8719257540603248,
+      "f1": 0.8428338706300614,
+      "log_loss": 0.42050097035055406,
+      "segundos": 1.4073301567999805,
+      "kappa_light": 0.776060293268123
+    },
+    {
+      "config": {
+        "medida": "lsi",
+        "k": 5,
+        "componentes": 100,
+        "ponderado": true
+      },
+      "descripcion": "LSI, k=5, 100 dimensiones, voto ponderado",
+      "accuracy": 0.8529485570890841,
+      "precision": 0.828221009794334,
+      "recall": 0.8579234972677595,
+      "specificity": 0.8487238979118329,
+      "f1": 0.8427387955384902,
+      "log_loss": 0.48550943291147597,
+      "segundos": 1.0814698001999659,
+      "kappa_light": 0.773731731883062
+    },
+    {
+      "config": {
+        "medida": "lsi",
+        "k": 9,
+        "componentes": 100,
+        "ponderado": true
+      },
+      "descripcion": "LSI, k=9, 100 dimensiones, voto ponderado",
+      "accuracy": 0.8549560853199498,
+      "precision": 0.8416930557703957,
+      "recall": 0.8426229508196721,
+      "specificity": 0.8654292343387471,
+      "f1": 0.8421523503069961,
+      "log_loss": 0.40895488691224396,
+      "segundos": 1.0591353964000063,
+      "kappa_light": 0.7734409724660289
+    },
+    {
+      "config": {
+        "medida": "lsi",
+        "k": 11,
+        "componentes": 100
+      },
+      "descripcion": "LSI, k=11, 100 dimensiones",
+      "accuracy": 0.8547051442910915,
+      "precision": 0.8423718939044237,
+      "recall": 0.840983606557377,
+      "specificity": 0.8663573085846868,
+      "f1": 0.8416545434159955,
+      "log_loss": 0.38943905403179757,
+      "segundos": 1.0293685346000074,
+      "kappa_light": 0.7754334586958558
+    },
+    {
+      "config": {
+        "medida": "lsi",
+        "k": 5,
+        "componentes": 100
+      },
+      "descripcion": "LSI, k=5, 100 dimensiones",
+      "accuracy": 0.8519447929736511,
+      "precision": 0.8282133418982973,
+      "recall": 0.8551912568306012,
+      "specificity": 0.8491879350348028,
+      "f1": 0.8414146214363679,
+      "log_loss": 0.48754489665918416,
+      "segundos": 0.9942771490000041,
+      "kappa_light": 0.7741544854499446
+    },
+    {
+      "config": {
+        "medida": "lsi",
+        "k": 7,
+        "componentes": 100
+      },
+      "descripcion": "LSI, k=7, 100 dimensiones",
+      "accuracy": 0.8529485570890841,
+      "precision": 0.8380467091367552,
+      "recall": 0.8426229508196721,
+      "specificity": 0.8617169373549883,
+      "f1": 0.8403155974302411,
+      "log_loss": 0.43491819331010584,
+      "segundos": 0.9949639597999976,
+      "kappa_light": 0.776719653507557
+    },
+    {
+      "config": {
+        "medida": "lsi",
+        "k": 9,
+        "componentes": 100
+      },
+      "descripcion": "LSI, k=9, 100 dimensiones",
+      "accuracy": 0.852697616060226,
+      "precision": 0.8405384607158692,
+      "recall": 0.8382513661202186,
+      "specificity": 0.8649651972157774,
+      "f1": 0.8393927250917497,
+      "log_loss": 0.41431788706022576,
+      "segundos": 1.0460239482000133,
+      "kappa_light": 0.7728545467426777
+    },
+    {
+      "config": {
+        "medida": "lsi",
+        "k": 11,
+        "componentes": 300
+      },
+      "descripcion": "LSI, k=11, 300 dimensiones",
+      "accuracy": 0.8542032622333752,
+      "precision": 0.8563402626518846,
+      "recall": 0.8202185792349728,
+      "specificity": 0.8830626450116009,
+      "f1": 0.8378448427278593,
+      "log_loss": 0.36206765930061596,
+      "segundos": 2.417400821199999,
+      "kappa_light": 0.7783065624782712
+    },
+    {
+      "config": {
+        "medida": "lsi",
+        "k": 9,
+        "componentes": 50,
+        "ponderado": true
+      },
+      "descripcion": "LSI, k=9, 50 dimensiones, voto ponderado",
+      "accuracy": 0.8486825595984943,
+      "precision": 0.8304996373967015,
+      "recall": 0.8426229508196721,
+      "specificity": 0.8538283062645012,
+      "f1": 0.8364537950095785,
+      "log_loss": 0.4527100927913413,
+      "segundos": 0.7886468160000277,
+      "kappa_light": 0.7754579790417777
+    },
+    {
+      "config": {
+        "medida": "lsi",
+        "k": 11,
+        "componentes": 50,
+        "ponderado": true
+      },
+      "descripcion": "LSI, k=11, 50 dimensiones, voto ponderado",
+      "accuracy": 0.8491844416562108,
+      "precision": 0.8331043772880082,
+      "recall": 0.8398907103825136,
+      "specificity": 0.8570765661252899,
+      "f1": 0.8364464252980511,
+      "log_loss": 0.4313107005486452,
+      "segundos": 0.8571632459999818,
+      "kappa_light": 0.7736856827291866
+    },
+    {
+      "config": {
+        "medida": "lsi",
+        "k": 7,
+        "componentes": 50,
+        "ponderado": true
+      },
+      "descripcion": "LSI, k=7, 50 dimensiones, voto ponderado",
+      "accuracy": 0.848180677540778,
+      "precision": 0.8307399661240359,
+      "recall": 0.840983606557377,
+      "specificity": 0.8542923433874711,
+      "f1": 0.8357538237106853,
+      "log_loss": 0.48839369667122057,
+      "segundos": 0.7047211589999733,
+      "kappa_light": 0.7743982814976855
+    },
+    {
+      "config": {
+        "medida": "lsi",
+        "k": 7,
+        "componentes": 50
+      },
+      "descripcion": "LSI, k=7, 50 dimensiones",
+      "accuracy": 0.8474278544542033,
+      "precision": 0.8304623599416902,
+      "recall": 0.839344262295082,
+      "specificity": 0.8542923433874711,
+      "f1": 0.8347976955000679,
+      "log_loss": 0.49152913904023754,
+      "segundos": 0.7480185441999992,
+      "kappa_light": 0.7743295549914109
+    },
+    {
+      "config": {
+        "medida": "lsi",
+        "k": 9,
+        "componentes": 50
+      },
+      "descripcion": "LSI, k=9, 50 dimensiones",
+      "accuracy": 0.8456712672521958,
+      "precision": 0.8297678543927756,
+      "recall": 0.8355191256830601,
+      "specificity": 0.8542923433874711,
+      "f1": 0.832561062494214,
+      "log_loss": 0.45682218926130264,
+      "segundos": 0.7688815104000014,
+      "kappa_light": 0.7739480763096579
+    },
+    {
+      "config": {
+        "medida": "lsi",
+        "k": 11,
+        "componentes": 50
+      },
+      "descripcion": "LSI, k=11, 50 dimensiones",
+      "accuracy": 0.846173149309912,
+      "precision": 0.832741553962426,
+      "recall": 0.83224043715847,
+      "specificity": 0.8580046403712297,
+      "f1": 0.8324415615862698,
+      "log_loss": 0.4360947289304378,
+      "segundos": 0.7156376851999994,
+      "kappa_light": 0.7712072306829342
+    },
+    {
+      "config": {
+        "medida": "lsi",
+        "k": 3,
+        "componentes": 300,
+        "ponderado": true
+      },
+      "descripcion": "LSI, k=3, 300 dimensiones, voto ponderado",
+      "accuracy": 0.8456712672521958,
+      "precision": 0.8303212482795079,
+      "recall": 0.8344262295081968,
+      "specificity": 0.8552204176334106,
+      "f1": 0.8323003026935927,
+      "log_loss": 0.5551586931014174,
+      "segundos": 2.382429852999985,
+      "kappa_light": 0.7746563803834333
+    },
+    {
+      "config": {
+        "medida": "coseno",
+        "k": 3
+      },
+      "descripcion": "COSENO, k=3",
+      "accuracy": 0.8524466750313676,
+      "precision": 0.8759135223587196,
+      "recall": 0.7907103825136611,
+      "specificity": 0.9048723897911832,
+      "f1": 0.8311213367615625,
+      "log_loss": 0.5561131772940773,
+      "segundos": 0.08849782260001575,
+      "kappa_light": 0.7739481134316846
+    },
+    {
+      "config": {
+        "medida": "lsi",
+        "k": 5,
+        "componentes": 50,
+        "ponderado": true
+      },
+      "descripcion": "LSI, k=5, 50 dimensiones, voto ponderado",
+      "accuracy": 0.8421580928481808,
+      "precision": 0.8207152651732941,
+      "recall": 0.8398907103825138,
+      "specificity": 0.8440835266821345,
+      "f1": 0.8301524871372556,
+      "log_loss": 0.54114518862105,
+      "segundos": 0.6977353606000178,
+      "kappa_light": 0.7704546506975776
+    },
+    {
+      "config": {
+        "medida": "lsi",
+        "k": 5,
+        "componentes": 50
+      },
+      "descripcion": "LSI, k=5, 50 dimensiones",
+      "accuracy": 0.8421580928481806,
+      "precision": 0.8210651719517754,
+      "recall": 0.839344262295082,
+      "specificity": 0.8445475638051045,
+      "f1": 0.8300650731174452,
+      "log_loss": 0.5434898156393371,
+      "segundos": 0.7430679217999796,
+      "kappa_light": 0.7704546506975776
+    },
+    {
+      "config": {
+        "medida": "lsi",
+        "k": 3,
+        "componentes": 200,
+        "ponderado": true
+      },
+      "descripcion": "LSI, k=3, 200 dimensiones, voto ponderado",
+      "accuracy": 0.84366373902133,
+      "precision": 0.8296992907105288,
+      "recall": 0.8300546448087431,
+      "specificity": 0.8552204176334108,
+      "f1": 0.8298145230471812,
+      "log_loss": 0.5437571966781534,
+      "segundos": 1.4872049848000188,
+      "kappa_light": 0.7740856071583928
+    },
+    {
+      "config": {
+        "medida": "lsi",
+        "k": 3,
+        "componentes": 100,
+        "ponderado": true
+      },
+      "descripcion": "LSI, k=3, 100 dimensiones, voto ponderado",
+      "accuracy": 0.8388958594730239,
+      "precision": 0.8107153668471607,
+      "recall": 0.8469945355191257,
+      "specificity": 0.8320185614849189,
+      "f1": 0.8284434442835765,
+      "log_loss": 0.614439989592433,
+      "segundos": 1.0502735047999976,
+      "kappa_light": 0.7668139152826852
+    },
+    {
+      "config": {
+        "medida": "lsi",
+        "k": 3,
+        "componentes": 300
+      },
+      "descripcion": "LSI, k=3, 300 dimensiones",
+      "accuracy": 0.8426599749058973,
+      "precision": 0.8299359047986148,
+      "recall": 0.826775956284153,
+      "specificity": 0.8561484918793504,
+      "f1": 0.8282864037914969,
+      "log_loss": 0.5576391879291309,
+      "segundos": 2.3954725992000023,
+      "kappa_light": 0.7749881082657631
+    },
+    {
+      "config": {
+        "medida": "lsi",
+        "k": 3,
+        "componentes": 200
+      },
+      "descripcion": "LSI, k=3, 200 dimensiones",
+      "accuracy": 0.8414052697616061,
+      "precision": 0.8288695972073826,
+      "recall": 0.8251366120218581,
+      "specificity": 0.8552204176334106,
+      "f1": 0.8269389588810832,
+      "log_loss": 0.5443272377306851,
+      "segundos": 1.4351361609999913,
+      "kappa_light": 0.7746228957217797
+    },
+    {
+      "config": {
+        "medida": "lsi",
+        "k": 3,
+        "componentes": 100
+      },
+      "descripcion": "LSI, k=3, 100 dimensiones",
+      "accuracy": 0.8373902132998745,
+      "precision": 0.8101308780271206,
+      "recall": 0.8437158469945356,
+      "specificity": 0.8320185614849189,
+      "f1": 0.8265553384180186,
+      "log_loss": 0.6155041195419132,
+      "segundos": 1.0276946245999852,
+      "kappa_light": 0.7667442051234333
+    },
+    {
+      "config": {
+        "medida": "coseno",
+        "k": 5
+      },
+      "descripcion": "COSENO, k=5",
+      "accuracy": 0.8526976160602258,
+      "precision": 0.9130858026107678,
+      "recall": 0.7508196721311475,
+      "specificity": 0.9392111368909513,
+      "f1": 0.8239928959025157,
+      "log_loss": 0.4904739121969753,
+      "segundos": 0.10019900439999674,
+      "kappa_light": 0.7706415698564767
+    },
+    {
+      "config": {
+        "medida": "lsi",
+        "k": 3,
+        "componentes": 50,
+        "ponderado": true
+      },
+      "descripcion": "LSI, k=3, 50 dimensiones, voto ponderado",
+      "accuracy": 0.833375156838143,
+      "precision": 0.8096309748304276,
+      "recall": 0.8333333333333334,
+      "specificity": 0.8334106728538282,
+      "f1": 0.821265049102491,
+      "log_loss": 0.6636758030560964,
+      "segundos": 0.7863665212000341,
+      "kappa_light": 0.769005359308548
+    },
+    {
+      "config": {
+        "medida": "lsi",
+        "k": 3,
+        "componentes": 50
+      },
+      "descripcion": "LSI, k=3, 50 dimensiones",
+      "accuracy": 0.8331242158092849,
+      "precision": 0.8095325791085024,
+      "recall": 0.8327868852459016,
+      "specificity": 0.8334106728538282,
+      "f1": 0.820947727732538,
+      "log_loss": 0.6651459554869665,
+      "segundos": 0.7703593937999813,
+      "kappa_light": 0.769005359308548
+    },
+    {
+      "config": {
+        "medida": "lsi",
+        "k": 1,
+        "componentes": 50
+      },
+      "descripcion": "LSI, k=1, 50 dimensiones",
+      "accuracy": 0.8235884567126727,
+      "precision": 0.7909770477776334,
+      "recall": 0.8371584699453554,
+      "specificity": 0.8120649651972158,
+      "f1": 0.8133791085152577,
+      "log_loss": 1.2194317699420987,
+      "segundos": 0.9639516019999974,
+      "kappa_light": 0.760171416179425
+    },
+    {
+      "config": {
+        "medida": "lsi",
+        "k": 1,
+        "componentes": 50,
+        "ponderado": true
+      },
+      "descripcion": "LSI, k=1, 50 dimensiones, voto ponderado",
+      "accuracy": 0.8235884567126727,
+      "precision": 0.7909770477776334,
+      "recall": 0.8371584699453554,
+      "specificity": 0.8120649651972158,
+      "f1": 0.8133791085152577,
+      "log_loss": 1.2194317699420987,
+      "segundos": 0.7385112773999936,
+      "kappa_light": 0.760171416179425
+    },
+    {
+      "config": {
+        "medida": "coseno",
+        "k": 1
+      },
+      "descripcion": "COSENO, k=1",
+      "accuracy": 0.8228356336260978,
+      "precision": 0.7939148712296596,
+      "recall": 0.8295081967213115,
+      "specificity": 0.817169373549884,
+      "f1": 0.8112988332338327,
+      "log_loss": 1.2246313343927748,
+      "segundos": 0.11651954179999394,
+      "kappa_light": 0.7583920099560668
+    },
+    {
+      "config": {
+        "medida": "lsi",
+        "k": 1,
+        "componentes": 100
+      },
+      "descripcion": "LSI, k=1, 100 dimensiones",
+      "accuracy": 0.8173149309912171,
+      "precision": 0.7834585880820985,
+      "recall": 0.83224043715847,
+      "specificity": 0.8046403712296983,
+      "f1": 0.8071016789368965,
+      "log_loss": 1.2627614736977357,
+      "segundos": 1.4651368754000031,
+      "kappa_light": 0.7618785735710752
+    },
+    {
+      "config": {
+        "medida": "lsi",
+        "k": 1,
+        "componentes": 100,
+        "ponderado": true
+      },
+      "descripcion": "LSI, k=1, 100 dimensiones, voto ponderado",
+      "accuracy": 0.8173149309912171,
+      "precision": 0.7834585880820985,
+      "recall": 0.83224043715847,
+      "specificity": 0.8046403712296983,
+      "f1": 0.8071016789368965,
+      "log_loss": 1.2627614736977357,
+      "segundos": 1.0060286921999704,
+      "kappa_light": 0.7618785735710752
+    },
+    {
+      "config": {
+        "medida": "lsi",
+        "k": 1,
+        "componentes": 300
+      },
+      "descripcion": "LSI, k=1, 300 dimensiones",
+      "accuracy": 0.8198243412797993,
+      "precision": 0.7938657843671036,
+      "recall": 0.8207650273224043,
+      "specificity": 0.8190255220417633,
+      "f1": 0.807091000938154,
+      "log_loss": 1.2454295921954808,
+      "segundos": 2.5662681034000117,
+      "kappa_light": 0.7618324313026869
+    },
+    {
+      "config": {
+        "medida": "lsi",
+        "k": 1,
+        "componentes": 300,
+        "ponderado": true
+      },
+      "descripcion": "LSI, k=1, 300 dimensiones, voto ponderado",
+      "accuracy": 0.8198243412797993,
+      "precision": 0.7938657843671036,
+      "recall": 0.8207650273224043,
+      "specificity": 0.8190255220417633,
+      "f1": 0.807091000938154,
+      "log_loss": 1.2454295921954808,
+      "segundos": 2.5292560691999824,
+      "kappa_light": 0.7618324313026869
+    },
+    {
+      "config": {
+        "medida": "lsi",
+        "k": 1,
+        "componentes": 200
+      },
+      "descripcion": "LSI, k=1, 200 dimensiones",
+      "accuracy": 0.8175658720200755,
+      "precision": 0.7892947219811142,
+      "recall": 0.8224043715846996,
+      "specificity": 0.8134570765661252,
+      "f1": 0.8054841504504878,
+      "log_loss": 1.2610282855475101,
+      "segundos": 1.8815209092000031,
+      "kappa_light": 0.7619200500348369
+    },
+    {
+      "config": {
+        "medida": "lsi",
+        "k": 1,
+        "componentes": 200,
+        "ponderado": true
+      },
+      "descripcion": "LSI, k=1, 200 dimensiones, voto ponderado",
+      "accuracy": 0.8175658720200755,
+      "precision": 0.7892947219811142,
+      "recall": 0.8224043715846996,
+      "specificity": 0.8134570765661252,
+      "f1": 0.8054841504504878,
+      "log_loss": 1.2610282855475101,
+      "segundos": 1.4956797417999952,
+      "kappa_light": 0.7619200500348369
+    },
+    {
+      "config": {
+        "medida": "coseno",
+        "k": 7
+      },
+      "descripcion": "COSENO, k=7",
+      "accuracy": 0.8358845671267252,
+      "precision": 0.9247550575084533,
+      "recall": 0.6994535519125684,
+      "specificity": 0.9517401392111369,
+      "f1": 0.7964362380947625,
+      "log_loss": 0.49481885281890053,
+      "segundos": 0.09641292999999677,
+      "kappa_light": 0.7548511136160749
+    },
+    {
+      "config": {
+        "medida": "coseno",
+        "k": 9
+      },
+      "descripcion": "COSENO, k=9",
+      "accuracy": 0.8140526976160603,
+      "precision": 0.9445403845393819,
+      "recall": 0.6322404371584699,
+      "specificity": 0.9684454756380511,
+      "f1": 0.7573903942140708,
+      "log_loss": 0.5177440817341692,
+      "segundos": 0.09792276979999315,
+      "kappa_light": 0.7489222144678753
+    },
+    {
+      "config": {
+        "medida": "tfidf",
+        "k": 1
+      },
+      "descripcion": "TFIDF, k=1",
+      "accuracy": 0.7811794228356337,
+      "precision": 0.7778287292429781,
+      "recall": 0.7327868852459016,
+      "specificity": 0.8222737819025522,
+      "f1": 0.7546120798044448,
+      "log_loss": 1.5123405673302055,
+      "segundos": 0.11891120540001339,
+      "kappa_light": 0.7452478453710731
+    },
+    {
+      "config": {
+        "medida": "coseno",
+        "k": 11
+      },
+      "descripcion": "COSENO, k=11",
+      "accuracy": 0.7904642409033877,
+      "precision": 0.9543647166159339,
+      "recall": 0.5710382513661202,
+      "specificity": 0.9767981438515081,
+      "f1": 0.7144967203502268,
+      "log_loss": 0.5398071432542866,
+      "segundos": 0.1013039420000041,
+      "kappa_light": 0.7415216399380338
+    },
+    {
+      "config": {
+        "medida": "tfidf",
+        "k": 3
+      },
+      "descripcion": "TFIDF, k=3",
+      "accuracy": 0.7751568381430364,
+      "precision": 0.8754266768443966,
+      "recall": 0.5950819672131148,
+      "specificity": 0.9280742459396751,
+      "f1": 0.708456083861791,
+      "log_loss": 0.9304133520894619,
+      "segundos": 0.12771278039999742,
+      "kappa_light": 0.7421595367678702
+    },
+    {
+      "config": {
+        "medida": "tfidf",
+        "k": 5
+      },
+      "descripcion": "TFIDF, k=5",
+      "accuracy": 0.7242158092848181,
+      "precision": 0.9130090133016816,
+      "recall": 0.44153005464480877,
+      "specificity": 0.9642691415313225,
+      "f1": 0.5952082391574052,
+      "log_loss": 0.9545889012427761,
+      "segundos": 0.12014679979999983,
+      "kappa_light": 0.7181101661323224
+    },
+    {
+      "config": {
+        "medida": "tfidf",
+        "k": 7
+      },
+      "descripcion": "TFIDF, k=7",
+      "accuracy": 0.6702634880803011,
+      "precision": 0.9258065096557416,
+      "recall": 0.30655737704918035,
+      "specificity": 0.9791183294663574,
+      "f1": 0.46036800555841256,
+      "log_loss": 1.0239945798709964,
+      "segundos": 0.1201922235999973,
+      "kappa_light": 0.6993078095530223
+    },
+    {
+      "config": {
+        "medida": "tfidf",
+        "k": 9
+      },
+      "descripcion": "TFIDF, k=9",
+      "accuracy": 0.6328732747804267,
+      "precision": 0.9339045693262561,
+      "recall": 0.21584699453551912,
+      "specificity": 0.9870069605568446,
+      "f1": 0.35051973592544317,
+      "log_loss": 1.0954576994906493,
+      "segundos": 0.10273611740001343,
+      "kappa_light": 0.6781155849531086
+    },
+    {
+      "config": {
+        "medida": "tfidf",
+        "k": 11
+      },
+      "descripcion": "TFIDF, k=11",
+      "accuracy": 0.6120451693851945,
+      "precision": 0.9466062421185372,
+      "recall": 0.16448087431693986,
+      "specificity": 0.9921113689095128,
+      "f1": 0.280247407276924,
+      "log_loss": 1.1564792667956287,
+      "segundos": 0.10914544980000755,
+      "kappa_light": 0.6684384373137067
+    }
+  ]
+}

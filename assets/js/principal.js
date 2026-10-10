@@ -9,23 +9,39 @@
   var D = window.ER_DATA;
   var ER = window.ER;
 
+  // Los filtros (categorías, ciudad, clasificación del modelo) viven en ER.filtros
+  // y se comparten con Histórico y Estadísticas.
   var st = {
     modo: "geo",
-    categorias: D.CATEGORIAS.map(function (c) { return c.id; }),
-    alertas: { ciudad: "", orden: "menciones", dir: "desc" },
+    alertas: { orden: "menciones", dir: "desc" },
     pendientes: []
   };
 
   var mapa, capaGrupos, capaCalor, spotlights = [], chart;
 
   // ================= Utilidades =================
-  function filtroBase() {
-    return { desde: ER.estado.desde, hasta: ER.estado.hasta, categorias: st.categorias };
-  }
+  function filtroBase() { return ER.consulta(); }
+  // ¿La publicación pasa los filtros actuales? (misma regla que D.filtrar)
   function coincide(p) {
-    return p.fecha >= ER.estado.desde && p.fecha <= ER.estado.hasta &&
-      st.categorias.indexOf(p.categoria) >= 0;
+    var f = ER.filtros;
+    if (p.fecha < ER.estado.desde || p.fecha > ER.estado.hasta) return false;
+    if (f.categorias.indexOf(p.categoria) < 0) return false;
+    if (f.ciudad && p.ciudad !== f.ciudad) return false;
+    if (f.clasificacion === "emergencias" && p.emergencia === false) return false;
+    if (f.clasificacion === "descartadas" && p.emergencia !== false) return false;
+    return true;
   }
+
+  // Resultado del modelo LSI + kNN, con la explicación de los vecinos.
+  function etiquetaModelo(p) {
+    if (p.emergencia === null) return "";
+    var k = (D.modelo() || {}).k || 7;
+    var detalle = p.vecinos !== null ? p.vecinos + " de " + k + " publicaciones parecidas del corpus son emergencias" : "";
+    return p.emergencia
+      ? '<span class="modelo si" title="' + detalle + '">Emergencia ' + Math.round(p.prob * 100) + " %</span>"
+      : '<span class="modelo no" title="' + detalle + '">Descartada por el modelo</span>';
+  }
+  ER.etiquetaModelo = etiquetaModelo;
   function iconoX() {
     return '<span class="x-logo">' + window.icon("brand-x") + "</span>";
   }
@@ -53,32 +69,54 @@
       "<p>" + textoEnriquecido(p.texto) + "</p>" +
       '<div class="tweet-foot"><span>' + ER.fmtLarga(p.fecha) + "</span>" +
         (p.url ? '<span>·</span><a class="client" href="' + ER.escapar(p.url) + '" target="_blank" rel="noopener">Ver en X</a>' : "") +
-        '<span class="cat"><i style="background:' + cat.color + '"></i>' + cat.nombre + " · " + p.ciudad + "</span>" +
+        '<span class="cat"><i style="background:' + cat.color + '"></i>' + cat.nombre + " · " + ER.escapar(p.ciudad) + "</span>" +
       "</div>" +
+      (p.emergencia !== null ? '<div class="tweet-modelo">' + etiquetaModelo(p) + "</div>" : "") +
     "</article>";
   }
   ER.htmlTweet = htmlTweet;
 
-  // ================= Chips y filtro del mapa =================
+  // ================= Chips y filtros ("Estás viendo") =================
+  var CLASES = {
+    emergencias: "Solo emergencias (según el modelo)",
+    todas: "Todas las publicaciones",
+    descartadas: "Solo las descartadas por el modelo"
+  };
+
   function pintarChips() {
+    var f = ER.filtros;
     var box = document.getElementById("chips");
-    if (!st.categorias.length) {
-      box.innerHTML = '<span class="placeholder">Ninguna categoría seleccionada</span>';
-    } else {
-      box.innerHTML = st.categorias.map(function (id) {
-        var c = D.categoria(id);
-        return '<span class="chip">' + c.nombre + '<button type="button" data-quitar="' + id + '" aria-label="Quitar ' + c.nombre + '">' + window.icon("x") + "</button></span>";
-      }).join("");
-    }
+    var chips = f.categorias.map(function (id) {
+      var c = D.categoria(id);
+      return '<span class="chip">' + c.nombre + '<button type="button" data-quitar="cat:' + id + '" aria-label="Quitar ' + c.nombre + '">' + window.icon("x") + "</button></span>";
+    });
+    if (f.ciudad) chips.push('<span class="chip chip-ciudad">' + window.icon("map-pin") + ER.escapar(f.ciudad) +
+      '<button type="button" data-quitar="ciudad" aria-label="Quitar ciudad">' + window.icon("x") + "</button></span>");
+    if (f.clasificacion !== "emergencias") chips.push('<span class="chip chip-modelo">' + (f.clasificacion === "todas" ? "Incluye descartadas" : "Solo descartadas") +
+      '<button type="button" data-quitar="clasificacion" aria-label="Volver a solo emergencias">' + window.icon("x") + "</button></span>");
+    box.innerHTML = chips.length ? chips.join("") : '<span class="placeholder">Ninguna categoría seleccionada</span>';
     box.querySelectorAll("[data-quitar]").forEach(function (b) {
       b.addEventListener("click", function (ev) {
         ev.stopPropagation();
-        var id = b.getAttribute("data-quitar");
-        st.categorias = st.categorias.filter(function (x) { return x !== id; });
-        alCambiarFiltros();
+        var q = b.getAttribute("data-quitar");
+        if (q === "ciudad") ER.cambiarFiltros({ ciudad: "" });
+        else if (q === "clasificacion") ER.cambiarFiltros({ clasificacion: "emergencias" });
+        else ER.cambiarFiltros({ categorias: f.categorias.filter(function (x) { return "cat:" + x !== q; }) });
       });
     });
-    document.querySelectorAll("#listaCatFiltro input").forEach(function (i) { i.checked = st.categorias.indexOf(i.value) >= 0; });
+    document.querySelectorAll("#listaCatFiltro input").forEach(function (i) { i.checked = f.categorias.indexOf(i.value) >= 0; });
+    document.getElementById("selCiudadMapa").value = f.ciudad;
+    document.getElementById("selClaseMapa").value = f.clasificacion;
+    document.getElementById("selCiudadAlertas").value = f.ciudad;
+    document.getElementById("btnFiltrosAlertas").textContent = f.ciudad ? "Filtros (1)" : "Filtros";
+  }
+
+  // Las ciudades salen de los datos capturados, con su número de publicaciones.
+  function opcionesCiudad(sel) {
+    sel.innerHTML = '<option value="">Todas las ciudades</option>' + D.ciudadesPresentes().map(function (c) {
+      return '<option value="' + ER.escapar(c.nombre) + '">' + ER.escapar(c.nombre) + " (" + c.total + ")</option>";
+    }).join("");
+    sel.value = ER.filtros.ciudad;
   }
 
   function iniciarFiltroMapa() {
@@ -86,23 +124,17 @@
     lista.innerHTML = D.CATEGORIAS.map(function (c) {
       return '<label><input type="checkbox" value="' + c.id + '" checked>' + window.icon(c.icono) + c.nombre + "</label>";
     }).join("");
-    ER.enlazarPopover("btnFiltroMapa", "popFiltroMapa");
+    var selCiudad = document.getElementById("selCiudadMapa");
+    var selClase = document.getElementById("selClaseMapa");
+    selClase.innerHTML = Object.keys(CLASES).map(function (k) { return '<option value="' + k + '">' + CLASES[k] + "</option>"; }).join("");
+    ER.enlazarPopover("btnFiltroMapa", "popFiltroMapa", function () { opcionesCiudad(selCiudad); });
     lista.querySelectorAll("input").forEach(function (i) {
       i.addEventListener("change", function () {
-        // Se conserva el orden original de las categorías.
-        st.categorias = D.CATEGORIAS.map(function (c) { return c.id; }).filter(function (id) {
-          return lista.querySelector('input[value="' + id + '"]').checked;
-        });
-        alCambiarFiltros();
+        ER.cambiarFiltros({ categorias: Array.prototype.map.call(lista.querySelectorAll("input:checked"), function (x) { return x.value; }) });
       });
     });
-  }
-
-  function alCambiarFiltros() {
-    pintarChips();
-    pintarMapa();
-    pintarTweets();
-    pintarFrecuencia();
+    selCiudad.addEventListener("change", function () { ER.cambiarFiltros({ ciudad: selCiudad.value }); });
+    selClase.addEventListener("change", function () { ER.cambiarFiltros({ clasificacion: selClase.value }); });
   }
 
   // ================= Mapa =================
@@ -252,9 +284,13 @@
       : "<span>Densidad de reportes: baja<i class=\"ramp\"></i>alta</span>" + base;
   }
 
-  function pintarMapa() {
+  // `ajustar`: centra el mapa en los resultados (al cambiar filtros o fechas, no con cada publicación en vivo).
+  function pintarMapa(ajustar) {
     var f = filtroBase(); f.soloGeo = true;
     var posts = D.filtrar(f);
+    if (ajustar && posts.length) {
+      mapa.fitBounds(L.latLngBounds(posts.map(function (p) { return [p.lat, p.lng]; })), { padding: [60, 60], maxZoom: 12 });
+    }
     spotlights.forEach(function (c) { c.unbindTooltip(); c._erSpot = false; });
     spotlights = [];
     capaGrupos.clearLayers();
@@ -305,11 +341,10 @@
       function (body) {
         function render() {
           var cat = body.querySelector("#vtCat").value;
-          var res = D.filtrar({
-            desde: ER.estado.desde, hasta: ER.estado.hasta,
-            categorias: cat ? [cat] : st.categorias,
+          var res = D.filtrar(ER.consulta({
+            categorias: cat ? [cat] : ER.filtros.categorias,
             texto: body.querySelector("#vtBuscar").value.trim()
-          });
+          }));
           body.querySelector("#vtInfo").textContent = res.length > 100
             ? "Mostrando las 100 más recientes de " + ER.fmtNum(res.length) + " publicaciones"
             : ER.fmtNum(res.length) + " publicaciones";
@@ -332,10 +367,11 @@
   function pintarAlertas() {
     var a = st.alertas;
     var v = ventanaAlertas();
-    var ciudad = a.ciudad || null;
-    var actual = D.filtrar({ desde: v.desde, hasta: v.hasta, ciudad: ciudad });
-    var previo = D.filtrar({ desde: v.prevDesde, hasta: new Date(v.desde.getTime() - 1), ciudad: ciudad });
-    var filas = D.CATEGORIAS.map(function (c) {
+    // Mismos filtros que el resto de la app, pero siempre sobre las últimas 24 horas.
+    var actual = D.filtrar(ER.consulta({ desde: v.desde, hasta: v.hasta }));
+    var previo = D.filtrar(ER.consulta({ desde: v.prevDesde, hasta: new Date(v.desde.getTime() - 1) }));
+    var visibles = D.CATEGORIAS.filter(function (c) { return ER.filtros.categorias.indexOf(c.id) >= 0; });
+    var filas = visibles.map(function (c) {
       var n = actual.filter(function (p) { return p.categoria === c.id; }).length;
       var m = previo.filter(function (p) { return p.categoria === c.id; }).length;
       var tend = m === 0 ? (n > 0 ? "up" : "flat") : n / m > 1.1 ? "up" : n / m < 0.9 ? "down" : "flat";
@@ -361,8 +397,8 @@
 
   function iniciarAlertas() {
     var sel = document.getElementById("selCiudadAlertas");
-    ER.enlazarPopover("btnFiltrosAlertas", "popAlertas", opcionesCiudadAlertas);
-    sel.addEventListener("change", function () { st.alertas.ciudad = sel.value; pintarAlertas(); marcarFiltrosAlertas(); });
+    ER.enlazarPopover("btnFiltrosAlertas", "popAlertas", function () { opcionesCiudad(sel); });
+    sel.addEventListener("change", function () { ER.cambiarFiltros({ ciudad: sel.value }); });
     document.querySelectorAll(".alerts .sort").forEach(function (b) {
       b.addEventListener("click", function () {
         var k = b.getAttribute("data-sort");
@@ -373,17 +409,6 @@
     });
     var h2 = document.querySelector(".card-alerts h2");
     h2.insertAdjacentHTML("afterend", '<span class="hint" style="margin:0 auto 0 0">Últimas 24 horas</span>');
-  }
-  // Las ciudades del filtro salen de los datos capturados, con su número de publicaciones.
-  function opcionesCiudadAlertas() {
-    var sel = document.getElementById("selCiudadAlertas");
-    sel.innerHTML = '<option value="">Todas</option>' + D.ciudadesPresentes().map(function (c) {
-      return '<option value="' + ER.escapar(c.nombre) + '">' + ER.escapar(c.nombre) + " (" + c.total + ")</option>";
-    }).join("");
-    sel.value = st.alertas.ciudad;
-  }
-  function marcarFiltrosAlertas() {
-    document.getElementById("btnFiltrosAlertas").textContent = st.alertas.ciudad ? "Filtros (1)" : "Filtros";
   }
 
   // ================= Frecuencia =================
@@ -476,7 +501,7 @@
   function pintarFrecuencia() {
     var actual = D.filtrar(filtroBase());
     var ant = ER.periodoAnterior();
-    var previo = D.filtrar({ desde: ant.desde, hasta: ant.hasta, categorias: st.categorias });
+    var previo = D.filtrar(ER.consulta({ desde: ant.desde, hasta: ant.hasta }));
     chart.data.datasets[0].data = porFranja(actual);
     chart.data.datasets[1].data = porFranja(previo);
     chart.update();
@@ -489,9 +514,9 @@
     refrescoTimer = setTimeout(function () { pintarAlertas(); pintarFrecuencia(); }, 400);
   }
 
-  function pintarTodo() {
+  function pintarTodo(ajustar) {
     pintarChips();
-    pintarMapa();
+    pintarMapa(ajustar);
     pintarTweets();
     pintarAlertas();
     pintarFrecuencia();
@@ -499,20 +524,27 @@
 
   ER.registrarVista("principal", {
     iniciar: function () {
+      opcionesCiudad(document.getElementById("selCiudadMapa"));
+      opcionesCiudad(document.getElementById("selCiudadAlertas"));
       iniciarFiltroMapa();
       iniciarMapa();
       iniciarAlertas();
       iniciarFrecuencia();
       document.getElementById("pillNuevos").addEventListener("click", mostrarPendientes);
       document.getElementById("btnVerTodo").addEventListener("click", verTodo);
-      pintarTodo();
+      pintarTodo(true);
     },
     mostrar: function () {
+      var ajustar = this._pendiente;
       if (this._pendiente) { this._pendiente = false; pintarTodo(); }
-      setTimeout(function () { mapa.invalidateSize(); programarSpotlights(); }, 0);
+      setTimeout(function () {
+        mapa.invalidateSize();
+        if (ajustar) pintarMapa(true);
+        programarSpotlights();
+      }, 0);
     },
     actualizar: function (tipo, p) {
-      if (tipo === "rango") { st.pendientes = st.pendientes.filter(coincide); pintarTodo(); return; }
+      if (tipo === "rango" || tipo === "filtros") { pintarTodo(true); return; }
       if (tipo === "nueva") {
         st.pendientes.unshift(p);
         pintarPildora();

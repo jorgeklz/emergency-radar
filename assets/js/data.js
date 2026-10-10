@@ -18,6 +18,9 @@
  *   ciudad:    string            // "Sin ubicación" si no se pudo ubicar
  *   lat, lng:  number | null     // null si la publicación no está geolocalizada
  *   url:       string | null     // enlace a la publicación en X
+ *   emergencia: boolean | null   // etiqueta del modelo LSI + kNN (null si aún no se clasificó)
+ *   prob:       number | null    // peso de los vecinos que son emergencia (0 a 1)
+ *   vecinos:    number | null    // cuántos de los k vecinos más parecidos son emergencias
  * }
  */
 (function () {
@@ -34,6 +37,7 @@
   // "cargando" | "ok" (hay datos) | "vacio" (archivo sin publicaciones) | "error" (no se pudo leer)
   var estado = "cargando";
   var actualizado = null;
+  var modelo = null;
 
   function quitarTildes(s) { return s.normalize("NFD").replace(/[̀-ͯ]/g, ""); }
 
@@ -60,7 +64,10 @@
       ciudad: p.ciudad || SIN_UBICACION,
       lat: typeof p.lat === "number" ? p.lat : null,
       lng: typeof p.lng === "number" ? p.lng : null,
-      url: /^https:\/\//.test(p.url || "") ? p.url : null
+      url: /^https:\/\//.test(p.url || "") ? p.url : null,
+      emergencia: typeof p.emergencia === "boolean" ? p.emergencia : null,
+      prob: typeof p.prob_emergencia === "number" ? p.prob_emergencia : null,
+      vecinos: typeof p.vecinos_emergencia === "number" ? p.vecinos_emergencia : null
     };
   }
 
@@ -78,6 +85,7 @@
     }).then(function (json) {
       return {
         generado: json.generado ? new Date(json.generado) : null,
+        modelo: json.modelo || null,
         lista: validas((json.publicaciones || []).map(desdeJSON))
       };
     });
@@ -93,6 +101,11 @@
       if (opts.categorias && opts.categorias.indexOf(p.categoria) < 0) return false;
       if (opts.ciudad && p.ciudad !== opts.ciudad) return false;
       if (opts.soloGeo && p.lat === null) return false;
+      // Clasificación del modelo: "emergencias" (por defecto), "descartadas" o "todas".
+      // Lo que aún no se clasificó cuenta como emergencia para no ocultarlo.
+      var clase = opts.clasificacion || "emergencias";
+      if (clase === "emergencias" && p.emergencia === false) return false;
+      if (clase === "descartadas" && p.emergencia !== false) return false;
       if (opts.texto) {
         var q = quitarTildes(opts.texto.toLowerCase());
         var hay = quitarTildes((p.texto + " " + p.autor.nombre + " " + p.autor.usuario + " " + p.ciudad).toLowerCase());
@@ -112,12 +125,15 @@
       return null;
     },
     estado: function () { return estado; },
+    // Configuración y métricas del modelo de clasificación (bloque "modelo" del JSON).
+    modelo: function () { return modelo; },
     actualizado: function () { return actualizado; },
     // Carga inicial. Siempre se resuelve; el resultado queda en estado().
     cargar: function () {
       return leerJSON().then(function (res) {
         publicaciones = res.lista;
         actualizado = res.generado;
+        modelo = res.modelo;
         estado = publicaciones.length ? "ok" : "vacio";
         ordenar();
       }).catch(function (e) {
@@ -132,9 +148,21 @@
         publicaciones.forEach(function (p) { vistos[p.id] = true; });
         var nuevas = res.lista.filter(function (p) { return !vistos[p.id]; });
         if (res.generado) actualizado = res.generado;
+        if (res.modelo) modelo = res.modelo;
+        // Las etiquetas del modelo pueden llegar después que la publicación.
+        var porId = {}, reetiquetadas = 0;
+        res.lista.forEach(function (p) { porId[p.id] = p; });
+        publicaciones.forEach(function (p) {
+          var r = porId[p.id];
+          if (r && r.emergencia !== null && r.emergencia !== p.emergencia) {
+            p.emergencia = r.emergencia; p.prob = r.prob; p.vecinos = r.vecinos;
+            reetiquetadas++;
+          }
+        });
         if (nuevas.length) { publicaciones = publicaciones.concat(nuevas); ordenar(); }
         if (publicaciones.length) estado = "ok";
         nuevas.sort(function (a, b) { return a.fecha - b.fecha; });
+        nuevas.reetiquetadas = reetiquetadas;
         return nuevas;
       }).catch(function () { return []; });
     },
