@@ -16,7 +16,7 @@
     pendientes: []
   };
 
-  var mapa, capaGrupos, spotlights = [], chart;
+  var mapa, capaGrupos, capaNuevos, spotlights = [], chart;
 
   // ================= Utilidades =================
   function filtroBase() { return ER.consulta(); }
@@ -223,6 +223,23 @@
     return m;
   }
 
+  // Post recién llegado: ondas de radar del color de su gravedad durante 2 minutos y una
+  // etiqueta "Nuevo" durante 15 segundos. Clic en las ondas abre el post.
+  var DESTAQUE_MS = 120000, ETIQUETA_MS = 15000;
+  function destacarNuevo(p) {
+    var g = ER.severidad(p).nivel, c = D.categoria(p.categoria), color = ER.CALOR[g.id].color;
+    var m = L.marker([p.lat, p.lng], {
+      pane: "erNuevos", keyboard: false,
+      icon: L.divIcon({ className: "er-ping", iconSize: [84, 84], html: '<span style="--p:' + color + '"></span><span style="--p:' + color + '"></span>' })
+    });
+    m.bindPopup(popupPost(p), { maxWidth: 320 });
+    m.bindTooltip('<span class="mini-ic" style="--g:' + g.color + '">' + window.icon(c.icono) + '</span><b>Nuevo</b><span class="mini-hace">' + ER.escapar(p.ciudad) + "</span>",
+      { permanent: true, direction: "top", className: "er-mini er-nuevo", offset: [0, -30] });
+    capaNuevos.addLayer(m);
+    setTimeout(function () { m.closeTooltip(); m.unbindTooltip(); }, ETIQUETA_MS);
+    setTimeout(function () { capaNuevos.removeLayer(m); }, DESTAQUE_MS);
+  }
+
   function ultimoDe(capa) {
     if (capa._erPost) return { post: capa._erPost, total: 1, porCat: {} };
     var hijos = capa.getAllChildMarkers();
@@ -357,6 +374,9 @@
     mapa.on("moveend", programarSpotlights);
 
     mapa.addLayer(capaGrupos);
+    // Capa propia (por encima de los grupos) para destacar los posts que van llegando.
+    mapa.createPane("erNuevos").style.zIndex = 640;
+    capaNuevos = L.layerGroup().addTo(mapa);
     pintarLeyendaMapa();
   }
 
@@ -942,6 +962,7 @@
         pintarPildora();
         if (coincide(p) && p.lat !== null) {
           capaGrupos.addLayer(crearMarcador(p, true));
+          destacarNuevo(p);
           pintarLeyendaMapa((pintarLeyendaMapa._t || 0) + 1);
         }
         refrescoDiferido();

@@ -225,7 +225,7 @@ a { color: inherit; }
 /* Solo la capa "Gris" se desatura; "Calles", "Humanitario" y "Satélite" van a color. */
 /* Mapa base atenuado (colores apagados y algo más claro) para que resalten las manchas,
    las etiquetas y los textos que van encima. Aplica a todas las capas. */
-.map .leaflet-tile-pane { filter: saturate(.3) contrast(.88) brightness(1.06); opacity: .8; }
+.map .leaflet-tile-pane { filter: saturate(.7) contrast(.95) brightness(1.03); opacity: .92; }
 .map { background: #eef0f3; }
 .tiles-gris { filter: grayscale(1) brightness(1.06) contrast(0.88); }
 .leaflet-control-layers { border: 0 !important; border-radius: 8px !important; box-shadow: 0 4px 14px rgba(20,24,60,.16) !important; font-family: var(--font); }
@@ -266,6 +266,15 @@ a { color: inherit; }
 .er-point.reciente .halo { animation: latido 2.4s ease-in-out infinite; }
 .er-point.fresh .halo { animation: latido 1.6s ease-in-out 3; }
 @keyframes latido { 0%, 100% { transform: scale(1); opacity: 1; } 50% { transform: scale(1.22); opacity: .85; } }
+
+/* Destaque de posts recién llegados: ondas tipo radar y etiqueta "Nuevo". */
+.er-ping { background: none; border: 0; cursor: pointer; }
+.er-ping span { position: absolute; inset: 0; border-radius: 50%; border: 3px solid var(--p); animation: ping 2s ease-out infinite; }
+.er-ping span + span { animation-delay: 1s; }
+@keyframes ping { 0% { transform: scale(.25); opacity: .95; } 100% { transform: scale(1); opacity: 0; } }
+.er-nuevo { font-weight: 700; box-shadow: 0 0 0 2px var(--blue), 0 4px 12px rgba(20, 24, 60, .2) !important; animation: aparecer-mini .3s ease-out; }
+.er-nuevo b { color: var(--blue); }
+@media (prefers-reduced-motion: reduce) { .er-ping span { animation: none; transform: scale(.7); opacity: .6; } }
 
 /* Botón de ubicación actual */
 .ctl-ubicacion { width: 34px; height: 34px; display: flex; align-items: center; justify-content: center; background: #fff; color: var(--ink); cursor: pointer; border: 0; padding: 0; }
