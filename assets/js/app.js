@@ -43,8 +43,12 @@
       });
     },
     iniciales: function (nombre) {
-      var p = nombre.split(/\s+/);
-      return ((p[0] || "")[0] + ((p[1] || "")[0] || "")).toUpperCase();
+      // Solo letras y números: los nombres reales de X traen emojis y símbolos.
+      var p = nombre.normalize("NFC").split(/\s+/).map(function (w) {
+        return w.replace(/[^0-9A-Za-zÀ-ÖØ-öø-ÿ]/g, "");
+      }).filter(Boolean);
+      var ini = ((p[0] || "").charAt(0) + (p[1] || "").charAt(0)).toUpperCase();
+      return ini || "?";
     },
     // Periodo anterior de igual duración al seleccionado.
     periodoAnterior: function () {
