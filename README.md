@@ -53,7 +53,7 @@ collector/x-collector.mjs  ──escribe──▶ data/posts.json ──publica�
 
 1. En el portal de desarrolladores de X crea una app y copia su **Bearer Token**. Tu plan debe incluir el endpoint de búsqueda reciente (`GET /2/tweets/search/recent`).
 2. En GitHub ve a *Settings → Secrets and variables → Actions → New repository secret*. Nombre: `X_BEARER_TOKEN`. Valor: el token.
-3. Ve a la pestaña *Actions*, abre **Captura de publicaciones de X** y pulsa *Run workflow* para la primera captura. Después corre sola cada 30 minutos.
+3. Ve a la pestaña *Actions*, abre **Captura continua cada 30 minutos** y pulsa *Run workflow*. Desde ahí captura sola en cada :00 y :30 (hora UTC).
 
 El token nunca se escribe en el repositorio ni en los registros de Actions: GitHub lo enmascara.
 
@@ -67,7 +67,16 @@ En *Settings → Secrets and variables → Actions → Variables* puedes crear:
 | `X_MAX_PAGES` | Páginas de 100 resultados por ejecución (controla el consumo de la API) | `2` |
 | `X_RETENCION_DIAS` | Días que se guardan en `data/posts.json` | `30` |
 
-La frecuencia se cambia en el `cron` de `.github/workflows/collect.yml`. Cada ejecución pide solo lo nuevo desde la última captura (`since_id`), pero ten en cuenta los límites y costos de tu plan de X.
+### Captura automática cada 30 minutos
+
+El `cron` de GitHub se salta ejecuciones cuando hay carga, así que la captura automática no depende de él. El workflow **Captura continua cada 30 minutos** (`.github/workflows/captura-continua.yml`) corre unas 5,5 horas, captura en cada :00 y :30 (hora UTC) y al terminar se vuelve a lanzar solo. Su `cron` es solo un respaldo que reinicia la cadena si alguna vez se corta; nunca corren dos a la vez. En repositorios públicos los minutos de GitHub Actions son gratuitos.
+
+- **Cambiar el intervalo:** en `captura-continua.yml`, el número `1800` (segundos) del cálculo de la próxima captura. Por ejemplo, `900` para cada 15 minutos o `3600` para cada hora.
+- **Captura puntual:** workflow **Captura de publicaciones de X** (`collect.yml`) > *Run workflow*.
+- **Detener la captura automática:** *Actions* > **Captura continua cada 30 minutos** > "..." > *Disable workflow*. Cancelar una ejecución a mano también corta la cadena; para retomarla, *Run workflow*.
+- Los pasos de cada captura están en `scripts/captura.sh` (X, modelo, commit y publicación en Pages).
+
+Cada captura pide solo lo nuevo desde la anterior (`since_id`), con un tope de `X_MAX_PAGES` páginas de 100 posts. Ten en cuenta los límites y costos de tu plan de X: son hasta 48 capturas por día.
 
 ### Cómo se procesa cada publicación
 
@@ -77,7 +86,7 @@ La frecuencia se cambia en el `cron` de `.github/workflows/collect.yml`. Cada ej
 
 ### Sobre el "tiempo real"
 
-Con GitHub Pages el retraso real es de varios minutos: el workflow corre cada 30 minutos (GitHub a veces lo retrasa), Pages tarda en republicar y el sitio relee el archivo cada minuto. Para algo inmediato hace falta un servidor propio conectado al *filtered stream* de X que empuje los datos al navegador.
+Con GitHub Pages el retraso real es de varios minutos: se captura cada 30 minutos, Pages tarda alrededor de un minuto en republicar y el sitio relee el archivo cada minuto. Para algo inmediato hace falta un servidor propio conectado al *filtered stream* de X que empuje los datos al navegador.
 
 ### Ejecutar el recolector en tu equipo
 
@@ -163,7 +172,8 @@ assets/vendor/              Leaflet, Leaflet.markercluster, Leaflet.heat y Chart
 collector/                  Recolector de X (Node 20, sin dependencias) y sus pruebas
 modelo/                     Modelo LSI + kNN en Python: corpus, preprocesamiento, evaluación y clasificación
 data/posts.json             Publicaciones capturadas (lo actualiza GitHub Actions)
-.github/workflows/          collect.yml (captura) y pages.yml (publicación desde main)
+.github/workflows/          captura-continua.yml (cada 30 min), collect.yml (captura manual) y pages.yml
+scripts/captura.sh          Una captura completa: X, modelo, commit y publicación en Pages
 ```
 
 ## Modelo de datos

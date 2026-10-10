@@ -1,10 +1,8 @@
 name: Captura de publicaciones de X
 
-# Corre cada 30 minutos (GitHub puede retrasar las ejecuciones programadas)
-# y también a mano desde la pestaña Actions.
+# Una sola captura, a mano desde la pestaña Actions (botón "Run workflow").
+# La captura automática cada 30 minutos la hace "Captura continua" (captura-continua.yml).
 on:
-  schedule:
-    - cron: "*/30 * * * *"
   workflow_dispatch:
 
 permissions:
@@ -12,7 +10,7 @@ permissions:
   pages: write
 
 concurrency:
-  group: captura-x
+  group: captura-x-manual
   cancel-in-progress: false
 
 jobs:
@@ -39,43 +37,15 @@ jobs:
           node --test collector/*.test.mjs tests/*.test.mjs
           python -m unittest modelo.test_modelo
 
-      - name: Capturar publicaciones
+      - name: Capturar, clasificar y publicar
         env:
           # La API key vive solo como secreto del repositorio; nunca en el código.
           X_BEARER_TOKEN: ${{ secrets.X_BEARER_TOKEN }}
           X_QUERY: ${{ vars.X_QUERY }}
           X_MAX_PAGES: ${{ vars.X_MAX_PAGES }}
           X_RETENCION_DIAS: ${{ vars.X_RETENCION_DIAS }}
-        run: node collector/x-collector.mjs
-
-      # Grafo kNN sobre similitud LSI (Parraga-Alava et al., 2026): marca cada
-      # publicación como emergencia o no emergencia según sus vecinos del corpus.
-      - name: Clasificar con el modelo
-        run: python -m modelo.clasificar
-
-      - name: Guardar datos
-        id: guardar
+          GH_TOKEN: ${{ github.token }}
         run: |
-          if git diff --quiet -- data/posts.json; then
-            echo "Sin cambios en los datos."
-            echo "cambios=false" >> "$GITHUB_OUTPUT"
-            exit 0
-          fi
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add data/posts.json
-          git commit -m "Datos: captura de X $(date -u +'%Y-%m-%d %H:%M') UTC"
-          for intento in 1 2 3; do
-            git pull --rebase origin "${GITHUB_REF_NAME}" && git push origin "HEAD:${GITHUB_REF_NAME}" && break
-            sleep $((intento * 5))
-          done
-          echo "cambios=true" >> "$GITHUB_OUTPUT"
-
-      # Los push hechos con GITHUB_TOKEN no siempre disparan la publicación de Pages,
-      # así que se solicita explícitamente.
-      - name: Republicar GitHub Pages
-        if: steps.guardar.outputs.cambios == 'true'
-        continue-on-error: true
-        env:
-          GH_TOKEN: ${{ github.token }}
-        run: gh api -X POST "repos/${{ github.repository }}/pages/builds"
+          bash scripts/captura.sh

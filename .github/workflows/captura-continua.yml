@@ -1,0 +1,80 @@
+name: Captura continua cada 30 minutos
+
+# El "cron" de GitHub se salta ejecuciones cuando hay carga, así que la captura
+# automática no depende de él: este workflow corre unas 5,5 horas, captura en cada
+# :00 y :30 (hora UTC) y al terminar se vuelve a lanzar a sí mismo.
+#
+# El cron de abajo es solo un respaldo: si la cadena se cortara, la reinicia. Si ya
+# hay una ejecución en curso, la nueva queda en espera y la reemplaza al terminar
+# (nunca corren dos a la vez).
+#
+# Para detener la captura automática: Actions > "Captura continua cada 30 minutos" >
+# "..." > Disable workflow. Cancelar una ejecución a mano también corta la cadena.
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: "7,37 * * * *"
+
+permissions:
+  contents: write
+  pages: write
+  actions: write
+
+concurrency:
+  group: captura-continua
+  cancel-in-progress: false
+
+jobs:
+  capturar:
+    runs-on: ubuntu-latest
+    timeout-minutes: 358
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+          cache-dependency-path: modelo/requirements.txt
+
+      - name: Instalar el modelo
+        run: pip install -r modelo/requirements.txt
+
+      - name: Probar el recolector y el modelo
+        run: |
+          node --test collector/*.test.mjs tests/*.test.mjs
+          python -m unittest modelo.test_modelo
+
+      - name: Capturar cada 30 minutos (unas 5,5 horas)
+        env:
+          X_BEARER_TOKEN: ${{ secrets.X_BEARER_TOKEN }}
+          X_QUERY: ${{ vars.X_QUERY }}
+          X_MAX_PAGES: ${{ vars.X_MAX_PAGES }}
+          X_RETENCION_DIAS: ${{ vars.X_RETENCION_DIAS }}
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          fin=$(( $(date +%s) + 330 * 60 ))
+          while :; do
+            echo "::group::Captura de las $(date -u +%H:%M) UTC"
+            bash scripts/captura.sh || echo "::warning::La captura terminó con errores; se reintenta en la próxima franja"
+            echo "::endgroup::"
+            ahora=$(date +%s)
+            # Siguiente :00 o :30 exacto.
+            proxima=$(( (ahora / 1800 + 1) * 1800 ))
+            if [ "$proxima" -ge "$fin" ]; then break; fi
+            echo "Próxima captura a las $(date -u -d @"$proxima" +%H:%M) UTC"
+            sleep $(( proxima - ahora ))
+          done
+
+      # Se encadena la siguiente ejecución (también si algo falló, pero no si se canceló a mano).
+      - name: Encadenar la siguiente ejecución
+        if: success() || failure()
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh workflow run captura-continua.yml --ref "${GITHUB_REF_NAME}"
