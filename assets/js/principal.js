@@ -47,7 +47,9 @@
         '<div class="who"><b>' + ER.escapar(p.autor.nombre) +
           (p.autor.verificado ? ' <span class="verified" title="Cuenta verificada">' + CHECK + "</span>" : "") +
           "</b><small>@" + ER.escapar(p.autor.usuario) + "</small></div>" +
-        '<span class="tweet-src">' + iconoFuente(p.fuente) + "</span>" +
+        (p.url
+          ? '<a class="tweet-src" href="' + ER.escapar(p.url) + '" target="_blank" rel="noopener" title="Ver publicación original">' + iconoFuente(p.fuente) + "</a>"
+          : '<span class="tweet-src">' + iconoFuente(p.fuente) + "</span>") +
       "</div>" +
       "<p>" + textoEnriquecido(p.texto) + "</p>" +
       '<div class="tweet-foot"><span>' + ER.fmtLarga(p.fecha) + '</span><span>·</span><span class="client">' + p.cliente + "</span>" +
@@ -464,7 +466,7 @@
             beginAtZero: true,
             border: { display: false },
             grid: { color: "#eef0f5" },
-            ticks: { maxTicksLimit: 5, font: { size: 13 }, color: "#6b7184", padding: 14 }
+            ticks: { maxTicksLimit: 5, precision: 0, font: { size: 13 }, color: "#6b7184", padding: 14 }
           }
         }
       },
@@ -506,7 +508,7 @@
       document.getElementById("pillNuevos").addEventListener("click", mostrarPendientes);
       document.getElementById("btnVerTodo").addEventListener("click", verTodo);
       // Al abrir en vivo ya hay algunas publicaciones esperando, como en un flujo real.
-      if (ER.estado.enVivo) for (var k = 0; k < 3; k++) st.pendientes.unshift(D.nuevaPublicacion());
+      if (ER.estado.enVivo && D.modo() === "simulado") for (var k = 0; k < 3; k++) st.pendientes.unshift(D.nuevaPublicacion());
       pintarTodo();
     },
     mostrar: function () {

@@ -164,7 +164,7 @@
             tooltip: { backgroundColor: "#fff", titleColor: "#1d2130", bodyColor: "#4a5063", borderColor: "#e2e5ee", borderWidth: 1, padding: 10 }
           },
           scales: {
-            x: { beginAtZero: true, grid: { color: "#eef0f5" }, border: { display: false }, ticks: { maxTicksLimit: 5 } },
+            x: { beginAtZero: true, grid: { color: "#eef0f5" }, border: { display: false }, ticks: { maxTicksLimit: 5, precision: 0 } },
             y: { grid: { display: false }, border: { display: false }, ticks: { color: "#1d2130", font: { size: 13 } } }
           }
         },

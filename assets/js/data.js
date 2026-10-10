@@ -2,10 +2,12 @@
  * Emergency Radar · capa de datos (prototipo)
  * ------------------------------------------------------------------
  * Todo el resto de la aplicación consume únicamente window.ER_DATA.
- * Hoy los datos se generan de forma simulada y determinista (semilla fija).
- * Para conectar datos reales basta con reemplazar `generarPublicaciones()`
- * por una carga (fetch a JSON o a una API) que devuelva objetos con el
- * mismo esquema de "Publicacion" descrito abajo.
+ *
+ * Al iniciar se intenta leer data/posts.json, que genera el recolector de X
+ * (collector/x-collector.mjs, ejecutado por GitHub Actions). Si el archivo
+ * existe y trae publicaciones, la app trabaja con datos reales y lo vuelve a
+ * leer cada minuto en modo "En Vivo". Si no, usa datos simulados y
+ * deterministas (semilla fija). La API key de X nunca llega al navegador.
  *
  * Publicacion {
  *   id:        string
@@ -17,41 +19,14 @@
  *   categoria: string            // id de CATEGORIAS
  *   ciudad:    string            // nombre de CIUDADES
  *   lat, lng:  number | null     // null si la publicación no está geolocalizada
+ *   url:       string            // opcional, enlace a la publicación original
  * }
  */
 (function () {
   "use strict";
 
-  var CATEGORIAS = [
-    { id: "asaltos", nombre: "Asaltos", icono: "run", color: "#2a78d6" },
-    { id: "incendios", nombre: "Incendios", icono: "flame", color: "#eb6834" },
-    { id: "accidentes", nombre: "Accidente vehicular", icono: "car-crash", color: "#1baf7a" },
-    { id: "desastres", nombre: "Desastres naturales", icono: "tornado", color: "#eda100" }
-  ];
-
-  // Ciudades con su peso relativo de publicaciones.
-  var CIUDADES = [
-    { nombre: "Guayaquil", provincia: "Guayas", lat: -2.170, lng: -79.922, peso: 30, radio: 0.06 },
-    { nombre: "Durán", provincia: "Guayas", lat: -2.172, lng: -79.838, peso: 6, radio: 0.025 },
-    { nombre: "Samborondón", provincia: "Guayas", lat: -2.135, lng: -79.870, peso: 4, radio: 0.02 },
-    { nombre: "Daule", provincia: "Guayas", lat: -1.862, lng: -79.977, peso: 5, radio: 0.03 },
-    { nombre: "Milagro", provincia: "Guayas", lat: -2.134, lng: -79.594, peso: 5, radio: 0.03 },
-    { nombre: "Playas", provincia: "Guayas", lat: -2.632, lng: -80.388, peso: 2, radio: 0.02 },
-    { nombre: "Santa Elena", provincia: "Santa Elena", lat: -2.226, lng: -80.858, peso: 4, radio: 0.03 },
-    { nombre: "La Libertad", provincia: "Santa Elena", lat: -2.231, lng: -80.900, peso: 3, radio: 0.02 },
-    { nombre: "Salinas", provincia: "Santa Elena", lat: -2.214, lng: -80.958, peso: 2, radio: 0.02 },
-    { nombre: "Babahoyo", provincia: "Los Ríos", lat: -1.801, lng: -79.534, peso: 4, radio: 0.03 },
-    { nombre: "Vinces", provincia: "Los Ríos", lat: -1.556, lng: -79.752, peso: 2, radio: 0.02 },
-    { nombre: "Quevedo", provincia: "Los Ríos", lat: -1.022, lng: -79.463, peso: 3, radio: 0.03 },
-    { nombre: "Portoviejo", provincia: "Manabí", lat: -1.054, lng: -80.454, peso: 6, radio: 0.04 },
-    { nombre: "Manta", provincia: "Manabí", lat: -0.957, lng: -80.712, peso: 6, radio: 0.04 },
-    { nombre: "Jipijapa", provincia: "Manabí", lat: -1.348, lng: -80.579, peso: 2, radio: 0.02 },
-    { nombre: "Chone", provincia: "Manabí", lat: -0.698, lng: -80.094, peso: 2, radio: 0.02 },
-    { nombre: "Machala", provincia: "El Oro", lat: -3.258, lng: -79.955, peso: 4, radio: 0.03 },
-    { nombre: "Riobamba", provincia: "Chimborazo", lat: -1.664, lng: -78.654, peso: 3, radio: 0.03 },
-    { nombre: "Cuenca", provincia: "Azuay", lat: -2.900, lng: -79.005, peso: 4, radio: 0.04 },
-    { nombre: "Quito", provincia: "Pichincha", lat: -0.180, lng: -78.468, peso: 9, radio: 0.06 }
-  ];
+  var CATEGORIAS = window.ER_CATALOGO.CATEGORIAS;
+  var CIUDADES = window.ER_CATALOGO.CIUDADES;
 
   // Autores ficticios (no corresponden a personas ni medios reales).
   var AUTORES = [
@@ -201,8 +176,67 @@
     return lista;
   }
 
-  var ahora = new Date();
-  var publicaciones = generarPublicaciones(ahora, 120);
+  var publicaciones = [];
+  var modo = "simulado";
+  var actualizado = null;
+  var URL_DATOS = "data/posts.json";
+  var INTERVALO_REAL_MS = 60 * 1000;
+
+  function colorAutor(usuario) {
+    var h = 0;
+    for (var i = 0; i < usuario.length; i++) h = (h * 31 + usuario.charCodeAt(i)) | 0;
+    return COLORES_AVATAR[Math.abs(h) % COLORES_AVATAR.length];
+  }
+
+  // Convierte una publicación del JSON del recolector al modelo de la app.
+  function desdeJSON(p) {
+    var autor = p.autor || {};
+    return {
+      id: String(p.id),
+      fuente: p.fuente || "twitter",
+      autor: {
+        nombre: autor.nombre || autor.usuario || "Usuario",
+        usuario: autor.usuario || "",
+        verificado: !!autor.verificado,
+        color: autor.color || colorAutor(autor.usuario || String(p.id))
+      },
+      texto: p.texto || "",
+      fecha: new Date(p.fecha),
+      cliente: p.cliente || "X",
+      categoria: p.categoria,
+      ciudad: p.ciudad || "Sin ubicación",
+      lat: typeof p.lat === "number" ? p.lat : null,
+      lng: typeof p.lng === "number" ? p.lng : null,
+      url: /^https:\/\//.test(p.url || "") ? p.url : null
+    };
+  }
+
+  function validas(lista) {
+    var ids = {};
+    CATEGORIAS.forEach(function (c) { ids[c.id] = true; });
+    return lista.filter(function (p) { return ids[p.categoria] && !isNaN(p.fecha); });
+  }
+
+  function leerJSON() {
+    if (!window.fetch || location.protocol === "file:") return Promise.reject(new Error("sin fetch"));
+    return fetch(URL_DATOS + "?t=" + Date.now(), { cache: "no-store" }).then(function (r) {
+      if (!r.ok) throw new Error("HTTP " + r.status);
+      return r.json();
+    }).then(function (json) {
+      return {
+        generado: json.generado ? new Date(json.generado) : null,
+        lista: validas((json.publicaciones || []).map(desdeJSON))
+      };
+    });
+  }
+
+  function usarSimulados() {
+    modo = "simulado";
+    actualizado = new Date();
+    publicaciones = generarPublicaciones(new Date(), 120);
+  }
+
+  function ordenar() { publicaciones.sort(function (a, b) { return b.fecha - a.fecha; }); }
 
   function filtrar(opts) {
     opts = opts || {};
@@ -225,19 +259,46 @@
   window.ER_DATA = {
     CATEGORIAS: CATEGORIAS,
     CIUDADES: CIUDADES,
+    INTERVALO_REAL_MS: INTERVALO_REAL_MS,
     categoria: function (id) {
       for (var i = 0; i < CATEGORIAS.length; i++) if (CATEGORIAS[i].id === id) return CATEGORIAS[i];
       return null;
     },
+    // "real" si los datos vienen del recolector de X, "simulado" si no.
+    modo: function () { return modo; },
+    actualizado: function () { return actualizado; },
+    // Carga inicial. Siempre se resuelve: ante cualquier fallo se usan datos simulados.
+    cargar: function () {
+      return leerJSON().then(function (res) {
+        if (!res.lista.length) { usarSimulados(); return; }
+        modo = "real";
+        actualizado = res.generado || new Date();
+        publicaciones = res.lista;
+        ordenar();
+      }).catch(usarSimulados);
+    },
+    // Modo real: vuelve a leer el JSON y devuelve solo las publicaciones nuevas.
+    sincronizar: function () {
+      return leerJSON().then(function (res) {
+        var vistos = {};
+        publicaciones.forEach(function (p) { vistos[p.id] = true; });
+        var nuevas = res.lista.filter(function (p) { return !vistos[p.id]; });
+        if (res.generado) actualizado = res.generado;
+        if (nuevas.length) { publicaciones = publicaciones.concat(nuevas); ordenar(); }
+        nuevas.sort(function (a, b) { return a.fecha - b.fecha; });
+        return nuevas;
+      }).catch(function () { return []; });
+    },
     todas: function () { return publicaciones; },
     filtrar: filtrar,
-    // Simula la llegada de una publicación nueva (modo "En Vivo").
+    // Modo simulado: genera la llegada de una publicación nueva.
     nuevaPublicacion: function () {
       var p = crearPublicacion(new Date());
       publicaciones.unshift(p);
       return p;
     },
     rangoDisponible: function () {
+      if (!publicaciones.length) return { desde: new Date(), hasta: new Date() };
       return { desde: publicaciones[publicaciones.length - 1].fecha, hasta: publicaciones[0].fecha };
     }
   };

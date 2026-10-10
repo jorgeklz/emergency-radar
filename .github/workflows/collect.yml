@@ -1,0 +1,65 @@
+name: Captura de publicaciones de X
+
+# Corre cada 15 minutos (GitHub puede retrasar las ejecuciones programadas)
+# y también a mano desde la pestaña Actions.
+on:
+  schedule:
+    - cron: "*/15 * * * *"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  pages: write
+
+concurrency:
+  group: captura-x
+  cancel-in-progress: false
+
+jobs:
+  capturar:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Probar el recolector
+        run: node --test collector/*.test.mjs
+
+      - name: Capturar publicaciones
+        env:
+          # La API key vive solo como secreto del repositorio; nunca en el código.
+          X_BEARER_TOKEN: ${{ secrets.X_BEARER_TOKEN }}
+          X_QUERY: ${{ vars.X_QUERY }}
+          X_MAX_PAGES: ${{ vars.X_MAX_PAGES }}
+          X_RETENCION_DIAS: ${{ vars.X_RETENCION_DIAS }}
+        run: node collector/x-collector.mjs
+
+      - name: Guardar datos
+        id: guardar
+        run: |
+          if git diff --quiet -- data/posts.json; then
+            echo "Sin cambios en los datos."
+            echo "cambios=false" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add data/posts.json
+          git commit -m "Datos: captura de X $(date -u +'%Y-%m-%d %H:%M') UTC"
+          for intento in 1 2 3; do
+            git pull --rebase origin "${GITHUB_REF_NAME}" && git push origin "HEAD:${GITHUB_REF_NAME}" && break
+            sleep $((intento * 5))
+          done
+          echo "cambios=true" >> "$GITHUB_OUTPUT"
+
+      # Los push hechos con GITHUB_TOKEN no siempre disparan la publicación de Pages,
+      # así que se solicita explícitamente.
+      - name: Republicar GitHub Pages
+        if: steps.guardar.outputs.cambios == 'true'
+        continue-on-error: true
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh api -X POST "repos/${{ github.repository }}/pages/builds"

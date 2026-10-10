@@ -129,7 +129,7 @@
           },
           scales: {
             x: { stacked: true, grid: { display: false }, border: { display: false }, ticks: { maxRotation: 0, autoSkipPadding: 12 } },
-            y: { stacked: true, beginAtZero: true, border: { display: false }, grid: { color: "#eef0f5" }, ticks: { maxTicksLimit: 6 } }
+            y: { stacked: true, beginAtZero: true, border: { display: false }, grid: { color: "#eef0f5" }, ticks: { maxTicksLimit: 6, precision: 0 } }
           }
         }
       });

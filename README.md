@@ -4,7 +4,7 @@ Prototipo funcional del panel **Emergency Radar**, que monitorea publicaciones d
 
 Es un sitio estático (HTML, CSS y JavaScript sin compilación), listo para publicarse en GitHub Pages. Todas las librerías están incluidas en `assets/vendor`, así que no depende de CDNs para funcionar.
 
-> Los datos de esta versión son **simulados** y los autores son ficticios. Se generan con una semilla fija, por lo que siempre son los mismos.
+> Mientras no haya datos capturados desde X, el sitio muestra datos **simulados** con autores ficticios (en la barra superior verás "Datos simulados"). Cuando el recolector guarda publicaciones reales, el sitio cambia solo a "Datos de X".
 
 ## Secciones
 
@@ -15,6 +15,56 @@ Es un sitio estático (HTML, CSS y JavaScript sin compilación), listo para publ
 **Estadísticas.** Indicadores generales, distribución por categoría, ciudades con más reportes, actividad por día y hora, fuentes y autores más activos.
 
 En la barra superior están el botón **En Vivo** (simula la llegada de publicaciones cada pocos segundos; un clic lo pausa), el selector de rango de fechas y el menú.
+
+## Captura de datos reales desde X (Twitter)
+
+La API key **no va en el código del sitio**. GitHub Pages publica todos los archivos, así que cualquier clave escrita en el JavaScript quedaría a la vista de cualquiera. Además, la API de X no acepta llamadas directas desde el navegador.
+
+Por eso la captura funciona así:
+
+```
+GitHub Actions (cada 15 min)          Repositorio              GitHub Pages
+collector/x-collector.mjs  ──escribe──▶ data/posts.json ──publica──▶ el sitio lee el JSON
+   usa el secreto X_BEARER_TOKEN                                     y lo relee cada minuto
+```
+
+### Configuración (una sola vez)
+
+1. En el portal de desarrolladores de X crea una app y copia su **Bearer Token**. Tu plan debe incluir el endpoint de búsqueda reciente (`GET /2/tweets/search/recent`).
+2. En GitHub ve a *Settings → Secrets and variables → Actions → New repository secret*. Nombre: `X_BEARER_TOKEN`. Valor: el token.
+3. Ve a la pestaña *Actions*, abre **Captura de publicaciones de X** y pulsa *Run workflow* para la primera captura. Después corre sola cada 15 minutos.
+
+El token nunca se escribe en el repositorio ni en los registros de Actions: GitHub lo enmascara.
+
+### Ajustes opcionales
+
+En *Settings → Secrets and variables → Actions → Variables* puedes crear:
+
+| Variable | Para qué sirve | Por defecto |
+|---|---|---|
+| `X_QUERY` | Consulta de búsqueda de X | Palabras de emergencia + ciudades de Ecuador, en español y sin retuits |
+| `X_MAX_PAGES` | Páginas de 100 resultados por ejecución (controla el consumo de la API) | `2` |
+| `X_RETENCION_DIAS` | Días que se guardan en `data/posts.json` | `30` |
+
+La frecuencia se cambia en el `cron` de `.github/workflows/collect.yml`. Cada ejecución pide solo lo nuevo desde la última captura (`since_id`), pero ten en cuenta los límites y costos de tu plan de X.
+
+### Cómo se procesa cada publicación
+
+- **Categoría:** por palabras clave definidas en `assets/js/catalogo.js`. Si no coincide con ninguna categoría, se descarta.
+- **Ubicación:** primero las coordenadas exactas (si las tiene), luego el lugar etiquetado en X y por último la ciudad mencionada en el texto. Si no hay ninguna, queda como "Sin ubicación" y no aparece en el mapa, pero sí en las listas y estadísticas.
+
+### Sobre el "tiempo real"
+
+Con GitHub Pages el retraso real es de unos minutos: el workflow corre cada 15 minutos (GitHub a veces lo retrasa), Pages tarda en republicar y el sitio relee el archivo cada minuto. Para algo inmediato hace falta un servidor propio conectado al *filtered stream* de X que empuje los datos al navegador.
+
+### Ejecutar el recolector en tu equipo
+
+```bash
+X_BEARER_TOKEN=tu_token node collector/x-collector.mjs   # escribe data/posts.json
+node --test collector/*.test.mjs                          # pruebas, sin red
+```
+
+No guardes el token en archivos del repositorio. Si usas un `.env`, ya está en `.gitignore`.
 
 ## Ejecutarlo en local
 
@@ -40,18 +90,22 @@ La navegación usa rutas con `#` (`#/principal`, `#/historico`, `#/estadisticas`
 ```
 index.html                  Maquetación de las tres vistas
 assets/css/styles.css       Estilos (línea gráfica del diseño)
-assets/js/data.js           Capa de datos: modelo y datos simulados
+assets/js/catalogo.js       Categorías (palabras clave) y ciudades, compartido con el recolector
+assets/js/data.js           Capa de datos: lee data/posts.json o genera datos simulados
 assets/js/app.js            Estado global, navegación, rango de fechas, modo En Vivo
 assets/js/principal.js      Vista Principal
 assets/js/historico.js      Vista Histórico
 assets/js/estadisticas.js   Vista Estadísticas
 assets/js/icons.js          Íconos SVG (Tabler Icons)
 assets/vendor/              Leaflet, Leaflet.markercluster, Leaflet.heat y Chart.js
+collector/                  Recolector de X (Node 20, sin dependencias) y sus pruebas
+data/posts.json             Publicaciones capturadas (lo actualiza GitHub Actions)
+.github/workflows/          collect.yml (captura) y pages.yml (publicación desde main)
 ```
 
 ## Modelo de datos
 
-Toda la interfaz lee los datos a través de `window.ER_DATA` (en `assets/js/data.js`). Para conectar datos reales hay que reemplazar la función `generarPublicaciones()` por una carga que devuelva una lista con este esquema:
+Toda la interfaz lee los datos a través de `window.ER_DATA` (en `assets/js/data.js`). `data/posts.json` tiene la forma `{ generado, ultimoId, publicaciones: [...] }` y cada publicación sigue este esquema (la fecha va en ISO 8601):
 
 ```js
 {
@@ -64,11 +118,12 @@ Toda la interfaz lee los datos a través de `window.ER_DATA` (en `assets/js/data
   categoria: "asaltos",              // asaltos | incendios | accidentes | desastres
   ciudad:    "Guayaquil",
   lat:       -2.17,                  // null si no está geolocalizada
-  lng:       -79.92
+  lng:       -79.92,
+  url:       "https://x.com/usuario/status/123"   // opcional
 }
 ```
 
-Las categorías y las ciudades están definidas en el mismo archivo (`CATEGORIAS` y `CIUDADES`), con su ícono, color y coordenadas.
+Las categorías y las ciudades están en `assets/js/catalogo.js`, con su ícono, color, palabras clave y coordenadas. Cualquier otra fuente de datos (tu propio modelo, otra red social) puede alimentar el sitio con solo escribir ese mismo JSON.
 
 ## Créditos
 

@@ -146,14 +146,27 @@
 
   // ---------- Modo En Vivo ----------
   var vivoTimer = null;
+  function recibir(p) {
+    // Si el rango termina hoy, se extiende para incluir la nueva publicación.
+    if (ER.isoDia(ER.estado.hasta) === ER.isoDia(p.fecha)) ER.estado.hasta = finDia(p.fecha);
+    ER.emitir("nueva", p);
+  }
   function programarVivo() {
     clearTimeout(vivoTimer);
     if (!ER.estado.enVivo) return;
+    if (D.modo() === "real") {
+      // Datos reales: se vuelve a leer el JSON que actualiza el recolector.
+      vivoTimer = setTimeout(function () {
+        D.sincronizar().then(function (nuevas) {
+          nuevas.forEach(recibir);
+          pintarFuente();
+          programarVivo();
+        });
+      }, D.INTERVALO_REAL_MS);
+      return;
+    }
     vivoTimer = setTimeout(function () {
-      var p = D.nuevaPublicacion();
-      // Si el rango termina hoy, se extiende para incluir la nueva publicación.
-      if (ER.isoDia(ER.estado.hasta) === ER.isoDia(p.fecha)) ER.estado.hasta = finDia(p.fecha);
-      ER.emitir("nueva", p);
+      recibir(D.nuevaPublicacion());
       programarVivo();
     }, 3500 + Math.random() * 5000);
   }
@@ -173,6 +186,18 @@
     });
     pintarVivo();
     programarVivo();
+  }
+
+  // ---------- Fuente de datos ----------
+  function pintarFuente() {
+    var el = document.getElementById("fuenteDatos");
+    var real = D.modo() === "real";
+    var act = D.actualizado();
+    el.classList.toggle("real", real);
+    el.textContent = real ? "Datos de X" + (act ? " · " + ER.fmtHora(act) : "") : "Datos simulados";
+    el.title = real
+      ? "Publicaciones reales capturadas desde la API de X. Última captura: " + (act ? ER.fmtLarga(act) : "desconocida")
+      : "Aún no hay datos capturados desde X; se muestran datos simulados";
   }
 
   // ---------- Navegación ----------
@@ -200,6 +225,11 @@
 
   ER.iniciar = function () {
     pintarIconos();
+    D.cargar().then(arrancar);
+  };
+
+  function arrancar() {
+    pintarFuente();
     iniciarRango();
     iniciarVivo();
     enlazarPopover("btnMenu", "popMenu");
@@ -213,7 +243,9 @@
       ER.abrirModal("Acerca de Emergency Radar",
         "<p><b>Emergency Radar</b> monitorea publicaciones de redes sociales para detectar " +
         "y ubicar emergencias (asaltos, incendios, accidentes de tránsito y desastres naturales) en Ecuador.</p>" +
-        "<p>Esta es una versión prototipo. Los datos que ves son simulados y los autores son ficticios.</p>" +
+        (D.modo() === "real"
+          ? "<p>Las publicaciones provienen de la API de X y se actualizan de forma periódica.</p>"
+          : "<p>Esta es una versión prototipo. Los datos que ves son simulados y los autores son ficticios.</p>") +
         "<p style='font-size:12px;color:#8a90a2'>Mapa base © OpenStreetMap, © CARTO. Íconos Tabler Icons. Gráficos Chart.js.</p>");
     });
     document.querySelectorAll("#modal [data-close]").forEach(function (b) { b.addEventListener("click", ER.cerrarModal); });
@@ -234,7 +266,7 @@
 
     window.addEventListener("hashchange", navegar);
     navegar();
-  };
+  }
 
   window.ER = ER;
 })();
