@@ -109,14 +109,26 @@
         </article>
 
         <article class="card card-freq">
-          <div class="card-head">
-            <div class="titulo-con-sub"><h2>Frecuencia de posts</h2><span class="hint">Posts por franja de 30 minutos en el periodo elegido, frente al periodo anterior</span></div>
-            <div class="legend">
-              <span><i class="sw sw-line"></i>Periodo seleccionado</span>
-              <span><i class="sw sw-line prev"></i>Periodo anterior</span>
+          <div class="card-head wrap">
+            <div class="titulo-con-sub"><h2>Frecuencia de posts</h2><span class="hint" id="freqSub"></span></div>
+            <div class="freq-controles">
+              <div class="segmented seg-mini" id="freqVista" role="tablist" aria-label="Vista">
+                <button type="button" data-vista="tiempo" role="tab">Línea de tiempo</button>
+                <button type="button" data-vista="hora" role="tab">Hora del día</button>
+              </div>
+              <div class="segmented seg-mini" id="freqRango" role="tablist" aria-label="Intervalo">
+                <button type="button" data-rango="6h" role="tab">6 h</button>
+                <button type="button" data-rango="24h" role="tab">24 h</button>
+                <button type="button" data-rango="3d" role="tab">3 días</button>
+                <button type="button" data-rango="7d" role="tab">7 días</button>
+                <button type="button" data-rango="periodo" role="tab">Periodo</button>
+              </div>
             </div>
           </div>
-          <div class="chart-box"><canvas id="chartFreq" aria-label="Frecuencia de publicaciones por hora del día"></canvas><div class="chart-tip" id="tipFreq" hidden></div></div>
+          <div class="legend freq-leyenda" id="freqLeyenda"></div>
+          <div class="chart-box"><canvas id="chartFreq" aria-label="Frecuencia de posts"></canvas><div class="chart-tip" id="tipFreq" hidden></div></div>
+          <div class="freq-picos" id="freqPicos"></div>
+          <div class="freq-detalle" id="freqDetalle" hidden></div>
         </article>
       </div>
 
@@ -254,6 +266,16 @@
       </article>
     </section>
   </main>
+
+  <footer class="pie">
+    <div class="pie-texto">
+      <b>Emergency Radar</b> implementa el modelo semisupervisado de grafo kNN para etiquetar emergencias en X propuesto en:
+      Parraga-Alava, J., Rodas-Silva, J., Franco, J. y Vélez, M.-J. (2026). <i>A graph-based semi-supervised approach for automatic text corpus emergency events labelling in X (Twitter)</i>.
+      Big Data Research, 45, 100630.
+      <a href="https://doi.org/10.1016/j.bdr.2026.100630" target="_blank" rel="noopener">https://doi.org/10.1016/j.bdr.2026.100630</a>
+    </div>
+    <div class="pie-meta">Datos: publicaciones públicas de X. Mapas: © colaboradores de OpenStreetMap, HOT y Esri.</div>
+  </footer>
 
   <!-- Modal genérico -->
   <div class="modal" id="modal" hidden>

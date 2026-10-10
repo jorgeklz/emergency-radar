@@ -22,8 +22,8 @@
   }
   function pct(a, b) { return b ? Math.round((a / b) * 1000) / 10 : 0; }
 
-  // Escala de calor del sistema: verde (poca actividad) a amarillo y rojo (mucha).
-  var PASOS = [[234, 246, 236], [47, 158, 68], [240, 164, 0], [201, 42, 42]];
+  // Escala de mapa de calor: blanco (sin actividad), amarillo, anaranjado y rojo (máxima).
+  var PASOS = [[248, 249, 251], [255, 212, 59], [255, 146, 43], [224, 49, 49]];
   function colorSecuencial(t) {
     t = Math.max(0, Math.min(1, t)) * (PASOS.length - 1);
     var i = Math.min(Math.floor(t), PASOS.length - 2), f = t - i, a = PASOS[i], b = PASOS[i + 1];

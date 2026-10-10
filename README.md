@@ -8,7 +8,7 @@ Todo lo que muestra el sitio son **publicaciones reales de X** que un recolector
 
 ## Secciones
 
-**Principal.** Resumen animado de las últimas 24 horas (emergencias y su tendencia, última hora, categoría y zona más activas, cuántos posts filtró el modelo). Mapa con dos modos (Geolocalización con agrupación de reportes y Mapa de Calor), cuatro mapas base (Calles a color, Humanitario, Gris y Satélite), puntos con el color de su categoría, filtro por categorías ("Estás viendo"), posts recientes de las últimas 24 horas con aviso de publicaciones nuevas, Pre Alertas (ver abajo) y la frecuencia de publicaciones por franja de 30 minutos comparada con el periodo anterior.
+**Principal.** Resumen animado de las últimas 24 horas (emergencias y su tendencia, última hora, categoría y zona más activas, cuántos posts filtró el modelo). Mapa con dos modos (Geolocalización con agrupación de reportes y Mapa de Calor), cuatro mapas base (Calles a color, Humanitario, Gris y Satélite), puntos con el color de su categoría, filtro por categorías ("Estás viendo"), posts recientes de las últimas 24 horas con aviso de publicaciones nuevas, Pre Alertas (ver abajo) y Frecuencia de posts, con una línea de tiempo por gravedad en intervalos de 6 h, 24 h, 3 días, 7 días o el periodo elegido, picos detectados automáticamente (franjas por encima de la media más dos desviaciones) y los posts de cada franja al hacer clic; o el patrón por hora del día frente al periodo anterior y la frecuencia de publicaciones por franja de 30 minutos comparada con el periodo anterior.
 
 **Histórico.** Publicaciones por día apiladas por categoría y un registro de 10 en 10 con búsqueda, filtros, resultado del modelo, enlace a cada publicación en X y exportación a CSV.
 
@@ -20,7 +20,8 @@ En la barra superior están la hora de la última captura, el botón **En Vivo**
 
 ## Colores
 
-- **Gravedad (rojo, amarillo, verde):** el rojo indica más emergencia, el amarillo una gravedad media y el verde menos. Se usa en los puntos y grupos del mapa, en el mapa de calor, en el borde y la etiqueta de cada post, en la actividad por día y hora y en los niveles de Pre Alertas. La gravedad de un post combina la probabilidad del modelo con un plus si menciona heridos o fallecidos; la de un grupo del mapa sigue la cantidad de reportes (verde menos de 5, amarillo de 5 a 14, rojo 15 o más). Siempre va acompañada de texto o ícono.
+- **Gravedad (rojo, amarillo, verde):** el rojo indica más emergencia, el amarillo una gravedad media y el verde menos. Se usa en los puntos y grupos del mapa, en el borde y la etiqueta de cada post, en la línea de tiempo de Frecuencia y en los niveles de Pre Alertas. La gravedad de un post combina la probabilidad del modelo con un plus si menciona heridos o fallecidos; la de un grupo del mapa sigue la cantidad de reportes (verde menos de 5, amarillo de 5 a 14, rojo 15 o más). Siempre va acompañada de texto o ícono.
+- **Mapas de calor (blanco, amarillo, anaranjado, rojo):** el modo Mapa de Calor y la actividad por día y hora van de blanco (sin peligro) a amarillo (medio), anaranjado (alto) y rojo (extremo).
 - **Categorías (azul, magenta, violeta, cian):** identifican el tipo de emergencia y a propósito no usan rojo, amarillo ni verde, para no confundirse con la gravedad. La paleta pasa las pruebas de separación para daltonismo y de contraste.
 
 ## Pre Alertas
@@ -186,5 +187,8 @@ Toda la interfaz lee los datos a través de `window.ER_DATA` (en `assets/js/data
 Las categorías y las ciudades están en `assets/js/catalogo.js`, con su ícono, color, palabras clave y coordenadas. Tu propio modelo de clasificación puede alimentar el sitio con solo escribir ese mismo JSON.
 
 ## Créditos
+
+Esta app implementa el modelo del artículo [https://doi.org/10.1016/j.bdr.2026.100630](https://doi.org/10.1016/j.bdr.2026.100630) (Parraga-Alava, Rodas-Silva, Franco y Vélez, *Big Data Research* 45, 2026). La referencia aparece en el pie de página de todo el sitio.
+
 
 Mapas base © colaboradores de [OpenStreetMap](https://www.openstreetmap.org/copyright), estilo humanitario de [HOT](https://www.hotosm.org/) e imágenes satelitales © Esri. Íconos de [Tabler Icons](https://tabler.io/icons) (MIT). Gráficos con [Chart.js](https://www.chartjs.org/) (MIT). Mapas con [Leaflet](https://leafletjs.com/) (BSD-2).

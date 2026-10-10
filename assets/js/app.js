@@ -261,6 +261,14 @@
     var dd = Math.floor(s / 86400);
     return "hace " + dd + (dd === 1 ? " día" : " días");
   };
+  // Versión corta para etiquetas del mapa: "ahora", "12 min", "3 h", "2 d".
+  ER.haceCorto = function (d) {
+    var s = (Date.now() - d.getTime()) / 1000;
+    if (s < 60) return "ahora";
+    if (s < 3600) return Math.floor(s / 60) + " min";
+    if (s < 86400) return Math.floor(s / 3600) + " h";
+    return Math.floor(s / 86400) + " d";
+  };
   ER.htmlHace = function (d) {
     return '<time data-hace="' + d.toISOString() + '" datetime="' + d.toISOString() + '" title="' + ER.fmtLarga(d) + '">' + ER.hace(d) + "</time>";
   };
