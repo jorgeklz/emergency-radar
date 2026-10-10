@@ -55,25 +55,34 @@
   }
 
   // Tarjeta de publicación reutilizada en la lista y en el modal "Ver todo".
+  // Tarjeta compacta: autor y hora en la cabecera, texto en hasta 3 líneas (clic para ver todo)
+  // y una sola línea con categoría, ciudad y decisión del modelo.
   function htmlPost(p, nuevo) {
     var cat = D.categoria(p.categoria);
     var g = ER.severidad(p).nivel;
+    var k = (D.modelo() || {}).k || 7;
+    var modelo = "";
+    if (p.emergencia !== null) {
+      var detalle = p.vecinos !== null ? p.vecinos + " de " + k + " publicaciones parecidas del corpus son emergencias" : "";
+      modelo = '<span class="pm-sep">·</span><span class="pm-modelo grav-' + (p.emergencia ? g.id : "baja") + '" title="' + g.nombre + ". " + detalle + '">' +
+        window.icon("tag") + (p.emergencia ? "Emergencia " + Math.round(p.prob * 100) + " %" : "Descartada") + "</span>";
+    }
     return '<article class="post grav-borde-' + g.id + (nuevo ? " nuevo" : "") + '">' +
       '<div class="post-head">' +
         '<div class="avatar" style="background:' + p.autor.color + '">' + ER.iniciales(p.autor.nombre) + "</div>" +
         '<div class="who"><b>' + ER.escapar(p.autor.nombre) +
           (p.autor.verificado ? ' <span class="verified" title="Cuenta verificada">' + CHECK + "</span>" : "") +
-          "</b><small>@" + ER.escapar(p.autor.usuario) + "</small></div>" +
+          "</b><small>@" + ER.escapar(p.autor.usuario) + " · " + ER.htmlHace(p.fecha) + "</small></div>" +
         (p.url
-          ? '<a class="post-src" href="' + ER.escapar(p.url) + '" target="_blank" rel="noopener" title="Ver publicación original">' + iconoX() + "</a>"
+          ? '<a class="post-src" href="' + ER.escapar(p.url) + '" target="_blank" rel="noopener" title="Ver en X">' + iconoX() + "</a>"
           : '<span class="post-src">' + iconoX() + "</span>") +
       "</div>" +
-      "<p>" + textoEnriquecido(p.texto) + "</p>" +
-      '<div class="post-foot">' + ER.htmlHace(p.fecha) +
-        (p.url ? '<span>·</span><a class="client" href="' + ER.escapar(p.url) + '" target="_blank" rel="noopener">Ver en X</a>' : "") +
-        '<span class="cat"><i style="background:' + cat.color + '"></i>' + cat.nombre + " · " + ER.escapar(p.ciudad) + "</span>" +
+      '<p class="post-texto" title="Clic para ver el texto completo">' + textoEnriquecido(p.texto) + "</p>" +
+      '<div class="post-meta">' +
+        '<span class="pm-cat" style="--k:' + cat.color + '">' + window.icon(cat.icono) + cat.nombre + "</span>" +
+        '<span class="pm-sep">·</span><span class="pm-ciudad">' + window.icon("map-pin") + ER.escapar(p.ciudad) + "</span>" +
+        modelo +
       "</div>" +
-      (p.emergencia !== null ? '<div class="post-modelo">' + etiquetaModelo(p) + "</div>" : "") +
     "</article>";
   }
   ER.htmlPost = htmlPost;
@@ -925,6 +934,11 @@
       iniciarFrecuencia();
       document.getElementById("pillNuevos").addEventListener("click", mostrarPendientes);
       document.getElementById("btnVerTodo").addEventListener("click", verTodo);
+      // Clic en el texto de un post: lo muestra completo o lo vuelve a recortar.
+      document.addEventListener("click", function (ev) {
+        var t = ev.target.closest(".post-texto");
+        if (t && !ev.target.closest("a")) t.classList.toggle("completo");
+      });
       pintarTodo(true);
     },
     mostrar: function () {
