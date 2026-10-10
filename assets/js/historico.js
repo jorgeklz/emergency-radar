@@ -69,12 +69,12 @@
       var c = D.categoria(p.categoria);
       return "<tr>" +
         '<td class="nowrap h-fecha">' + ER.fmtFechaCorta(p.fecha) + "<br><small style=\"color:#8a90a2\">" + ER.fmtHora(p.fecha) + " · " + ER.htmlHace(p.fecha) + "</small></td>" +
-        '<td class="h-cat"><span class="tag-cat"><i style="background:' + c.color + '"></i>' + c.nombre + "</span></td>" +
+        '<td class="h-cat"><span class="tag-cat">' + window.icon(c.icono) + c.nombre + "</span></td>" +
         '<td class="nowrap h-ciudad">' + ER.escapar(p.ciudad) + (p.lat === null ? "" : ' <span title="Geolocalizada" style="color:#2f7be5">' + window.icon("map-pin", "") + "</span>") + "</td>" +
-        '<td class="nowrap h-autor">' + ER.escapar(p.autor.nombre) + '<br><small style="color:#8a90a2">@' + ER.escapar(p.autor.usuario) + "</small></td>" +
+        '<td class="nowrap h-autor"><b>' + ER.escapar(p.autor.nombre) + '</b><br><small style="color:#8a90a2">@' + ER.escapar(p.autor.usuario) + "</small></td>" +
         '<td class="txt">' + ER.escapar(p.texto) + "</td>" +
         '<td class="nowrap h-modelo">' + (ER.etiquetaModelo(p) || '<span class="modelo">Sin clasificar</span>') + "</td>" +
-        '<td class="nowrap h-link">' + (p.url ? '<a class="link-x" href="' + ER.escapar(p.url) + '" target="_blank" rel="noopener">' + window.icon("brand-x") + "Ver en X</a>" : "") + "</td></tr>";
+        '<td class="nowrap h-link">' + (p.url ? '<a class="link-x" href="' + ER.escapar(p.url) + '" target="_blank" rel="noopener">' + "Ver en" + window.icon("brand-x") + "</a>" : "") + "</td></tr>";
     }).join("") : '<tr><td colspan="7" class="empty">' + ER.mensajeSinDatos("No hay publicaciones para los filtros seleccionados.") + "</td></tr>";
     document.querySelectorAll("#histBody .ic").forEach(function (i) { i.style.width = i.style.height = "14px"; });
     document.getElementById("histInfo").textContent = total
@@ -142,7 +142,7 @@
         D.CATEGORIAS.map(function (c) { return '<option value="' + c.id + '">' + c.nombre + "</option>"; }).join("") +
         '<option value="__sel" hidden></option>';
       document.getElementById("legendHist").innerHTML = D.CATEGORIAS.map(function (c) {
-        return '<span><i class="sw" style="background:' + c.color + '"></i>' + c.nombre + "</span>";
+        return '<span><i class="sw" style="background:' + c.color + '"></i>' + window.icon(c.icono) + c.nombre + "</span>";
       }).join("");
 
       chart = new Chart(document.getElementById("chartHist"), {

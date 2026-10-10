@@ -8,7 +8,7 @@ Todo lo que muestra el sitio son **publicaciones reales de X** que un recolector
 
 ## Secciones
 
-**Principal.** Resumen animado de las últimas 24 horas (emergencias y su tendencia, última hora, categoría y zona más activas). Mapa con dos modos (Geolocalización con agrupación de reportes y Mapa de Calor), cuatro mapas base (Calles por defecto, Humanitario, Gris y Satélite), puntos con el color de su categoría, filtro por categorías ("Estás viendo"), posts recientes de las últimas 24 horas con aviso de publicaciones nuevas, Pre-alertas (ver abajo) y Frecuencia de posts, con una línea de tiempo por gravedad en intervalos de 6 h, 24 h, 3 días, 7 días o el periodo elegido, picos detectados automáticamente (franjas por encima de la media más dos desviaciones) y los posts de cada franja al hacer clic.
+**Principal.** Resumen animado de las últimas 24 horas (emergencias y su tendencia, última hora, categoría y zona más activas). Mapa de geolocalización con agrupación de reportes, cuatro mapas base (Calles por defecto, Humanitario, Gris y Satélite), puntos con el color de su categoría, filtro por categorías ("Estás viendo"), posts recientes de las últimas 24 horas con aviso de publicaciones nuevas, Pre-alertas (ver abajo) y Frecuencia de posts, con una línea de tiempo por gravedad en intervalos de 6 h, 24 h, 3 días, 7 días o el periodo elegido, picos detectados automáticamente (franjas por encima de la media más dos desviaciones) y los posts de cada franja al hacer clic.
 
 **Histórico.** Publicaciones por día apiladas por categoría y un registro de 10 en 10 con búsqueda, filtros, resultado del modelo, enlace a cada publicación en X y exportación a CSV.
 
@@ -21,7 +21,7 @@ En la barra superior están la hora de la última captura, el botón **En vivo**
 ## Colores
 
 - **Gravedad (rojo, amarillo, verde):** el rojo indica más emergencia, el amarillo una gravedad media y el verde menos. Se usa en los puntos y grupos del mapa, en el borde y la etiqueta de cada post, en la línea de tiempo de Frecuencia y en los niveles de Pre-alertas. La gravedad de un post combina la probabilidad del modelo con un plus si menciona heridos o fallecidos; la de un grupo del mapa sigue la cantidad de reportes (verde menos de 5, amarillo de 5 a 14, rojo 15 o más). Siempre va acompañada de texto o ícono.
-- **Mapas de calor (blanco, amarillo, anaranjado, rojo):** el modo Mapa de Calor y la actividad por día y hora van de blanco (sin peligro) a amarillo (medio), anaranjado (alto) y rojo (extremo).
+- **Escala de calor (blanco, amarillo, anaranjado, rojo):** las manchas del mapa y la actividad por día y hora van de blanco (sin peligro) a amarillo (medio), anaranjado (alto) y rojo (extremo).
 - **Categorías (azul, magenta, violeta, cian):** identifican el tipo de emergencia y a propósito no usan rojo, amarillo ni verde, para no confundirse con la gravedad. La paleta pasa las pruebas de separación para daltonismo y de contraste.
 
 ## Pre-alertas
@@ -194,7 +194,7 @@ assets/js/config.js         Configuración pública (contador de visitas)
 assets/js/visitas.js        Contador de visitas
 supabase/visitas.sql        Tabla y funciones del contador en Supabase
 assets/js/icons.js          Íconos SVG (Tabler Icons)
-assets/vendor/              Leaflet, Leaflet.markercluster, Leaflet.heat y Chart.js
+assets/vendor/              Leaflet, Leaflet.markercluster y Chart.js
 collector/                  Recolector de X (Node 20, sin dependencias) y sus pruebas
 modelo/                     Modelo LSI + kNN en Python: corpus, preprocesamiento, evaluación y clasificación
 data/posts.json             Publicaciones capturadas (lo actualiza GitHub Actions)

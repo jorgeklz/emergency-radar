@@ -1,6 +1,6 @@
 /*
  * Emergency Radar · vista Principal
- * Mapa (geolocalización / mapa de calor), posts recientes,
+ * Mapa de geolocalización, posts recientes,
  * pre-alertas y frecuencia de publicaciones con detección de picos.
  */
 (function () {
@@ -12,12 +12,11 @@
   // Los filtros (categorías, ciudad, clasificación del modelo) viven en ER.filtros
   // y se comparten con Histórico y Estadísticas.
   var st = {
-    modo: "geo",
     alertas: { horas: 6, abiertas: {} },
     pendientes: []
   };
 
-  var mapa, capaGrupos, capaCalor, spotlights = [], chart;
+  var mapa, capaGrupos, spotlights = [], chart;
 
   // ================= Utilidades =================
   function filtroBase() { return ER.consulta(); }
@@ -182,13 +181,13 @@
       "<p>" + textoEnriquecido(p.texto) + "</p>" +
       '<div class="foot">' + ER.escapar(p.autor.nombre) + " · " + ER.fmtLarga(p.fecha) + " (" + ER.hace(p.fecha) + ")</div>" +
       '<div class="foot2">' + etiquetaModelo(p) +
-      (p.url ? '<a class="link-x" href="' + ER.escapar(p.url) + '" target="_blank" rel="noopener">' + window.icon("brand-x") + "Ver en X</a>" : "") +
+      (p.url ? '<a class="link-x" href="' + ER.escapar(p.url) + '" target="_blank" rel="noopener">' + "Ver en" + window.icon("brand-x") + "</a>" : "") +
       "</div></div>";
   }
 
   function iconoGrupo(cluster) {
     var n = cluster.getChildCount();
-    // Tamaño parecido al de una mancha del mapa de calor (radio 34 px + difuminado).
+    // Manchas suaves, más grandes cuantos más reportes agrupan.
     var s = n < 10 ? 76 : n < 50 ? 88 : n < 200 ? 100 : 112;
     var nivel = ER.nivelPorCantidad(n);
     return L.divIcon({
@@ -229,7 +228,7 @@
   function refrescarSpotlights() {
     spotlights.forEach(function (capa) { capa.unbindTooltip(); capa._erSpot = false; });
     spotlights = [];
-    if (st.modo !== "geo" || !mapa) return;
+    if (!mapa) return;
     var limites = mapa.getBounds().pad(-0.08);
     var vistos = [];
     var marcadores = capaGrupos.getLayers().slice().sort(function (a, b) { return b._erPost.fecha - a._erPost.fecha; });
@@ -346,51 +345,8 @@
     capaGrupos.on("animationend", programarSpotlights);
     mapa.on("moveend", programarSpotlights);
 
-    // Evita que la capa de calor dibuje cuando el mapa está oculto (tamaño 0).
-    var redibujar = L.HeatLayer.prototype._redraw;
-    L.HeatLayer.prototype._redraw = function () {
-      if (!this._map || this._map.getSize().x === 0 || this._map.getSize().y === 0) { this._frame = null; return; }
-      return redibujar.call(this);
-    };
-    // Cada post pesa según su gravedad, así el calor refleja peligro y no solo cantidad.
-    // Blanco = sin peligro, amarillo = medio, anaranjado = alto, rojo = extremo.
-    capaCalor = L.heatLayer([], {
-      radius: 34, blur: 24, maxZoom: 11, max: 2.5, minOpacity: 0.55,
-      gradient: { 0.05: "#ffffff", 0.3: "#fff3a0", 0.5: "#ffd000", 0.7: "#ff8c00", 0.88: "#f03e3e", 1: "#c00000" }
-    });
-
-    document.querySelectorAll(".card-map .segmented button").forEach(function (b) {
-      b.addEventListener("click", function () {
-        st.modo = b.getAttribute("data-modo");
-        document.querySelectorAll(".card-map .segmented button").forEach(function (x) {
-          var on = x === b;
-          x.classList.toggle("active", on);
-          x.setAttribute("aria-selected", String(on));
-        });
-        aplicarModo();
-      });
-    });
-    aplicarModo();
-  }
-
-  // Peso de un post en el mapa de calor: gravedad alta 1, media 0,6, baja 0,3.
-  function pesoCalor(p) {
-    var g = ER.severidad(p).nivel.id;
-    return g === "alta" ? 1 : g === "media" ? 0.6 : 0.3;
-  }
-
-  function aplicarModo() {
-    // En modo calor el mapa base se atenúa para que el blanco y el amarillo resalten.
-    document.getElementById("map").classList.toggle("modo-calor", st.modo !== "geo");
-    if (st.modo === "geo") {
-      if (mapa.hasLayer(capaCalor)) mapa.removeLayer(capaCalor);
-      if (!mapa.hasLayer(capaGrupos)) mapa.addLayer(capaGrupos);
-    } else {
-      if (mapa.hasLayer(capaGrupos)) mapa.removeLayer(capaGrupos);
-      if (!mapa.hasLayer(capaCalor)) mapa.addLayer(capaCalor);
-    }
+    mapa.addLayer(capaGrupos);
     pintarLeyendaMapa();
-    programarSpotlights();
   }
 
   function pintarLeyendaMapa(total) {
@@ -405,9 +361,7 @@
     var cats = '<span class="ley-cats">' + D.CATEGORIAS.filter(function (c) { return ER.filtros.categorias.indexOf(c.id) >= 0; }).map(function (c) {
       return '<span title="' + c.nombre + '">' + window.icon(c.icono) + c.nombre + "</span>";
     }).join("") + "</span>";
-    el.innerHTML = st.modo === "geo"
-      ? escala + cats + '<span class="ley-grupos">Grupos: amarillo menos de 5 reportes, naranja de 5 a 14, rojo 15 o más</span>' + base
-      : '<span class="ley-calor"><b>Peligro</b><span class="ramp-calor"><i></i></span><span class="ramp-etq"><span>Sin peligro</span><span>Medio</span><span>Alto</span><span>Extremo</span></span></span>' + base;
+    el.innerHTML = escala + cats + '<span class="ley-grupos">Grupos: amarillo menos de 5 reportes, naranja de 5 a 14, rojo 15 o más</span>' + base;
   }
 
   // `ajustar`: centra el mapa en los resultados (al cambiar filtros o fechas, no con cada publicación en vivo).
@@ -421,7 +375,6 @@
     spotlights = [];
     capaGrupos.clearLayers();
     capaGrupos.addLayers(posts.map(function (p) { return crearMarcador(p, false); }));
-    capaCalor.setLatLngs(posts.map(function (p) { return [p.lat, p.lng, pesoCalor(p)]; }));
     pintarLeyendaMapa(posts.length);
     programarSpotlights();
   }
@@ -571,7 +524,7 @@
       var detalle = c.recientes.length ? c.recientes.map(function (p) {
         return '<li><span class="d-meta">' + ER.htmlHace(p.fecha) + " · " + ER.escapar(p.ciudad) + "</span>" +
           '<span class="d-texto">' + ER.escapar(p.texto.length > 140 ? p.texto.slice(0, 140) + "…" : p.texto) + "</span>" +
-          (p.url ? '<a class="link-x" href="' + ER.escapar(p.url) + '" target="_blank" rel="noopener">' + window.icon("brand-x") + "Ver en X</a>" : "") + "</li>";
+          (p.url ? '<a class="link-x" href="' + ER.escapar(p.url) + '" target="_blank" rel="noopener">' + "Ver en" + window.icon("brand-x") + "</a>" : "") + "</li>";
       }).join("") : '<li class="d-vacio">Sin posts en ' + nombreVentana(horas) + ".</li>";
       return '<li class="alerta-fila alerta-' + c.nivel.id + (abierta ? " abierta" : "") + '" data-cat="' + c.categoria.id + '">' +
         '<button type="button" class="alerta-cabecera" aria-expanded="' + abierta + '">' +
@@ -819,7 +772,7 @@
           '<div><span class="fd-meta"><b>' + c.nombre + "</b> · " + ER.escapar(p.ciudad) + " · " + ER.htmlHace(p.fecha) +
           (typeof p.prob === "number" ? " · " + Math.round(p.prob * 100) + " %" : "") + "</span>" +
           '<span class="fd-texto">' + ER.escapar(p.texto.length > 160 ? p.texto.slice(0, 160) + "…" : p.texto) + "</span></div>" +
-          (p.url ? '<a class="link-x" href="' + ER.escapar(p.url) + '" target="_blank" rel="noopener">' + window.icon("brand-x") + "Ver</a>" : "") + "</li>";
+          (p.url ? '<a class="link-x" href="' + ER.escapar(p.url) + '" target="_blank" rel="noopener">' + "Ver en" + window.icon("brand-x") + "</a>" : "") + "</li>";
       }).join("") + "</ul>";
     el.hidden = false;
     document.getElementById("fdCerrar").addEventListener("click", function () { seleccionarFranja(freq.sel); });
@@ -958,7 +911,6 @@
         pintarPildora();
         if (coincide(p) && p.lat !== null) {
           capaGrupos.addLayer(crearMarcador(p, true));
-          capaCalor.addLatLng([p.lat, p.lng, pesoCalor(p)]);
           pintarLeyendaMapa((pintarLeyendaMapa._t || 0) + 1);
         }
         refrescoDiferido();
