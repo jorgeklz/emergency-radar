@@ -74,3 +74,14 @@ test("combina sin duplicados y respeta la retención", () => {
   assert.deepEqual(r.map((p) => p.id), ["3", "2"]);
   assert.equal(r[1].texto, "a actualizado");
 });
+
+test("sin créditos (402) termina sin error y sin tocar el archivo", async () => {
+  const { main } = await import("./x-collector.mjs");
+  const original = globalThis.fetch;
+  globalThis.fetch = async () => ({ ok: false, status: 402, headers: { get: () => null }, json: async () => ({ title: "credits depleted" }) });
+  try {
+    assert.deepEqual(await main({ X_BEARER_TOKEN: "t" }), { cambios: 0 });
+  } finally {
+    globalThis.fetch = original;
+  }
+});

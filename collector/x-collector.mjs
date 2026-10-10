@@ -202,6 +202,11 @@ export async function main(env = process.env) {
       console.log(`::warning::Límite de solicitudes de X alcanzado. Se reintentará en la próxima ejecución (reinicio: ${cuando}).`);
       return { cambios: 0 };
     }
+    // Sin créditos la ejecución no falla: así no llega un correo de error cada 15 minutos.
+    if (e instanceof ErrorAPI && e.estado === 402) {
+      console.log(`::warning::${e.message}. La cuenta de X no tiene créditos disponibles; recárgalos en el portal de desarrolladores de X. No se capturó nada.`);
+      return { cambios: 0 };
+    }
     if (e instanceof ErrorAPI && (e.estado === 401 || e.estado === 403)) {
       console.log(`::error::${e.message}. Revisa que el token sea válido y que tu plan de la API de X permita la búsqueda reciente.`);
     }
