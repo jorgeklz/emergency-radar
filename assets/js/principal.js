@@ -810,7 +810,8 @@
         (b.alta ? '<span class="pc-grave">' + b.alta + " de gravedad alta</span>" : "") +
         "</button>";
     }).join("");
-    return cab + '<div class="picos-lista">' + tarjetas + "</div>";
+    // Con un solo pico la tarjeta ocupa todo el ancho del panel, en una sola fila.
+    return cab + '<div class="picos-lista' + (freq.picos.length === 1 ? " uno" : "") + '">' + tarjetas + "</div>";
   }
 
   function pintarDetalleFranja() {
