@@ -64,7 +64,7 @@
     chartCat.data.datasets[0].backgroundColor = D.CATEGORIAS.map(function (c) { return c.color; });
     chartCat.update();
     document.getElementById("legendCat").innerHTML = D.CATEGORIAS.map(function (c, i) {
-      return '<li><i class="sw" style="background:' + c.color + '"></i><span>' + c.nombre + '</span><span class="n">' +
+      return '<li><i class="sw" style="background:' + c.color + '"></i>' + window.icon(c.icono) + "<span>" + c.nombre + '</span><span class="n">' +
         ER.fmtNum(datos[i]) + '</span><span class="p">' + pct(datos[i], posts.length).toString().replace(".", ",") + " %</span></li>";
     }).join("");
   }
@@ -78,22 +78,42 @@
     chartCiud.update();
   }
 
+  // En pantallas angostas la cuadrícula se transpone (días en columnas, horas en filas) para no desbordarse.
+  var vertical = window.matchMedia("(max-width: 640px)");
+  var ultimosHeat = null;
   function pintarHeatgrid(posts) {
+    ultimosHeat = posts;
     var g = DIAS.map(function () { return new Array(24).fill(0); });
     posts.forEach(function (p) { g[(p.fecha.getDay() + 6) % 7][p.fecha.getHours()]++; });
     var max = Math.max.apply(null, g.map(function (r) { return Math.max.apply(null, r); })) || 1;
-    var html = "<table><thead><tr><th></th>";
-    for (var h = 0; h < 24; h++) html += "<th>" + (h % 3 === 0 ? ER.pad(h) + "h" : "") + "</th>";
-    html += "</tr></thead><tbody>";
-    g.forEach(function (fila, d) {
-      html += '<tr><th class="row">' + DIAS[d] + "</th>";
-      fila.forEach(function (v, h) {
-        html += '<td style="background:' + colorSecuencial(v / max) + '" title="' + DIAS[d] + " " + ER.pad(h) + ":00 · " + ER.fmtNum(v) + ' publicaciones"></td>';
-      });
-      html += "</tr>";
-    });
-    document.getElementById("heatgrid").innerHTML = html + "</tbody></table>";
+    var celda = function (d, h) {
+      var v = g[d][h];
+      return '<td style="background:' + colorSecuencial(v / max) + '" title="' + DIAS[d] + " " + ER.pad(h) + ":00 · " + ER.fmtNum(v) + ' publicaciones"></td>';
+    };
+    var html = "<table><thead><tr><th></th>", d, h;
+    if (vertical.matches) {
+      DIAS.forEach(function (dia) { html += "<th>" + dia + "</th>"; });
+      html += "</tr></thead><tbody>";
+      for (h = 0; h < 24; h++) {
+        html += '<tr><th class="row">' + ER.pad(h) + "h</th>";
+        for (d = 0; d < 7; d++) html += celda(d, h);
+        html += "</tr>";
+      }
+    } else {
+      for (h = 0; h < 24; h++) html += "<th>" + (h % 3 === 0 ? ER.pad(h) + "h" : "") + "</th>";
+      html += "</tr></thead><tbody>";
+      for (d = 0; d < 7; d++) {
+        html += '<tr><th class="row">' + DIAS[d] + "</th>";
+        for (h = 0; h < 24; h++) html += celda(d, h);
+        html += "</tr>";
+      }
+    }
+    var el = document.getElementById("heatgrid");
+    el.classList.toggle("vertical", vertical.matches);
+    el.innerHTML = html + "</tbody></table>";
   }
+  var alCambiar = function () { if (ultimosHeat) pintarHeatgrid(ultimosHeat); };
+  if (vertical.addEventListener) vertical.addEventListener("change", alCambiar); else vertical.addListener(alCambiar);
 
   // Cuántas publicaciones pudieron ubicarse en el mapa y cuántas no.
   function pintarUbicacion(posts) {

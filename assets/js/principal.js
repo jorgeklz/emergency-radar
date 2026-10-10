@@ -302,8 +302,8 @@
   function iniciarMapa() {
     mapa = L.map("map", { zoomControl: true, minZoom: 5, maxZoom: 17, worldCopyJump: false })
       .setView([-1.86, -79.75], 8);
-    // Mapas base sin API key. Por defecto "Humanitario" (OpenStreetMap, estilo HOT); se puede
-    // cambiar desde el control de capas y la elección se recuerda en este navegador.
+    // Mapas base sin API key. Por defecto "Calles" (OpenStreetMap); se puede cambiar desde el
+    // control de capas (abajo a la izquierda) y la elección se recuerda en este navegador.
     var osm = '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>';
     var bases = {
       "Calles": L.tileLayer("https://tile.openstreetmap.org/{z}/{x}/{y}.png", { attribution: osm, maxZoom: 19 }),
@@ -313,12 +313,12 @@
       "Satélite": L.tileLayer("https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}", {
         attribution: "Imágenes &copy; Esri", maxZoom: 19 })
     };
-    var elegida = "Humanitario";
-    try { if (bases[localStorage.getItem("er-mapa-base-v2")]) elegida = localStorage.getItem("er-mapa-base-v2"); } catch (e) { /* sin almacenamiento */ }
+    var elegida = "Calles";
+    try { if (bases[localStorage.getItem("er-mapa-base-v3")]) elegida = localStorage.getItem("er-mapa-base-v3"); } catch (e) { /* sin almacenamiento */ }
     bases[elegida].addTo(mapa);
-    L.control.layers(bases, null, { position: "topright", collapsed: true }).addTo(mapa);
+    L.control.layers(bases, null, { position: "bottomleft", collapsed: true }).addTo(mapa);
     mapa.on("baselayerchange", function (e) {
-      try { localStorage.setItem("er-mapa-base-v2", e.name); } catch (err) { /* sin almacenamiento */ }
+      try { localStorage.setItem("er-mapa-base-v3", e.name); } catch (err) { /* sin almacenamiento */ }
     });
     mapa.zoomControl.setPosition("bottomright");
     controlUbicacion().addTo(mapa);
@@ -880,8 +880,6 @@
     var actual = D.filtrar(ER.consulta({ desde: v.desde, hasta: v.hasta }));
     var previo = D.filtrar(ER.consulta({ desde: v.prevDesde, hasta: v.prevHasta }));
     var ultimaHora = actual.filter(function (p) { return p.fecha >= v.hasta - 3600000; }).length;
-    var todas = D.filtrar(ER.consulta({ desde: v.desde, hasta: v.hasta, clasificacion: "todas" }));
-    var descartadas = todas.filter(function (p) { return p.emergencia === false; }).length;
 
     var porCat = {}, porCiudad = {};
     actual.forEach(function (p) {
@@ -898,20 +896,18 @@
     var clase = { emergencias: "Emergencias", todas: "Posts", descartadas: "Descartadas" }[ER.filtros.clasificacion];
 
     var tiles = [
-      { id: "r24", lbl: clase + " · 24 h", valor: actual.length, sub: tendencia },
-      { id: "r1h", lbl: "Última hora", valor: ultimaHora, sub: ultimaHora ? "posts en los últimos 60 minutos" : "Sin reportes en la última hora" },
-      { id: "rcat", lbl: "Categoría con más reportes", texto: cat ? D.categoria(cat).nombre : "–",
-        color: cat ? D.categoria(cat).color : null, sub: cat ? ER.fmtNum(porCat[cat]) + " de " + ER.fmtNum(actual.length) + " posts" : "Sin reportes" },
-      { id: "rzona", lbl: "Zona más activa", texto: ciudad || "–", sub: ciudad ? ER.fmtNum(porCiudad[ciudad]) + " posts ubicados" : "Sin posts ubicados" },
-      { id: "rmod", lbl: "Filtradas por el modelo", valor: descartadas,
-        sub: todas.length ? "de " + ER.fmtNum(todas.length) + " posts analizados no eran emergencias" : "Sin posts analizados" }
+      { id: "r24", icono: "alert-triangle", lbl: clase + " · 24&nbsp;h", valor: actual.length, sub: tendencia },
+      { id: "r1h", icono: "clock", lbl: "Última hora", valor: ultimaHora, sub: ultimaHora ? "posts en los últimos 60 minutos" : "Sin reportes en la última hora" },
+      { id: "rcat", icono: cat ? D.categoria(cat).icono : "chart-bar", lbl: "Categoría con más reportes", texto: cat ? D.categoria(cat).nombre : "–",
+        sub: cat ? ER.fmtNum(porCat[cat]) + " de " + ER.fmtNum(actual.length) + " posts" : "Sin reportes" },
+      { id: "rzona", icono: "map-pin", lbl: "Zona más activa", texto: ciudad || "–", sub: ciudad ? ER.fmtNum(porCiudad[ciudad]) + " posts ubicados" : "Sin posts ubicados" }
     ];
     var el = document.getElementById("resumen");
     el.innerHTML = tiles.map(function (t) {
       var cuerpo = "valor" in t
         ? '<b class="r-val" data-id="' + t.id + '">' + ER.fmtNum(previoResumen[t.id] || 0) + "</b>"
-        : '<b class="r-val r-texto">' + (t.color ? '<i style="background:' + t.color + '"></i>' : "") + ER.escapar(t.texto) + "</b>";
-      return '<div class="r-tile"><span class="r-lbl">' + t.lbl + "</span>" + cuerpo + '<span class="r-sub">' + t.sub + "</span></div>";
+        : '<b class="r-val r-texto">' + ER.escapar(t.texto) + "</b>";
+      return '<div class="r-tile"><span class="r-lbl">' + window.icon(t.icono) + t.lbl + "</span>" + cuerpo + '<span class="r-sub">' + t.sub + "</span></div>";
     }).join("");
     tiles.forEach(function (t) {
       if (!("valor" in t)) return;
