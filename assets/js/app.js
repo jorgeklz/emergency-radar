@@ -27,8 +27,8 @@
     _oyentes: [],
 
     // ---------- filtros globales ----------
-    // Un solo estado para toda la app: lo que se elige en "Estás viendo",
-    // en Pre-alertas o en Histórico aplica en las tres pestañas.
+    // Estado compartido por Principal e Histórico: lo que se elige en "Estás viendo",
+    // en Pre-alertas o en Histórico aplica en ambas. Estadísticas tiene sus propios filtros.
     filtros: {
       categorias: D.CATEGORIAS.map(function (c) { return c.id; }),
       ciudad: "",
@@ -342,6 +342,7 @@
   function navegar() {
     var ruta = rutaActual();
     ER.estado.vista = ruta;
+    document.body.setAttribute("data-vista", ruta);
     document.querySelectorAll("[data-view]").forEach(function (v) { v.hidden = v.getAttribute("data-view") !== ruta; });
     document.querySelectorAll(".tabs a").forEach(function (a) {
       var on = a.getAttribute("data-route") === ruta;

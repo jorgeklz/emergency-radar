@@ -32,7 +32,7 @@
         <span class="live-dot"></span><span class="live-label">En vivo</span>
       </button>
 
-      <div class="popover-anchor">
+      <div class="popover-anchor anchor-rango">
         <button id="btnRango" class="date-range" type="button" aria-haspopup="dialog">
           <span id="rangoDesde">----/--/--</span>
           <span class="ic-wrap" data-icon="arrow-right"></span>
@@ -215,7 +215,31 @@
 
     <!-- ============ ESTADÍSTICAS ============ -->
     <section class="view view-estadisticas" data-view="estadisticas" hidden>
-      <p class="resumen-filtros" id="resumenFiltros"></p>
+      <!-- Filtros propios de Estadísticas: no dependen de las otras pestañas ni del rango de la barra superior. -->
+      <article class="card est-filtros" aria-label="Filtros de estadísticas">
+        <div class="est-cab">
+          <span class="est-titulo"><span class="ic-wrap" data-icon="filter"></span>Filtros de esta pestaña</span>
+          <div class="segmented seg-mini" id="estPresets" role="group" aria-label="Periodo rápido">
+            <button type="button" data-preset="24h">24 h</button>
+            <button type="button" data-preset="7d">7 días</button>
+            <button type="button" data-preset="30d">30 días</button>
+            <button type="button" data-preset="todo">Todo</button>
+          </div>
+        </div>
+        <div class="est-campos">
+          <label class="est-campo"><span>Desde</span><input type="datetime-local" id="estDesde"></label>
+          <label class="est-campo"><span>Hasta</span><input type="datetime-local" id="estHasta"></label>
+          <label class="est-campo"><span>Categoría</span><select id="estCategoria"></select></label>
+          <label class="est-campo"><span>Ciudad</span><select id="estCiudad"></select></label>
+          <label class="est-campo"><span>Modelo</span><select id="estClase">
+            <option value="emergencias">Solo emergencias</option>
+            <option value="todas">Todas</option>
+            <option value="descartadas">Solo descartadas</option>
+          </select></label>
+          <button type="button" class="btn-ghost est-limpiar" id="estLimpiar">Restablecer</button>
+        </div>
+        <p class="resumen-filtros" id="resumenFiltros"></p>
+      </article>
       <div class="kpis" id="kpis"></div>
       <div class="grid-2">
         <article class="card">

@@ -164,7 +164,7 @@
       el.innerHTML = '<p class="hint" style="max-width:none">' + ER.mensajeSinDatos("Las publicaciones todavía no se clasificaron con el modelo.") + "</p>";
       return;
     }
-    var todas = D.filtrar(ER.consulta({ clasificacion: "todas" }));
+    var todas = D.filtrar(consulta({ clasificacion: "todas" }));
     var emerg = todas.filter(function (p) { return p.emergencia === true; }).length;
     var desc = todas.filter(function (p) { return p.emergencia === false; }).length;
     var met = m.metricas || {};
@@ -184,22 +184,92 @@
       "</b> publicaciones como emergencia y descartó <b>" + ER.fmtNum(desc) + "</b>.</p>";
   }
 
-  // Qué filtros globales están activos (se cambian en Principal o en Histórico).
-  function pintarResumenFiltros() {
-    var f = ER.filtros;
-    var cats = f.categorias.length === D.CATEGORIAS.length ? "Todas las categorías"
-      : f.categorias.map(function (id) { return D.categoria(id).nombre; }).join(", ") || "Ninguna categoría";
-    var clase = { emergencias: "solo emergencias", todas: "incluye descartadas", descartadas: "solo descartadas" }[f.clasificacion];
-    document.getElementById("resumenFiltros").innerHTML = "<b>Filtros:</b> " + ER.escapar(cats) + " · " +
-      ER.escapar(f.ciudad || "todas las ciudades") + " · " + clase + ' · <a href="#/principal">cambiar</a>';
+  // ---------- Filtros propios de esta pestaña ----------
+  // Son independientes de los filtros globales y del rango de la barra superior.
+  var HORA = 3600000;
+  var PRESETS = { "24h": 24 * HORA, "7d": 7 * 24 * HORA, "30d": 30 * 24 * HORA };
+  var fe = { preset: "7d", desde: null, hasta: null, categoria: "", ciudad: "", clasificacion: "emergencias" };
+
+  function primeraFecha() {
+    var todas = D.filtrar({ clasificacion: "todas" });
+    return todas.reduce(function (m, p) { return !m || p.fecha < m ? p.fecha : m; }, null) || ER.estado.desde;
+  }
+  // Con un periodo rápido el rango se recalcula en cada repintado, así sigue incluyendo lo más reciente.
+  function rangoActual() {
+    if (fe.preset) {
+      var ahora = new Date();
+      fe.hasta = ahora;
+      fe.desde = fe.preset === "todo" ? primeraFecha() : new Date(ahora - PRESETS[fe.preset]);
+    }
+    return { desde: fe.desde, hasta: fe.hasta };
+  }
+  function consulta(extra) {
+    var r = rangoActual();
+    var o = {
+      desde: r.desde, hasta: r.hasta, ciudad: fe.ciudad || null, clasificacion: fe.clasificacion,
+      categorias: fe.categoria ? [fe.categoria] : D.CATEGORIAS.map(function (c) { return c.id; })
+    };
+    Object.keys(extra || {}).forEach(function (k) { o[k] = extra[k]; });
+    return o;
+  }
+  function aLocal(d) {
+    return d.getFullYear() + "-" + ER.pad(d.getMonth() + 1) + "-" + ER.pad(d.getDate()) + "T" + ER.pad(d.getHours()) + ":" + ER.pad(d.getMinutes());
+  }
+  function deLocal(v) { var d = v ? new Date(v) : null; return d && !isNaN(d) ? d : null; }
+
+  function pintarControles() {
+    var r = rangoActual();
+    document.getElementById("estDesde").value = aLocal(r.desde);
+    document.getElementById("estHasta").value = aLocal(r.hasta);
+    document.querySelectorAll("#estPresets button").forEach(function (b) { b.classList.toggle("active", b.getAttribute("data-preset") === fe.preset); });
+    var sel = document.getElementById("estCiudad"), actual = fe.ciudad;
+    sel.innerHTML = '<option value="">Todas las ciudades</option>' + D.ciudadesPresentes().map(function (c) {
+      return '<option value="' + ER.escapar(c.nombre) + '">' + ER.escapar(c.nombre) + "</option>";
+    }).join("");
+    sel.value = actual;
+    document.getElementById("estCategoria").value = fe.categoria;
+    document.getElementById("estClase").value = fe.clasificacion;
+  }
+
+  function iniciarFiltros() {
+    document.getElementById("estCategoria").innerHTML = '<option value="">Todas las categorías</option>' +
+      D.CATEGORIAS.map(function (c) { return '<option value="' + c.id + '">' + c.nombre + "</option>"; }).join("");
+    document.querySelectorAll("#estPresets button").forEach(function (b) {
+      b.addEventListener("click", function () { fe.preset = b.getAttribute("data-preset"); pintarTodo(); });
+    });
+    ["estDesde", "estHasta"].forEach(function (id) {
+      document.getElementById(id).addEventListener("change", function () {
+        var d = deLocal(document.getElementById("estDesde").value), h = deLocal(document.getElementById("estHasta").value);
+        if (!d || !h) return;
+        if (d > h) { var t = d; d = h; h = t; }
+        fe.preset = null; fe.desde = d; fe.hasta = h;
+        pintarTodo();
+      });
+    });
+    document.getElementById("estCategoria").addEventListener("change", function (e) { fe.categoria = e.target.value; pintarTodo(); });
+    document.getElementById("estCiudad").addEventListener("change", function (e) { fe.ciudad = e.target.value; pintarTodo(); });
+    document.getElementById("estClase").addEventListener("change", function (e) { fe.clasificacion = e.target.value; pintarTodo(); });
+    document.getElementById("estLimpiar").addEventListener("click", function () {
+      fe = { preset: "7d", desde: null, hasta: null, categoria: "", ciudad: "", clasificacion: "emergencias" };
+      pintarTodo();
+    });
+  }
+
+  function pintarResumenFiltros(total) {
+    var r = rangoActual();
+    var f = function (d) { return ER.fmtFechaCorta(d) + " " + ER.fmtHora(d); };
+    document.getElementById("resumenFiltros").innerHTML = "<b>" + ER.fmtNum(total) + (total === 1 ? " publicación" : " publicaciones") +
+      "</b> entre el " + f(r.desde) + " y el " + f(r.hasta) + ". Estos filtros solo aplican en Estadísticas.";
   }
 
   function pintarTodo() {
-    var posts = D.filtrar(ER.consulta());
-    var ant = ER.periodoAnterior();
-    var previos = D.filtrar(ER.consulta({ desde: ant.desde, hasta: ant.hasta }));
+    var o = consulta();
+    var posts = D.filtrar(o);
+    var dur = o.hasta - o.desde;
+    var previos = D.filtrar(consulta({ desde: new Date(o.desde - dur - 1), hasta: new Date(o.desde - 1) }));
+    pintarControles();
     pintarModelo();
-    pintarResumenFiltros();
+    pintarResumenFiltros(posts.length);
     pintarKpis(posts, previos);
     pintarCategorias(posts);
     pintarCiudades(posts);
@@ -240,12 +310,14 @@
         },
         plugins: [valoresBarra]
       });
+      iniciarFiltros();
       pintarTodo();
     },
     mostrar: function () {
       if (this._pendiente) { this._pendiente = false; pintarTodo(); }
     },
     actualizar: function (tipo) {
+      // Repintar es seguro ante cualquier evento: esta pestaña usa solo sus propios filtros.
       clearTimeout(this._t);
       if (tipo === "nueva") this._t = setTimeout(pintarTodo, 600);
       else pintarTodo();

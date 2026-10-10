@@ -651,6 +651,19 @@ a { color: inherit; }
 
 /* ---------------- Modelo de clasificación ---------------- */
 .resumen-filtros { margin: -6px 0 -6px; font-size: 13px; color: var(--ink-2); }
+/* Filtros propios de Estadísticas; el rango de la barra superior no aplica en esta pestaña. */
+body[data-vista="estadisticas"] .anchor-rango { display: none; }
+.est-filtros { padding: 14px 20px 12px; display: flex; flex-direction: column; gap: 10px; }
+.est-cab { display: flex; align-items: center; justify-content: space-between; gap: 10px; flex-wrap: wrap; }
+.est-titulo { display: inline-flex; align-items: center; gap: 6px; font-weight: 800; color: var(--indigo); font-size: 15px; }
+.est-titulo .ic { width: 17px; height: 17px; color: #000; }
+.est-campos { display: flex; flex-wrap: wrap; align-items: flex-end; gap: 10px; }
+.est-campo { display: flex; flex-direction: column; gap: 3px; font-size: 11px; font-weight: 800; letter-spacing: .4px; text-transform: uppercase; color: var(--muted); min-width: 0; }
+.est-campo input, .est-campo select { height: 36px; padding: 0 10px; border: 1px solid var(--line-2); border-radius: 6px; background: #fff;
+  font-weight: 400; font-size: 14px; letter-spacing: 0; text-transform: none; color: var(--ink); }
+.est-campo input:focus, .est-campo select:focus { outline: 2px solid var(--blue-soft); border-color: var(--blue); }
+.est-limpiar { height: 36px; }
+.est-filtros .resumen-filtros { margin: 0; }
 .resumen-filtros a { color: var(--indigo); font-weight: 700; }
 .modelo { display: inline-flex; align-items: center; gap: 4px; font-size: 11px; font-weight: 700; border-radius: 3px; padding: 1px 6px; background: #f1f2f6; color: var(--ink-2); white-space: nowrap; cursor: help; }
 .modelo i { width: 7px; height: 7px; border-radius: 50%; display: inline-block; }
@@ -750,6 +763,10 @@ a { color: inherit; }
   .search input { width: 100%; }
   .search { width: 100%; }
   .table-scroll { padding: 0 16px; }
+  .est-filtros { padding: 14px 16px 12px; }
+  .est-campos { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .est-campo input, .est-campo select { width: 100%; }
+  .est-campo:nth-child(-n+2) { grid-column: 1 / -1; }
   /* Registro de publicaciones: en pantallas angostas cada fila pasa a ser una tarjeta. */
   .data-table thead { display: none; }
   .data-table, .data-table tbody { display: block; }
