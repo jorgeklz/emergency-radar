@@ -749,7 +749,8 @@ body[data-vista="estadisticas"] .anchor-rango { display: none; }
 .acerca-cats .ic { width: 20px; height: 20px; color: #000; flex: none; margin-top: 1px; }
 @media (max-width: 560px) { .acerca-cats { grid-template-columns: 1fr; } }
 .acerca-nota { font-size: 12px; color: var(--muted); }
-.acerca-autor { margin: 14px 0 0; font-weight: 700; color: var(--ink); }
+.acerca-cita { margin: 26px 0 0; padding-top: 18px; border-top: 1px solid var(--line); font-size: 13px; line-height: 1.55; color: var(--ink-2); }
+.acerca-cita a { color: var(--indigo); font-weight: 700; word-break: break-all; }
 
 /* ---------------- Contador de visitas ---------------- */
 .visitas { display: flex; align-items: center; gap: 8px; }

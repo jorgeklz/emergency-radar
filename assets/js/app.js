@@ -398,11 +398,9 @@
         "Todas las fechas y horas están en hora de Ecuador (GMT-5).</p>" +
         "<p class='acerca-sub'>Visitas</p>" +
         "<p class='acerca-nota'>Cada persona cuenta una vez cada 6 horas. No se guarda la IP, solo una huella cifrada, el país y la ciudad aproximados.</p>" +
-        "<div class='acerca-paper'><p>Implementa el modelo propuesto en:</p>" +
-        "<p>Parraga-Alava, J., Rodas-Silva, J., Franco, J. y Vélez, M.-J. (2026). <i>A graph-based semi-supervised approach for automatic text corpus " +
-        "emergency events labelling in X (Twitter)</i>. Big Data Research, 45, 100630.</p>" +
-        "<p>DOI: <a href='https://doi.org/10.1016/j.bdr.2026.100630' target='_blank' rel='noopener'>https://doi.org/10.1016/j.bdr.2026.100630</a></p></div>" +
-        "<p class='acerca-autor'>Jorge Párraga-Álava, Ph.D.</p>");
+        "<p class='acerca-cita'>Esta app es la implementación del modelo propuesto en Parraga-Alava, J., Rodas-Silva, J., Franco, J. y Vélez, M.-J. (2026). " +
+        "<i>A graph-based semi-supervised approach for automatic text corpus emergency events labelling in X (Twitter)</i>. Big Data Research, 45, 100630. " +
+        "<a href='https://doi.org/10.1016/j.bdr.2026.100630' target='_blank' rel='noopener'>https://doi.org/10.1016/j.bdr.2026.100630</a></p>");
     });
     document.querySelectorAll("#modal [data-close]").forEach(function (b) { b.addEventListener("click", ER.cerrarModal); });
     document.addEventListener("click", cerrarPopovers);
