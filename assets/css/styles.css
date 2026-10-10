@@ -221,6 +221,9 @@ a { color: inherit; }
 #btnFiltroMapa { color: var(--indigo); }
 
 .map { height: 576px; width: 100%; background: #dfe2e6; z-index: 1; }
+/* Modo calor: el mapa base se oscurece y desatura para que blanco, amarillo, anaranjado y rojo destaquen. */
+.map.modo-calor .leaflet-tile-pane { filter: brightness(.62) saturate(.35) contrast(1.05); }
+.map.modo-calor .leaflet-heatmap-layer { mix-blend-mode: normal; }
 /* Solo la capa "Gris" se desatura; "Calles", "Humanitario" y "Satélite" van a color. */
 .tiles-gris { filter: grayscale(1) brightness(1.06) contrast(0.88); }
 .leaflet-control-layers { border: 0 !important; border-radius: 8px !important; box-shadow: 0 4px 14px rgba(20,24,60,.16) !important; font-family: var(--font); }
@@ -238,7 +241,7 @@ a { color: inherit; }
 .map-legend .dot-cat { display: inline-block; width: 10px; height: 10px; border-radius: 50%; border: 2px solid #fff; box-shadow: 0 0 0 1px rgba(0,0,0,.15); margin-right: 6px; vertical-align: middle; }
 .ley-calor { display: inline-flex; align-items: center; gap: 10px; }
 .ley-calor b { color: var(--ink-2); }
-.ramp-calor i { display: block; width: 180px; height: 9px; border-radius: 5px; background: linear-gradient(90deg, #ffffff, #fff3bf, #ffd43b, #ff922b, #e03131); box-shadow: inset 0 0 0 1px rgba(0,0,0,.12); }
+.ramp-calor i { display: block; width: 180px; height: 10px; border-radius: 5px; background: linear-gradient(90deg, #ffffff, #fff3a0, #ffd000, #ff8c00, #f03e3e, #c00000); box-shadow: inset 0 0 0 1px rgba(0,0,0,.18); }
 .ramp-etq { display: inline-flex; gap: 12px; font-size: 11px; }
 .map-legend .ramp { display: inline-block; width: 90px; height: 8px; border-radius: 4px; vertical-align: middle; margin: 0 6px; background: linear-gradient(90deg, #a8e0b0, #2f9e44, #f0a400, #ec6a2c, #c92a2a); }
 

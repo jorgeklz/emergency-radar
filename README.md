@@ -8,7 +8,7 @@ Todo lo que muestra el sitio son **publicaciones reales de X** que un recolector
 
 ## Secciones
 
-**Principal.** Resumen animado de las últimas 24 horas (emergencias y su tendencia, última hora, categoría y zona más activas, cuántos posts filtró el modelo). Mapa con dos modos (Geolocalización con agrupación de reportes y Mapa de Calor), cuatro mapas base (Calles a color, Humanitario, Gris y Satélite), puntos con el color de su categoría, filtro por categorías ("Estás viendo"), posts recientes de las últimas 24 horas con aviso de publicaciones nuevas, Pre Alertas (ver abajo) y Frecuencia de posts, con una línea de tiempo por gravedad en intervalos de 6 h, 24 h, 3 días, 7 días o el periodo elegido, picos detectados automáticamente (franjas por encima de la media más dos desviaciones) y los posts de cada franja al hacer clic; o el patrón por hora del día frente al periodo anterior y la frecuencia de publicaciones por franja de 30 minutos comparada con el periodo anterior.
+**Principal.** Resumen animado de las últimas 24 horas (emergencias y su tendencia, última hora, categoría y zona más activas, cuántos posts filtró el modelo). Mapa con dos modos (Geolocalización con agrupación de reportes y Mapa de Calor), cuatro mapas base (Humanitario por defecto, Calles, Gris y Satélite), puntos con el color de su categoría, filtro por categorías ("Estás viendo"), posts recientes de las últimas 24 horas con aviso de publicaciones nuevas, Pre Alertas (ver abajo) y Frecuencia de posts, con una línea de tiempo por gravedad en intervalos de 6 h, 24 h, 3 días, 7 días o el periodo elegido, picos detectados automáticamente (franjas por encima de la media más dos desviaciones) y los posts de cada franja al hacer clic; o el patrón por hora del día frente al periodo anterior y la frecuencia de publicaciones por franja de 30 minutos comparada con el periodo anterior.
 
 **Histórico.** Publicaciones por día apiladas por categoría y un registro de 10 en 10 con búsqueda, filtros, resultado del modelo, enlace a cada publicación en X y exportación a CSV.
 
@@ -16,7 +16,7 @@ Los filtros (categorías, ciudad y clasificación del modelo) son los mismos en 
 
 **Estadísticas.** Indicadores generales, distribución por categoría, ciudades con más reportes, actividad por día y hora, cuántas publicaciones se pudieron ubicar, autores más activos y el desempeño del modelo de clasificación.
 
-En la barra superior están la hora de la última captura, el botón **En Vivo** (relee los datos cada minuto y avisa de las publicaciones nuevas; un clic lo pausa), el selector de rango de fechas (por defecto, los últimos 7 días) y el menú.
+En la barra superior están la hora de la última captura, el botón **En Vivo** (cada minuto revisa si el recolector dejó posts nuevos y los suma al mapa, al resumen, a Pre Alertas y a Frecuencia, con un aviso; en pausa la pantalla queda fija para analizarla, y la captura en X sigue corriendo igual), el selector de rango de fechas (por defecto, los últimos 7 días) y el menú.
 
 ## Colores
 

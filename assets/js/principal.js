@@ -252,7 +252,7 @@
   function iniciarMapa() {
     mapa = L.map("map", { zoomControl: true, minZoom: 5, maxZoom: 17, worldCopyJump: false })
       .setView([-1.86, -79.75], 8);
-    // Mapas base sin API key. "Calles" es el de OpenStreetMap a color; se puede
+    // Mapas base sin API key. Por defecto "Humanitario" (OpenStreetMap, estilo HOT); se puede
     // cambiar desde el control de capas y la elección se recuerda en este navegador.
     var osm = '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>';
     var bases = {
@@ -263,12 +263,12 @@
       "Satélite": L.tileLayer("https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}", {
         attribution: "Imágenes &copy; Esri", maxZoom: 19 })
     };
-    var elegida = "Calles";
-    try { if (bases[localStorage.getItem("er-mapa-base")]) elegida = localStorage.getItem("er-mapa-base"); } catch (e) { /* sin almacenamiento */ }
+    var elegida = "Humanitario";
+    try { if (bases[localStorage.getItem("er-mapa-base-v2")]) elegida = localStorage.getItem("er-mapa-base-v2"); } catch (e) { /* sin almacenamiento */ }
     bases[elegida].addTo(mapa);
     L.control.layers(bases, null, { position: "topright", collapsed: true }).addTo(mapa);
     mapa.on("baselayerchange", function (e) {
-      try { localStorage.setItem("er-mapa-base", e.name); } catch (err) { /* sin almacenamiento */ }
+      try { localStorage.setItem("er-mapa-base-v2", e.name); } catch (err) { /* sin almacenamiento */ }
     });
     mapa.zoomControl.setPosition("bottomright");
 
@@ -301,10 +301,11 @@
       if (!this._map || this._map.getSize().x === 0 || this._map.getSize().y === 0) { this._frame = null; return; }
       return redibujar.call(this);
     };
+    // Cada post pesa según su gravedad, así el calor refleja peligro y no solo cantidad.
+    // Blanco = sin peligro, amarillo = medio, anaranjado = alto, rojo = extremo.
     capaCalor = L.heatLayer([], {
-      radius: 26, blur: 22, maxZoom: 12, max: 6, minOpacity: 0.25,
-      // Blanco = sin peligro, amarillo = medio, anaranjado = alto, rojo = extremo.
-      gradient: { 0.1: "rgba(255,255,255,0.65)", 0.35: "#fff3bf", 0.55: "#ffd43b", 0.75: "#ff922b", 1: "#e03131" }
+      radius: 34, blur: 24, maxZoom: 11, max: 2.5, minOpacity: 0.55,
+      gradient: { 0.05: "#ffffff", 0.3: "#fff3a0", 0.5: "#ffd000", 0.7: "#ff8c00", 0.88: "#f03e3e", 1: "#c00000" }
     });
 
     document.querySelectorAll(".card-map .segmented button").forEach(function (b) {
@@ -321,7 +322,15 @@
     aplicarModo();
   }
 
+  // Peso de un post en el mapa de calor: gravedad alta 1, media 0,6, baja 0,3.
+  function pesoCalor(p) {
+    var g = ER.severidad(p).nivel.id;
+    return g === "alta" ? 1 : g === "media" ? 0.6 : 0.3;
+  }
+
   function aplicarModo() {
+    // En modo calor el mapa base se atenúa para que el blanco y el amarillo resalten.
+    document.getElementById("map").classList.toggle("modo-calor", st.modo !== "geo");
     if (st.modo === "geo") {
       if (mapa.hasLayer(capaCalor)) mapa.removeLayer(capaCalor);
       if (!mapa.hasLayer(capaGrupos)) mapa.addLayer(capaGrupos);
@@ -361,7 +370,7 @@
     spotlights = [];
     capaGrupos.clearLayers();
     capaGrupos.addLayers(posts.map(function (p) { return crearMarcador(p, false); }));
-    capaCalor.setLatLngs(posts.map(function (p) { return [p.lat, p.lng, 1]; }));
+    capaCalor.setLatLngs(posts.map(function (p) { return [p.lat, p.lng, pesoCalor(p)]; }));
     pintarLeyendaMapa(posts.length);
     programarSpotlights();
   }
@@ -934,7 +943,7 @@
         pintarPildora();
         if (coincide(p) && p.lat !== null) {
           capaGrupos.addLayer(crearMarcador(p, true));
-          capaCalor.addLatLng([p.lat, p.lng, 1]);
+          capaCalor.addLatLng([p.lat, p.lng, pesoCalor(p)]);
           pintarLeyendaMapa((pintarLeyendaMapa._t || 0) + 1);
         }
         refrescoDiferido();

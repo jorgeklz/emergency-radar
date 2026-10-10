@@ -181,32 +181,54 @@
     if (ER.isoDia(ER.estado.hasta) === ER.isoDia(p.fecha)) ER.estado.hasta = finDia(p.fecha);
     ER.emitir("nueva", p);
   }
+  // En Vivo: cada minuto se vuelve a leer data/posts.json (que el recolector actualiza cada
+  // 30 minutos) y lo nuevo entra al mapa, al resumen, a Pre Alertas, a Frecuencia y a la
+  // píldora "N posts nuevos". En pausa la pantalla queda fija para analizarla con calma.
+  // No afecta la captura en X, que corre en GitHub Actions de todos modos.
+  var proximaRevision = null;
+  function revisarAhora() {
+    var antes = D.estado();
+    return D.sincronizar().then(function (nuevas) {
+      nuevas.forEach(recibir);
+      pintarFuente();
+      if ((antes !== "ok" && D.estado() === "ok") || nuevas.reetiquetadas) ER.emitir("rango");
+      if (nuevas.length) ER.toast(nuevas.length === 1 ? "Llegó 1 post nuevo" : "Llegaron " + nuevas.length + " posts nuevos");
+      return nuevas;
+    });
+  }
   function programarVivo() {
     clearTimeout(vivoTimer);
-    if (!ER.estado.enVivo) return;
-    // Se vuelve a leer el JSON que actualiza el recolector y se agregan las publicaciones nuevas.
-    vivoTimer = setTimeout(function () {
-      var antes = D.estado();
-      D.sincronizar().then(function (nuevas) {
-        nuevas.forEach(recibir);
-        pintarFuente();
-        if ((antes !== "ok" && D.estado() === "ok") || nuevas.reetiquetadas) ER.emitir("rango");
-        programarVivo();
-      });
-    }, D.INTERVALO_MS);
+    if (!ER.estado.enVivo) { proximaRevision = null; pintarVivo(); return; }
+    proximaRevision = Date.now() + D.INTERVALO_MS;
+    pintarVivo();
+    vivoTimer = setTimeout(function () { revisarAhora().then(programarVivo); }, D.INTERVALO_MS);
   }
   function pintarVivo() {
     var b = document.getElementById("btnLive");
     b.classList.toggle("is-on", ER.estado.enVivo);
     b.setAttribute("aria-pressed", String(ER.estado.enVivo));
     b.querySelector(".live-label").textContent = ER.estado.enVivo ? "En Vivo" : "Pausado";
+    var seg = proximaRevision ? Math.max(0, Math.round((proximaRevision - Date.now()) / 1000)) : null;
+    b.title = ER.estado.enVivo
+      ? "En vivo: revisa si hay posts nuevos cada minuto (próxima revisión en " + seg + " s). Clic para pausar y dejar la pantalla fija."
+      : "Pausado: la pantalla no se actualiza. Clic para volver a revisar posts nuevos cada minuto.";
   }
+  // Mantiene al día la cuenta regresiva del título del botón.
+  setInterval(function () { if (ER.estado.enVivo && proximaRevision) pintarVivo(); }, 5000);
   function iniciarVivo() {
     document.getElementById("btnLive").addEventListener("click", function () {
       ER.estado.enVivo = !ER.estado.enVivo;
-      pintarVivo();
-      programarVivo();
-      ER.toast(ER.estado.enVivo ? "Transmisión en vivo activada" : "Transmisión en vivo pausada");
+      if (ER.estado.enVivo) {
+        // Al reanudar se revisa de inmediato, sin esperar el minuto.
+        ER.toast("En vivo: buscando posts nuevos…");
+        revisarAhora().then(function (nuevas) {
+          if (!nuevas.length) ER.toast("En vivo: no hay posts nuevos por ahora");
+          programarVivo();
+        });
+      } else {
+        programarVivo();
+        ER.toast("Pausado: la pantalla queda fija hasta que reactives En Vivo");
+      }
       ER.emitir("vivo");
     });
     pintarVivo();
