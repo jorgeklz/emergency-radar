@@ -13,6 +13,6 @@ window.ER_CONFIG = {
     url: "https://syglkptimygybufswhmd.supabase.co",
     // Clave pública: "Publishable key" (sb_publishable_...) o la clave "anon" de "Legacy API Keys" (eyJ...).
     // Está en Project Settings → API Keys, o en el botón "Connect" del panel del proyecto.
-    clave: ""
+    clave: "sb_publishable_Y8spfv16sNIBd-bVk6lE6A_wuEITxvP"
   }
 };
