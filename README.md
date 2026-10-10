@@ -4,17 +4,17 @@ Prototipo funcional del panel **Emergency Radar**, que monitorea publicaciones d
 
 Es un sitio estático (HTML, CSS y JavaScript sin compilación), listo para publicarse en GitHub Pages. Todas las librerías están incluidas en `assets/vendor`, así que no depende de CDNs para funcionar.
 
-> Mientras no haya datos capturados desde X, el sitio muestra datos **simulados** con autores ficticios (en la barra superior verás "Datos simulados"). Cuando el recolector guarda publicaciones reales, el sitio cambia solo a "Datos de X".
+Todo lo que muestra el sitio son **publicaciones reales de X** que un recolector captura cada 30 minutos. No hay datos simulados: si todavía no hay capturas, las secciones aparecen vacías con un aviso.
 
 ## Secciones
 
-**Principal.** Mapa con dos modos (Geolocalización con agrupación de reportes y Mapa de Calor), filtro por categorías y fuentes ("Estas viendo"), tweets recientes con aviso de publicaciones nuevas, Pre Alertas de las últimas 24 horas con tendencia frente a las 24 horas previas y la frecuencia de publicaciones por franja de 30 minutos comparada con el periodo anterior.
+**Principal.** Mapa con dos modos (Geolocalización con agrupación de reportes y Mapa de Calor), filtro por categorías ("Estás viendo"), tweets recientes con aviso de publicaciones nuevas, Pre Alertas de las últimas 24 horas con tendencia frente a las 24 horas previas y la frecuencia de publicaciones por franja de 30 minutos comparada con el periodo anterior.
 
-**Histórico.** Publicaciones por día apiladas por categoría y un registro paginado con búsqueda, filtros y exportación a CSV.
+**Histórico.** Publicaciones por día apiladas por categoría y un registro paginado con búsqueda, filtros por categoría y ciudad (las ciudades salen de los datos capturados), enlace a cada publicación en X y exportación a CSV.
 
-**Estadísticas.** Indicadores generales, distribución por categoría, ciudades con más reportes, actividad por día y hora, fuentes y autores más activos.
+**Estadísticas.** Indicadores generales, distribución por categoría, ciudades con más reportes, actividad por día y hora, cuántas publicaciones se pudieron ubicar y autores más activos.
 
-En la barra superior están el botón **En Vivo** (simula la llegada de publicaciones cada pocos segundos; un clic lo pausa), el selector de rango de fechas y el menú.
+En la barra superior están la hora de la última captura, el botón **En Vivo** (relee los datos cada minuto y avisa de las publicaciones nuevas; un clic lo pausa), el selector de rango de fechas (por defecto, los últimos 7 días) y el menú.
 
 ## Captura de datos reales desde X (Twitter)
 
@@ -23,7 +23,7 @@ La API key **no va en el código del sitio**. GitHub Pages publica todos los arc
 Por eso la captura funciona así:
 
 ```
-GitHub Actions (cada 15 min)          Repositorio              GitHub Pages
+GitHub Actions (cada 30 min)          Repositorio              GitHub Pages
 collector/x-collector.mjs  ──escribe──▶ data/posts.json ──publica──▶ el sitio lee el JSON
    usa el secreto X_BEARER_TOKEN                                     y lo relee cada minuto
 ```
@@ -32,7 +32,7 @@ collector/x-collector.mjs  ──escribe──▶ data/posts.json ──publica�
 
 1. En el portal de desarrolladores de X crea una app y copia su **Bearer Token**. Tu plan debe incluir el endpoint de búsqueda reciente (`GET /2/tweets/search/recent`).
 2. En GitHub ve a *Settings → Secrets and variables → Actions → New repository secret*. Nombre: `X_BEARER_TOKEN`. Valor: el token.
-3. Ve a la pestaña *Actions*, abre **Captura de publicaciones de X** y pulsa *Run workflow* para la primera captura. Después corre sola cada 15 minutos.
+3. Ve a la pestaña *Actions*, abre **Captura de publicaciones de X** y pulsa *Run workflow* para la primera captura. Después corre sola cada 30 minutos.
 
 El token nunca se escribe en el repositorio ni en los registros de Actions: GitHub lo enmascara.
 
@@ -55,7 +55,7 @@ La frecuencia se cambia en el `cron` de `.github/workflows/collect.yml`. Cada ej
 
 ### Sobre el "tiempo real"
 
-Con GitHub Pages el retraso real es de unos minutos: el workflow corre cada 15 minutos (GitHub a veces lo retrasa), Pages tarda en republicar y el sitio relee el archivo cada minuto. Para algo inmediato hace falta un servidor propio conectado al *filtered stream* de X que empuje los datos al navegador.
+Con GitHub Pages el retraso real es de varios minutos: el workflow corre cada 30 minutos (GitHub a veces lo retrasa), Pages tarda en republicar y el sitio relee el archivo cada minuto. Para algo inmediato hace falta un servidor propio conectado al *filtered stream* de X que empuje los datos al navegador.
 
 ### Ejecutar el recolector en tu equipo
 
@@ -68,7 +68,7 @@ No guardes el token en archivos del repositorio. Si usas un `.env`, ya está en 
 
 ## Ejecutarlo en local
 
-Basta con abrir `index.html` en el navegador. Si prefieres un servidor:
+Los datos se leen con `fetch`, así que hace falta un servidor (abrir `index.html` directamente no carga las publicaciones):
 
 ```bash
 npx http-server -p 8080
@@ -91,7 +91,7 @@ La navegación usa rutas con `#` (`#/principal`, `#/historico`, `#/estadisticas`
 index.html                  Maquetación de las tres vistas
 assets/css/styles.css       Estilos (línea gráfica del diseño)
 assets/js/catalogo.js       Categorías (palabras clave) y ciudades, compartido con el recolector
-assets/js/data.js           Capa de datos: lee data/posts.json o genera datos simulados
+assets/js/data.js           Capa de datos: lee data/posts.json y lo vuelve a leer en modo En Vivo
 assets/js/app.js            Estado global, navegación, rango de fechas, modo En Vivo
 assets/js/principal.js      Vista Principal
 assets/js/historico.js      Vista Histórico
@@ -110,11 +110,9 @@ Toda la interfaz lee los datos a través de `window.ER_DATA` (en `assets/js/data
 ```js
 {
   id:        "p123",
-  fuente:    "twitter",              // "twitter" | "facebook"
   autor:     { nombre, usuario, verificado, color },
   texto:     "Texto de la publicación",
   fecha:     Date,
-  cliente:   "Twitter for Android",
   categoria: "asaltos",              // asaltos | incendios | accidentes | desastres
   ciudad:    "Guayaquil",
   lat:       -2.17,                  // null si no está geolocalizada
@@ -123,8 +121,8 @@ Toda la interfaz lee los datos a través de `window.ER_DATA` (en `assets/js/data
 }
 ```
 
-Las categorías y las ciudades están en `assets/js/catalogo.js`, con su ícono, color, palabras clave y coordenadas. Cualquier otra fuente de datos (tu propio modelo, otra red social) puede alimentar el sitio con solo escribir ese mismo JSON.
+Las categorías y las ciudades están en `assets/js/catalogo.js`, con su ícono, color, palabras clave y coordenadas. Tu propio modelo de clasificación puede alimentar el sitio con solo escribir ese mismo JSON.
 
 ## Créditos
 
-Mapa base © OpenStreetMap y © CARTO. Íconos de [Tabler Icons](https://tabler.io/icons) (MIT). Gráficos con [Chart.js](https://www.chartjs.org/) (MIT). Mapas con [Leaflet](https://leafletjs.com/) (BSD-2).
+Mapa base © colaboradores de [OpenStreetMap](https://www.openstreetmap.org/copyright). Íconos de [Tabler Icons](https://tabler.io/icons) (MIT). Gráficos con [Chart.js](https://www.chartjs.org/) (MIT). Mapas con [Leaflet](https://leafletjs.com/) (BSD-2).

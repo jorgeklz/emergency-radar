@@ -17,7 +17,8 @@
   var hoy = new Date();
   var ER = {
     estado: {
-      desde: inicioDia(sumarDias(hoy, -29)),
+      // X solo entrega publicaciones de los últimos 7 días; por eso es el rango inicial.
+      desde: inicioDia(sumarDias(hoy, -6)),
       hasta: finDia(hoy),
       enVivo: true,
       vista: "principal"
@@ -158,21 +159,16 @@
   function programarVivo() {
     clearTimeout(vivoTimer);
     if (!ER.estado.enVivo) return;
-    if (D.modo() === "real") {
-      // Datos reales: se vuelve a leer el JSON que actualiza el recolector.
-      vivoTimer = setTimeout(function () {
-        D.sincronizar().then(function (nuevas) {
-          nuevas.forEach(recibir);
-          pintarFuente();
-          programarVivo();
-        });
-      }, D.INTERVALO_REAL_MS);
-      return;
-    }
+    // Se vuelve a leer el JSON que actualiza el recolector y se agregan las publicaciones nuevas.
     vivoTimer = setTimeout(function () {
-      recibir(D.nuevaPublicacion());
-      programarVivo();
-    }, 3500 + Math.random() * 5000);
+      var antes = D.estado();
+      D.sincronizar().then(function (nuevas) {
+        nuevas.forEach(recibir);
+        pintarFuente();
+        if (antes !== "ok" && D.estado() === "ok") ER.emitir("rango");
+        programarVivo();
+      });
+    }, D.INTERVALO_MS);
   }
   function pintarVivo() {
     var b = document.getElementById("btnLive");
@@ -195,14 +191,25 @@
   // ---------- Fuente de datos ----------
   function pintarFuente() {
     var el = document.getElementById("fuenteDatos");
-    var real = D.modo() === "real";
+    var est = D.estado();
     var act = D.actualizado();
-    el.classList.toggle("real", real);
-    el.textContent = real ? "Datos de X" + (act ? " · " + ER.fmtHora(act) : "") : "Datos simulados";
-    el.title = real
-      ? "Publicaciones reales capturadas desde la API de X. Última captura: " + (act ? ER.fmtLarga(act) : "desconocida")
-      : "Aún no hay datos capturados desde X; se muestran datos simulados";
+    el.classList.toggle("real", est === "ok");
+    el.classList.toggle("error", est === "error");
+    el.textContent = est === "error" ? "Sin conexión a los datos"
+      : est === "vacio" ? "Sin capturas aún"
+      : "Datos de X" + (act ? " · " + ER.fmtHora(act) : "");
+    el.title = est === "error"
+      ? "No se pudo leer data/posts.json"
+      : "Última captura desde la API de X: " + (act ? ER.fmtLarga(act) : "aún no hay capturas");
   }
+
+  // Texto para listas vacías según el estado de los datos.
+  ER.mensajeSinDatos = function (siFiltros) {
+    var est = D.estado();
+    if (est === "error") return "No se pudieron cargar las publicaciones. Revisa tu conexión y recarga la página.";
+    if (est !== "ok") return "Aún no hay publicaciones capturadas desde X. Aparecerán aquí después de la próxima captura.";
+    return siFiltros;
+  };
 
   // ---------- Navegación ----------
   function rutaActual() {
@@ -238,19 +245,14 @@
     iniciarVivo();
     enlazarPopover("btnMenu", "popMenu");
     document.querySelectorAll("#popMenu a").forEach(function (a) { a.addEventListener("click", cerrarPopovers); });
-    document.querySelector("[data-soon]").addEventListener("click", function () {
-      cerrarPopovers();
-      ER.toast("Disponible en una próxima versión");
-    });
     document.getElementById("btnAcerca").addEventListener("click", function () {
       cerrarPopovers();
       ER.abrirModal("Acerca de Emergency Radar",
         "<p><b>Emergency Radar</b> monitorea publicaciones de redes sociales para detectar " +
         "y ubicar emergencias (asaltos, incendios, accidentes de tránsito y desastres naturales) en Ecuador.</p>" +
-        (D.modo() === "real"
-          ? "<p>Las publicaciones provienen de la API de X y se actualizan de forma periódica.</p>"
-          : "<p>Esta es una versión prototipo. Los datos que ves son simulados y los autores son ficticios.</p>") +
-        "<p style='font-size:12px;color:#8a90a2'>Mapa base © OpenStreetMap, © CARTO. Íconos Tabler Icons. Gráficos Chart.js.</p>");
+        "<p>Las publicaciones provienen de la API de X. Se capturan cada 30 minutos, se clasifican por palabras clave " +
+        "y se ubican por las coordenadas, el lugar etiquetado o la ciudad mencionada en el texto.</p>" +
+        "<p style='font-size:12px;color:#8a90a2'>Mapa base © colaboradores de OpenStreetMap. Íconos Tabler Icons. Gráficos Chart.js.</p>");
     });
     document.querySelectorAll("#modal [data-close]").forEach(function (b) { b.addEventListener("click", ER.cerrarModal); });
     document.addEventListener("click", cerrarPopovers);

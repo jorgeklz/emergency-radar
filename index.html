@@ -65,7 +65,6 @@
           <a href="#/historico" role="menuitem"><span class="ic-wrap" data-icon="clock"></span>Histórico</a>
           <a href="#/estadisticas" role="menuitem"><span class="ic-wrap" data-icon="chart-bar"></span>Estadísticas</a>
           <hr>
-          <button type="button" role="menuitem" data-soon><span class="ic-wrap" data-icon="settings"></span>Configuración</button>
           <button type="button" role="menuitem" id="btnAcerca"><span class="ic-wrap" data-icon="info-circle"></span>Acerca de</button>
         </div>
       </div>
@@ -86,7 +85,7 @@
               </div>
             </div>
             <div class="toolbar-right">
-              <span class="toolbar-label">Estas viendo</span>
+              <span class="toolbar-label">Estás viendo</span>
               <div class="popover-anchor">
                 <div class="chips-box" id="chipsBox">
                   <div class="chips" id="chips"></div>
@@ -97,11 +96,6 @@
                 <div id="popFiltroMapa" class="popover popover-right" hidden>
                   <div class="pop-title">Categorías</div>
                   <div id="listaCatFiltro" class="check-list"></div>
-                  <div class="pop-title">Fuentes</div>
-                  <div class="check-list">
-                    <label><input type="checkbox" name="fuente" value="twitter" checked><span class="ic-wrap tw" data-icon="brand-twitter"></span>Twitter</label>
-                    <label><input type="checkbox" name="fuente" value="facebook" checked><span class="ic-wrap fb" data-icon="brand-facebook"></span>Facebook</label>
-                  </div>
                 </div>
               </div>
             </div>
@@ -141,14 +135,7 @@
               <button type="button" class="btn-soft" id="btnFiltrosAlertas">Filtros</button>
               <div id="popAlertas" class="popover popover-right" hidden>
                 <label class="field"><span>Ciudad</span><select id="selCiudadAlertas"></select></label>
-                <label class="field"><span>Fuente</span>
-                  <select id="selFuenteAlertas">
-                    <option value="">Todas</option>
-                    <option value="twitter">Twitter</option>
-                    <option value="facebook">Facebook</option>
-                  </select>
-                </label>
-                <p class="hint">Las tendencias comparan el periodo seleccionado con el periodo anterior de igual duración.</p>
+                <p class="hint">Las flechas comparan las últimas 24 horas con las 24 horas anteriores. Las ciudades salen de las publicaciones capturadas.</p>
               </div>
             </div>
           </div>
@@ -181,11 +168,6 @@
           <div class="filters">
             <label class="search"><span class="ic-wrap" data-icon="search"></span><input type="search" id="histBuscar" placeholder="Buscar texto, autor o ciudad"></label>
             <select id="histCategoria" aria-label="Categoría"></select>
-            <select id="histFuente" aria-label="Fuente">
-              <option value="">Todas las fuentes</option>
-              <option value="twitter">Twitter</option>
-              <option value="facebook">Facebook</option>
-            </select>
             <select id="histCiudad" aria-label="Ciudad"></select>
             <button type="button" class="btn-soft" id="histExportar"><span class="ic-wrap" data-icon="download"></span>CSV</button>
           </div>
@@ -193,7 +175,7 @@
         <div class="table-scroll">
           <table class="data-table">
             <thead>
-              <tr><th>Fecha</th><th>Categoría</th><th>Ciudad</th><th>Fuente</th><th>Autor</th><th>Publicación</th></tr>
+              <tr><th>Fecha</th><th>Categoría</th><th>Ciudad</th><th>Autor</th><th>Publicación</th><th></th></tr>
             </thead>
             <tbody id="histBody"></tbody>
           </table>
@@ -233,7 +215,7 @@
       </article>
       <div class="grid-2">
         <article class="card">
-          <div class="card-head"><h2>Publicaciones por fuente</h2></div>
+          <div class="card-head"><h2>Ubicación de las publicaciones</h2></div>
           <div class="source-bars" id="sourceBars"></div>
         </article>
         <article class="card">

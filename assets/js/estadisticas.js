@@ -1,6 +1,6 @@
 /*
  * Emergency Radar · vista Estadísticas
- * Indicadores, distribución por categoría, ciudades, actividad por día/hora, fuentes y autores.
+ * Indicadores, distribución por categoría, ciudades, actividad por día/hora, ubicación y autores.
  */
 (function () {
   "use strict";
@@ -36,13 +36,16 @@
     var cambio = previos.length ? ((total - previos.length) / previos.length) * 100 : 0;
     var porCat = contarPor(posts, function (p) { return p.categoria; });
     var topCat = maximo(porCat);
-    var porCiudad = contarPor(posts, function (p) { return p.ciudad; });
+    var porCiudad = contarPor(posts.filter(function (p) { return p.ciudad !== D.SIN_UBICACION; }), function (p) { return p.ciudad; });
     var topCiudad = maximo(porCiudad);
     var sube = cambio > 0;
+    // Sin publicaciones en el periodo anterior no hay con qué comparar.
+    var subTotal = previos.length
+      ? '<span class="ic-wrap">' + window.icon(sube ? "trending-up" : "trending-down") + "</span>" +
+        (sube ? "+" : "") + cambio.toFixed(1).replace(".", ",") + " % frente al periodo anterior"
+      : "Sin capturas del periodo anterior para comparar";
     var kpis = [
-      { lbl: "Publicaciones", val: ER.fmtNum(total),
-        sub: '<span class="ic-wrap">' + window.icon(sube ? "trending-up" : "trending-down") + "</span>" +
-          (sube ? "+" : "") + cambio.toFixed(1).replace(".", ",") + " % frente al periodo anterior", subCls: sube ? "up" : "" },
+      { lbl: "Publicaciones", val: ER.fmtNum(total), sub: subTotal, subCls: previos.length && sube ? "up" : "" },
       { lbl: "Geolocalizadas", val: ER.fmtNum(geo), sub: pct(geo, total).toString().replace(".", ",") + " % del total" },
       { lbl: "Categoría principal", val: topCat ? D.categoria(topCat).nombre : "–", sm: true, sub: topCat ? ER.fmtNum(porCat[topCat]) + " menciones" : "" },
       { lbl: "Ciudad con más reportes", val: topCiudad || "–", sm: true, sub: topCiudad ? ER.fmtNum(porCiudad[topCiudad]) + " reportes" : "" }
@@ -67,7 +70,8 @@
   }
 
   function pintarCiudades(posts) {
-    var m = contarPor(posts, function (p) { return p.ciudad; });
+    // Las publicaciones sin ubicación se cuentan aparte, en "Ubicación de las publicaciones".
+    var m = contarPor(posts.filter(function (p) { return p.ciudad !== D.SIN_UBICACION; }), function (p) { return p.ciudad; });
     var top = Object.keys(m).sort(function (a, b) { return m[b] - m[a]; }).slice(0, 10);
     chartCiud.data.labels = top;
     chartCiud.data.datasets[0].data = top.map(function (k) { return m[k]; });
@@ -91,14 +95,19 @@
     document.getElementById("heatgrid").innerHTML = html + "</tbody></table>";
   }
 
-  function pintarFuentes(posts) {
-    var m = contarPor(posts, function (p) { return p.fuente; });
+  // Cuántas publicaciones pudieron ubicarse en el mapa y cuántas no.
+  function pintarUbicacion(posts) {
     var total = posts.length;
-    document.getElementById("sourceBars").innerHTML = [["twitter", "Twitter", "brand-twitter", "tw"], ["facebook", "Facebook", "brand-facebook", "fb"]].map(function (f) {
-      var n = m[f[0]] || 0;
-      return '<div><div class="row-h"><span class="' + f[3] + '">' + window.icon(f[2]) + '<b style="color:#1d2130">' + f[1] + "</b></span><small>" +
-        ER.fmtNum(n) + " · " + pct(n, total).toString().replace(".", ",") + ' %</small></div><div class="track"><div class="fill" style="width:' + pct(n, total) + '%"></div></div></div>';
-    }).join("");
+    var geo = posts.filter(function (p) { return p.lat !== null; }).length;
+    var filas = [
+      ["map-pin", "En el mapa", geo, "#2f7be5"],
+      ["map-pin-off", "Sin ubicación", total - geo, "#c4ccdb"]
+    ];
+    document.getElementById("sourceBars").innerHTML = filas.map(function (f) {
+      return '<div><div class="row-h"><span>' + window.icon(f[0]) + "<b>" + f[1] + "</b></span><small>" +
+        ER.fmtNum(f[2]) + " · " + pct(f[2], total).toString().replace(".", ",") + ' %</small></div><div class="track"><div class="fill" style="width:' +
+        pct(f[2], total) + "%;background:" + f[3] + '"></div></div></div>';
+    }).join("") + '<p class="hint" style="max-width:none">Se ubican por coordenadas, por el lugar etiquetado en X o por la ciudad mencionada en el texto.</p>';
   }
 
   function pintarAutores(posts) {
@@ -108,8 +117,9 @@
     document.getElementById("rankAutores").innerHTML = top.map(function (u) {
       var a = info[u];
       return '<li><div class="avatar" style="width:30px;height:30px;font-size:11px;background:' + a.color + '">' + ER.iniciales(a.nombre) + "</div>" +
-        '<div class="who"><b>' + ER.escapar(a.nombre) + "</b><small>@" + ER.escapar(u) + '</small></div><span class="n">' + ER.fmtNum(m[u]) + "</span></li>";
-    }).join("");
+        '<div class="who"><b>' + ER.escapar(a.nombre) + '</b><small><a href="https://x.com/' + encodeURIComponent(u) + '" target="_blank" rel="noopener">@' +
+        ER.escapar(u) + '</a></small></div><span class="n">' + ER.fmtNum(m[u]) + "</span></li>";
+    }).join("") || '<li class="empty" style="justify-content:center">' + ER.mensajeSinDatos("Sin publicaciones en el periodo.") + "</li>";
   }
 
   // Etiqueta el valor al final de cada barra horizontal.
@@ -134,7 +144,7 @@
     pintarCategorias(posts);
     pintarCiudades(posts);
     pintarHeatgrid(posts);
-    pintarFuentes(posts);
+    pintarUbicacion(posts);
     pintarAutores(posts);
   }
 

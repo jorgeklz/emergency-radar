@@ -108,11 +108,9 @@ export function transformar(respuesta) {
     const pos = ubicar(t, lugar);
     salida.push({
       id: t.id,
-      fuente: "twitter",
       autor: { nombre: u.name || u.username || "Usuario de X", usuario: u.username || "", verificado: !!u.verified },
       texto: t.text,
       fecha: t.created_at,
-      cliente: "X",
       categoria,
       ciudad: pos.ciudad,
       lat: pos.lat,
@@ -202,7 +200,7 @@ export async function main(env = process.env) {
       console.log(`::warning::Límite de solicitudes de X alcanzado. Se reintentará en la próxima ejecución (reinicio: ${cuando}).`);
       return { cambios: 0 };
     }
-    // Sin créditos la ejecución no falla: así no llega un correo de error cada 15 minutos.
+    // Sin créditos la ejecución no falla: así no llega un correo de error en cada captura.
     if (e instanceof ErrorAPI && e.estado === 402) {
       console.log(`::warning::${e.message}. La cuenta de X no tiene créditos disponibles; recárgalos en el portal de desarrolladores de X. No se capturó nada.`);
       return { cambios: 0 };

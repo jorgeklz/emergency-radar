@@ -12,8 +12,7 @@
   var st = {
     modo: "geo",
     categorias: D.CATEGORIAS.map(function (c) { return c.id; }),
-    fuentes: ["twitter", "facebook"],
-    alertas: { ciudad: "", fuente: "", orden: "menciones", dir: "desc" },
+    alertas: { ciudad: "", orden: "menciones", dir: "desc" },
     pendientes: []
   };
 
@@ -21,14 +20,14 @@
 
   // ================= Utilidades =================
   function filtroBase() {
-    return { desde: ER.estado.desde, hasta: ER.estado.hasta, categorias: st.categorias, fuentes: st.fuentes };
+    return { desde: ER.estado.desde, hasta: ER.estado.hasta, categorias: st.categorias };
   }
   function coincide(p) {
     return p.fecha >= ER.estado.desde && p.fecha <= ER.estado.hasta &&
-      st.categorias.indexOf(p.categoria) >= 0 && st.fuentes.indexOf(p.fuente) >= 0;
+      st.categorias.indexOf(p.categoria) >= 0;
   }
-  function iconoFuente(f) {
-    return '<span class="' + (f === "twitter" ? "tw" : "fb") + '">' + window.icon(f === "twitter" ? "brand-twitter" : "brand-facebook") + "</span>";
+  function iconoX() {
+    return '<span class="x-logo">' + window.icon("brand-x") + "</span>";
   }
   var CHECK = '<svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12l5 5l9 -9"/></svg>';
 
@@ -48,11 +47,12 @@
           (p.autor.verificado ? ' <span class="verified" title="Cuenta verificada">' + CHECK + "</span>" : "") +
           "</b><small>@" + ER.escapar(p.autor.usuario) + "</small></div>" +
         (p.url
-          ? '<a class="tweet-src" href="' + ER.escapar(p.url) + '" target="_blank" rel="noopener" title="Ver publicación original">' + iconoFuente(p.fuente) + "</a>"
-          : '<span class="tweet-src">' + iconoFuente(p.fuente) + "</span>") +
+          ? '<a class="tweet-src" href="' + ER.escapar(p.url) + '" target="_blank" rel="noopener" title="Ver publicación original">' + iconoX() + "</a>"
+          : '<span class="tweet-src">' + iconoX() + "</span>") +
       "</div>" +
       "<p>" + textoEnriquecido(p.texto) + "</p>" +
-      '<div class="tweet-foot"><span>' + ER.fmtLarga(p.fecha) + '</span><span>·</span><span class="client">' + p.cliente + "</span>" +
+      '<div class="tweet-foot"><span>' + ER.fmtLarga(p.fecha) + "</span>" +
+        (p.url ? '<span>·</span><a class="client" href="' + ER.escapar(p.url) + '" target="_blank" rel="noopener">Ver en X</a>' : "") +
         '<span class="cat"><i style="background:' + cat.color + '"></i>' + cat.nombre + " · " + p.ciudad + "</span>" +
       "</div>" +
     "</article>";
@@ -96,12 +96,6 @@
         alCambiarFiltros();
       });
     });
-    document.querySelectorAll('#popFiltroMapa input[name="fuente"]').forEach(function (i) {
-      i.addEventListener("change", function () {
-        st.fuentes = Array.prototype.slice.call(document.querySelectorAll('#popFiltroMapa input[name="fuente"]:checked')).map(function (x) { return x.value; });
-        alCambiarFiltros();
-      });
-    });
   }
 
   function alCambiarFiltros() {
@@ -114,7 +108,7 @@
   // ================= Mapa =================
   function tarjeta(p, total) {
     var c = D.categoria(p.categoria);
-    return '<div class="t">' + iconoFuente(p.fuente) + c.nombre + "</div>" +
+    return '<div class="t">' + iconoX() + c.nombre + "</div>" +
       '<div class="row">' + window.icon("calendar-event") + ER.fmtFechaCorta(p.fecha) + "</div>" +
       '<div class="row time">' + ER.fmtHoraH(p.fecha) + "</div>" +
       (total > 1 ? '<div class="count">' + total + " reportes en esta zona</div>" : "");
@@ -122,7 +116,7 @@
 
   function popupPost(p) {
     var c = D.categoria(p.categoria);
-    return '<div class="popup-post"><div class="meta">' + iconoFuente(p.fuente) + "<b>" + c.nombre + "</b> · " + ER.escapar(p.ciudad) + "</div>" +
+    return '<div class="popup-post"><div class="meta">' + iconoX() + "<b>" + c.nombre + "</b> · " + ER.escapar(p.ciudad) + "</div>" +
       "<p>" + textoEnriquecido(p.texto) + "</p>" +
       '<div class="foot">' + ER.escapar(p.autor.nombre) + " · " + ER.fmtLarga(p.fecha) + "</div></div>";
   }
@@ -187,9 +181,10 @@
   function iniciarMapa() {
     mapa = L.map("map", { zoomControl: true, minZoom: 5, maxZoom: 17, worldCopyJump: false })
       .setView([-1.86, -79.75], 8);
-    L.tileLayer("https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png", {
-      attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> &copy; <a href="https://carto.com/attributions">CARTO</a>',
-      subdomains: "abcd",
+    // Mosaicos oficiales de OpenStreetMap: no requieren API key (solo la atribución).
+    // En CSS se pasan a escala de grises para seguir la línea gráfica del diseño.
+    L.tileLayer("https://tile.openstreetmap.org/{z}/{x}/{y}.png", {
+      attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>',
       maxZoom: 19
     }).addTo(mapa);
     mapa.zoomControl.setPosition("bottomright");
@@ -276,7 +271,7 @@
     var lista = D.filtrar(filtroBase()).filter(function (p) { return !excluidos[p.id]; }).slice(0, 40);
     var cont = document.getElementById("tweets");
     cont.innerHTML = lista.length ? lista.map(function (p) { return htmlTweet(p); }).join("") :
-      '<div class="empty">No hay publicaciones para los filtros seleccionados.</div>';
+      '<div class="empty">' + ER.mensajeSinDatos("No hay publicaciones para los filtros seleccionados.") + "</div>";
     pintarPildora();
   }
 
@@ -311,7 +306,7 @@
         function render() {
           var cat = body.querySelector("#vtCat").value;
           var res = D.filtrar({
-            desde: ER.estado.desde, hasta: ER.estado.hasta, fuentes: st.fuentes,
+            desde: ER.estado.desde, hasta: ER.estado.hasta,
             categorias: cat ? [cat] : st.categorias,
             texto: body.querySelector("#vtBuscar").value.trim()
           });
@@ -337,9 +332,9 @@
   function pintarAlertas() {
     var a = st.alertas;
     var v = ventanaAlertas();
-    var opts = { ciudad: a.ciudad || null, fuentes: a.fuente ? [a.fuente] : null };
-    var actual = D.filtrar({ desde: v.desde, hasta: v.hasta, ciudad: opts.ciudad, fuentes: opts.fuentes });
-    var previo = D.filtrar({ desde: v.prevDesde, hasta: new Date(v.desde.getTime() - 1), ciudad: opts.ciudad, fuentes: opts.fuentes });
+    var ciudad = a.ciudad || null;
+    var actual = D.filtrar({ desde: v.desde, hasta: v.hasta, ciudad: ciudad });
+    var previo = D.filtrar({ desde: v.prevDesde, hasta: new Date(v.desde.getTime() - 1), ciudad: ciudad });
     var filas = D.CATEGORIAS.map(function (c) {
       var n = actual.filter(function (p) { return p.categoria === c.id; }).length;
       var m = previo.filter(function (p) { return p.categoria === c.id; }).length;
@@ -366,12 +361,8 @@
 
   function iniciarAlertas() {
     var sel = document.getElementById("selCiudadAlertas");
-    sel.innerHTML = '<option value="">Todas</option>' + D.CIUDADES.slice().sort(function (a, b) { return a.nombre.localeCompare(b.nombre, "es"); })
-      .map(function (c) { return '<option value="' + c.nombre + '">' + c.nombre + "</option>"; }).join("");
-    ER.enlazarPopover("btnFiltrosAlertas", "popAlertas");
+    ER.enlazarPopover("btnFiltrosAlertas", "popAlertas", opcionesCiudadAlertas);
     sel.addEventListener("change", function () { st.alertas.ciudad = sel.value; pintarAlertas(); marcarFiltrosAlertas(); });
-    var selF = document.getElementById("selFuenteAlertas");
-    selF.addEventListener("change", function () { st.alertas.fuente = selF.value; pintarAlertas(); marcarFiltrosAlertas(); });
     document.querySelectorAll(".alerts .sort").forEach(function (b) {
       b.addEventListener("click", function () {
         var k = b.getAttribute("data-sort");
@@ -383,9 +374,16 @@
     var h2 = document.querySelector(".card-alerts h2");
     h2.insertAdjacentHTML("afterend", '<span class="hint" style="margin:0 auto 0 0">Últimas 24 horas</span>');
   }
+  // Las ciudades del filtro salen de los datos capturados, con su número de publicaciones.
+  function opcionesCiudadAlertas() {
+    var sel = document.getElementById("selCiudadAlertas");
+    sel.innerHTML = '<option value="">Todas</option>' + D.ciudadesPresentes().map(function (c) {
+      return '<option value="' + ER.escapar(c.nombre) + '">' + ER.escapar(c.nombre) + " (" + c.total + ")</option>";
+    }).join("");
+    sel.value = st.alertas.ciudad;
+  }
   function marcarFiltrosAlertas() {
-    var n = (st.alertas.ciudad ? 1 : 0) + (st.alertas.fuente ? 1 : 0);
-    document.getElementById("btnFiltrosAlertas").textContent = n ? "Filtros (" + n + ")" : "Filtros";
+    document.getElementById("btnFiltrosAlertas").textContent = st.alertas.ciudad ? "Filtros (1)" : "Filtros";
   }
 
   // ================= Frecuencia =================
@@ -478,7 +476,7 @@
   function pintarFrecuencia() {
     var actual = D.filtrar(filtroBase());
     var ant = ER.periodoAnterior();
-    var previo = D.filtrar({ desde: ant.desde, hasta: ant.hasta, categorias: st.categorias, fuentes: st.fuentes });
+    var previo = D.filtrar({ desde: ant.desde, hasta: ant.hasta, categorias: st.categorias });
     chart.data.datasets[0].data = porFranja(actual);
     chart.data.datasets[1].data = porFranja(previo);
     chart.update();
@@ -507,8 +505,6 @@
       iniciarFrecuencia();
       document.getElementById("pillNuevos").addEventListener("click", mostrarPendientes);
       document.getElementById("btnVerTodo").addEventListener("click", verTodo);
-      // Al abrir en vivo ya hay algunas publicaciones esperando, como en un flujo real.
-      if (ER.estado.enVivo && D.modo() === "simulado") for (var k = 0; k < 3; k++) st.pendientes.unshift(D.nuevaPublicacion());
       pintarTodo();
     },
     mostrar: function () {
