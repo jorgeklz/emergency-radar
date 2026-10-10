@@ -67,7 +67,7 @@
       modelo = '<span class="pm-sep">·</span><span class="pm-modelo grav-' + (p.emergencia ? g.id : "baja") + '" title="' + g.nombre + ". " + detalle + '">' +
         window.icon("tag") + (p.emergencia ? "Emergencia " + Math.round(p.prob * 100) + " %" : "Descartada") + "</span>";
     }
-    return '<article class="post grav-borde-' + g.id + (nuevo ? " nuevo" : "") + '">' +
+    return '<article class="post' + (nuevo ? " nuevo" : "") + '">' +
       '<div class="post-head">' +
         '<div class="avatar" style="background:' + p.autor.color + '">' + ER.iniciales(p.autor.nombre) + "</div>" +
         '<div class="who"><b>' + ER.escapar(p.autor.nombre) +
@@ -203,7 +203,7 @@
     var m = L.marker([p.lat, p.lng], {
       icon: L.divIcon({
         html: '<div class="halo" style="--c:' + g.color + '"><div class="core">' + window.icon(D.categoria(p.categoria).icono) + "</div></div>",
-        className: "er-point er-" + g.id + (fresco ? " fresh" : "") + (reciente ? " reciente" : ""), iconSize: [30, 30] }),
+        className: "er-point er-" + g.id + (fresco ? " fresh" : "") + (reciente ? " reciente" : ""), iconSize: [34, 34] }),
       keyboard: false
     });
     m._erPost = p;
@@ -258,6 +258,46 @@
   var spotTimer;
   function programarSpotlights() { clearTimeout(spotTimer); spotTimer = setTimeout(refrescarSpotlights, 80); }
 
+  // Botón para centrar el mapa en la ubicación actual del dispositivo (pide permiso al navegador).
+  function controlUbicacion() {
+    var Control = L.Control.extend({
+      options: { position: "bottomright" },
+      onAdd: function (m) {
+        var caja = L.DomUtil.create("div", "leaflet-bar");
+        var btn = L.DomUtil.create("button", "ctl-ubicacion", caja);
+        var yo = null, area = null;
+        // Panel propio por encima de las etiquetas para que el punto azul nunca quede tapado.
+        if (!m.getPane("erYo")) m.createPane("erYo").style.zIndex = 660;
+        btn.type = "button";
+        btn.title = "Mi ubicación";
+        btn.setAttribute("aria-label", "Mostrar mi ubicación actual");
+        btn.innerHTML = window.icon("current-location");
+        L.DomEvent.disableClickPropagation(caja);
+        L.DomEvent.on(btn, "click", function () {
+          if (!navigator.geolocation) { ER.toast("Este navegador no permite obtener la ubicación."); return; }
+          btn.classList.add("buscando");
+          btn.innerHTML = window.icon("loader-2");
+          navigator.geolocation.getCurrentPosition(function (pos) {
+            var ll = [pos.coords.latitude, pos.coords.longitude], r = pos.coords.accuracy || 0;
+            btn.classList.remove("buscando"); btn.classList.add("activa");
+            btn.innerHTML = window.icon("current-location");
+            if (yo) { m.removeLayer(yo); m.removeLayer(area); }
+            area = L.circle(ll, { radius: r, color: "#2f7be5", weight: 1, opacity: .5, fillColor: "#2f7be5", fillOpacity: .1, interactive: false }).addTo(m);
+            yo = L.marker(ll, { icon: L.divIcon({ className: "er-yo", html: "<span></span>", iconSize: [18, 18] }), pane: "erYo", keyboard: false })
+              .bindTooltip("Estás aquí" + (r ? " (± " + Math.round(r) + " m)" : ""), { direction: "top", className: "er-mini", offset: [0, -10] }).addTo(m);
+            m.flyTo(ll, Math.max(m.getZoom(), r && r < 2000 ? 13 : 11), { duration: .8 });
+          }, function (err) {
+            btn.classList.remove("buscando");
+            btn.innerHTML = window.icon("current-location");
+            ER.toast(err.code === 1 ? "Permiso de ubicación denegado en el navegador." : "No se pudo obtener tu ubicación.");
+          }, { enableHighAccuracy: true, timeout: 10000, maximumAge: 60000 });
+        });
+        return caja;
+      }
+    });
+    return new Control();
+  }
+
   function iniciarMapa() {
     mapa = L.map("map", { zoomControl: true, minZoom: 5, maxZoom: 17, worldCopyJump: false })
       .setView([-1.86, -79.75], 8);
@@ -280,6 +320,7 @@
       try { localStorage.setItem("er-mapa-base-v2", e.name); } catch (err) { /* sin almacenamiento */ }
     });
     mapa.zoomControl.setPosition("bottomright");
+    controlUbicacion().addTo(mapa);
 
     capaGrupos = L.markerClusterGroup({
       showCoverageOnHover: false,
@@ -622,11 +663,13 @@
   }
 
   // Picos: franjas que superan la media + 2 desviaciones (y al menos 3 posts) y son máximos locales.
+  // Guarda la media en freq.media para expresar cada pico como "× veces lo normal".
   function detectarPicos(bins) {
     var tot = bins.map(function (b) { return b.total; });
     var media = tot.reduce(function (s, x) { return s + x; }, 0) / (tot.length || 1);
     var sd = Math.sqrt(tot.reduce(function (s, x) { return s + (x - media) * (x - media); }, 0) / (tot.length || 1));
     var umbral = Math.max(3, media + 2 * sd);
+    freq.media = media;
     return tot.map(function (t, k) { return { k: k, t: t }; })
       .filter(function (o) { return o.t >= umbral && o.t >= (tot[o.k - 1] || 0) && o.t >= (tot[o.k + 1] || 0); })
       .sort(function (a, b) { return b.t - a.t; }).slice(0, 4).map(function (o) { return o.k; });
@@ -653,21 +696,26 @@
     return id ? D.categoria(id) : null;
   }
 
-  // Marca los picos con un triángulo sobre la barra.
+  // Marca los picos con una pastilla roja con el total sobre la barra.
   var marcasPico = {
     id: "marcasPico",
     afterDatasetsDraw: function (c) {
       if (freq.vista !== "tiempo" || !freq.picos.length) return;
       var meta = c.getDatasetMeta(c.data.datasets.length - 1), ctx = c.ctx;
       ctx.save();
+      ctx.font = "800 10px " + Chart.defaults.font.family;
+      ctx.textAlign = "center"; ctx.textBaseline = "middle";
       freq.picos.forEach(function (k) {
         var y = c.scales.y.getPixelForValue(freq.bins[k].total), x = meta.data[k] && meta.data[k].x;
         if (x === undefined) return;
+        var txt = String(freq.bins[k].total), w = ctx.measureText(txt).width + 10, h = 15, top = y - h - 5;
         ctx.fillStyle = "#c92a2a";
-        ctx.beginPath(); ctx.moveTo(x - 5, y - 12); ctx.lineTo(x + 5, y - 12); ctx.lineTo(x, y - 5); ctx.closePath(); ctx.fill();
-        ctx.font = "700 10px " + Chart.defaults.font.family;
-        ctx.textAlign = "center";
-        ctx.fillText(freq.bins[k].total, x, y - 15);
+        ctx.beginPath();
+        if (ctx.roundRect) ctx.roundRect(x - w / 2, top, w, h, 7.5); else ctx.rect(x - w / 2, top, w, h);
+        ctx.fill();
+        ctx.beginPath(); ctx.moveTo(x - 3, top + h); ctx.lineTo(x + 3, top + h); ctx.lineTo(x, top + h + 3); ctx.closePath(); ctx.fill();
+        ctx.fillStyle = "#fff";
+        ctx.fillText(txt, x, top + h / 2 + .5);
       });
       ctx.restore();
     }
@@ -696,7 +744,7 @@
     if (freq.vista === "tiempo") {
       var b = freq.bins[i], cat = categoriaPrincipal(b.porCat);
       html = '<div class="h">' + fmtFranja(b, freq.paso) + "</div>" +
-        '<div class="v"><b>' + ER.fmtNum(b.total) + (b.total === 1 ? " post" : " posts") + "</b>" + (freq.picos.indexOf(i) >= 0 ? ' <span class="tip-pico">pico</span>' : "") + "</div>" +
+        '<div class="v"><b>' + ER.fmtNum(b.total) + (b.total === 1 ? " post" : " posts") + "</b>" + (freq.picos.indexOf(i) >= 0 ?  ' <span class="tip-pico">' + window.icon("chart-line") + "pico</span>" : "") + "</div>" +
         (b.total ? '<div class="tip-grav"><span><i style="background:' + COL.alta + '"></i>' + b.alta + ' alta</span><span><i style="background:' + COL.media + '"></i>' + b.media +
           ' media</span><span><i style="background:' + COL.baja + '"></i>' + b.baja + " baja</span></div>" : "") +
         (b.nProb ? '<div class="v prev">Confianza media del modelo: ' + Math.round(b.prob / b.nProb * 100) + " %</div>" : "") +
@@ -775,7 +823,41 @@
   function seleccionarFranja(k) {
     freq.sel = freq.sel === k ? null : k;
     chart.update("none");
+    document.querySelectorAll("#freqPicos [data-pico]").forEach(function (b) {
+      var sel = +b.getAttribute("data-pico") === freq.sel;
+      b.classList.toggle("sel", sel);
+      b.setAttribute("aria-pressed", sel ? "true" : "false");
+    });
     pintarDetalleFranja();
+  }
+
+  // Tarjetas de picos: franja, total, cuántas veces supera lo normal, gravedad y qué se reporta.
+  function htmlPicos(paso) {
+    var media = freq.media || 0;
+    var unidad = paso >= 1440 ? "día" : paso >= 60 ? (paso === 60 ? "hora" : "franja de " + paso / 60 + " h") : "franja de " + paso + " min";
+    var cab = '<div class="picos-cab"><span class="pop-title">' + window.icon("chart-line") + "Picos detectados</span>" +
+      '<small>Lo normal: ' + ER.fmtNum(Math.round(media * 10) / 10) + " posts por " + unidad + "</small></div>";
+    var tarjetas = freq.picos.map(function (k) {
+      var b = freq.bins[k], cat = categoriaPrincipal(b.porCat);
+      var ciudades = {};
+      b.posts.forEach(function (p) { if (p.ciudad && p.ciudad !== "Sin ubicación") ciudades[p.ciudad] = (ciudades[p.ciudad] || 0) + 1; });
+      var ciudad = Object.keys(ciudades).sort(function (x, y) { return ciudades[y] - ciudades[x]; })[0];
+      var veces = media > 0 ? b.total / media : null;
+      var d = b.desde, dia = d.getDate() + " " + MESES_C[d.getMonth()];
+      var hora = paso >= 1440 ? dia : ER.fmtHora(d) + "–" + ER.fmtHora(b.hasta);
+      var barra = ["alta", "media", "baja"].map(function (n) {
+        return b[n] ? '<i style="width:' + (b[n] / b.total * 100) + "%;background:" + COL[n] + '" title="' + b[n] + " de gravedad " + n + '"></i>' : "";
+      }).join("");
+      return '<button type="button" class="pico-card' + (freq.sel === k ? " sel" : "") + '" data-pico="' + k + '" aria-pressed="' + (freq.sel === k) + '">' +
+        '<span class="pc-hora"><b>' + hora + "</b>" + (paso >= 1440 ? "" : "<small>" + dia + "</small>") + "</span>" +
+        '<span class="pc-num"><b>' + ER.fmtNum(b.total) + "</b> posts" +
+        (veces ? '<em title="Veces sobre lo normal en este intervalo">× ' + veces.toFixed(1).replace(".", ",") + "</em>" : "") + "</span>" +
+        '<span class="pc-barra">' + barra + "</span>" +
+        '<span class="pc-que">' + (cat ? window.icon(cat.icono) + "<b>" + cat.nombre + "</b>" : "") + (ciudad ? '<span class="pc-ciudad">· ' + ER.escapar(ciudad) + "</span>" : "") + "</span>" +
+        (b.alta ? '<span class="pc-grave">' + b.alta + " de gravedad alta</span>" : "") +
+        "</button>";
+    }).join("");
+    return cab + '<div class="picos-lista">' + tarjetas + "</div>";
   }
 
   function pintarDetalleFranja() {
@@ -848,16 +930,11 @@
     var conProb = posts.filter(function (p) { return typeof p.prob === "number"; });
     var probMedia = conProb.length ? Math.round(conProb.reduce(function (s, p) { return s + p.prob; }, 0) / conProb.length * 100) : null;
     ley.innerHTML = '<span><i class="sw" style="background:' + COL.alta + '"></i>Gravedad alta</span><span><i class="sw" style="background:' + COL.media +
-      '"></i>Gravedad media</span><span><i class="sw" style="background:' + COL.baja + '"></i>Gravedad baja</span><span class="ley-pico">▲ Pico</span>' +
+      '"></i>Gravedad media</span><span><i class="sw" style="background:' + COL.baja + '"></i>Gravedad baja</span><span class="ley-pico">' + window.icon("chart-line") + 'Pico</span>' +
       '<span class="ley-stats">' + ER.fmtNum(posts.length) + " posts" + (probMedia !== null ? " · confianza media " + probMedia + " %" : "") + "</span>";
 
-    picosEl.innerHTML = freq.picos.length
-      ? '<span class="pop-title">Picos detectados</span>' + freq.picos.map(function (k) {
-          var b = freq.bins[k], cat = categoriaPrincipal(b.porCat);
-          return '<button type="button" class="pico" data-pico="' + k + '"><b>▲ ' + fmtFranja(b, r.paso) + "</b>" + b.total + " posts" +
-            (cat ? " · " + cat.nombre.toLowerCase() : "") + (b.alta ? ' · <span class="pico-alta">' + b.alta + " de gravedad alta</span>" : "") + "</button>";
-        }).join("")
-      : '<span class="sin-picos">' + window.icon("circle-check") + "Sin picos fuera de lo normal en este intervalo.</span>";
+    picosEl.innerHTML = freq.picos.length ? htmlPicos(r.paso) :
+      '<span class="sin-picos">' + window.icon("circle-check") + "Sin picos fuera de lo normal en este intervalo.</span>";
     pintarDetalleFranja();
   }
 

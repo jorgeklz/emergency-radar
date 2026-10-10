@@ -136,6 +136,7 @@
   function pintarRango() {
     document.getElementById("rangoDesde").textContent = ER.fmtFecha(ER.estado.desde);
     document.getElementById("rangoHasta").textContent = ER.fmtFecha(ER.estado.hasta);
+    document.getElementById("btnRango").title = "Rango de fechas: " + ER.fmtFecha(ER.estado.desde) + " a " + ER.fmtFecha(ER.estado.hasta);
   }
   function aplicarRango(desde, hasta) {
     if (hasta < desde) { var t = desde; desde = hasta; hasta = t; }
