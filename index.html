@@ -75,6 +75,7 @@
     <!-- ============ PRINCIPAL ============ -->
     <section class="view view-principal" data-view="principal">
       <div class="col-main">
+        <section class="resumen" id="resumen" aria-label="Resumen de las últimas 24 horas" aria-live="polite"></section>
         <article class="card card-map">
           <div class="card-toolbar">
             <div class="toolbar-left">
@@ -109,7 +110,7 @@
 
         <article class="card card-freq">
           <div class="card-head">
-            <h2>Frecuencia de Tweets</h2>
+            <div class="titulo-con-sub"><h2>Frecuencia de posts</h2><span class="hint">Posts por franja de 30 minutos en el periodo elegido, frente al periodo anterior</span></div>
             <div class="legend">
               <span><i class="sw sw-line"></i>Periodo seleccionado</span>
               <span><i class="sw sw-line prev"></i>Periodo anterior</span>
@@ -120,14 +121,14 @@
       </div>
 
       <div class="col-side">
-        <article class="card card-tweets">
+        <article class="card card-posts">
           <div class="card-head">
-            <h2>Tweets recientes</h2>
+            <div class="titulo-con-sub"><h2>Posts recientes</h2><span class="hint" id="conteoPosts"></span></div>
             <button type="button" class="btn-soft" id="btnVerTodo">Ver todo</button>
           </div>
-          <div class="tweets-wrap">
+          <div class="posts-wrap">
             <button type="button" class="pill-new" id="pillNuevos" hidden></button>
-            <div class="tweets" id="tweets"></div>
+            <div class="posts" id="posts"></div>
           </div>
         </article>
 

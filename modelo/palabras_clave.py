@@ -4,7 +4,7 @@ Palabras clave para buscar publicaciones en X (fase 1 del paper).
 Port de data_get_synonim.R y de la parte de sinónimos de data_features.py.
 El original buscaba sinónimos en WordNet (que solo funciona bien en inglés),
 quitaba los que aparecían en más de una categoría y armaba una consulta por
-categoría para la API v1.1 de Twitter con lang = "en".
+categoría para la antigua API v1.1 de X con lang = "en".
 
 Aquí, con el mismo objetivo pero en español:
 1. Se toman las palabras del corpus etiquetado (sin stopwords ni tildes).

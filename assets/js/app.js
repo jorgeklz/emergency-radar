@@ -222,11 +222,49 @@
     el.classList.toggle("error", est === "error");
     el.textContent = est === "error" ? "Sin conexión a los datos"
       : est === "vacio" ? "Sin capturas aún"
-      : "Datos de X" + (act ? " · " + ER.fmtHora(act) : "");
+      : "Datos de X" + (act ? " · " + ER.hace(act) : "");
     el.title = est === "error"
       ? "No se pudo leer data/posts.json"
       : "Última captura desde la API de X: " + (act ? ER.fmtLarga(act) : "aún no hay capturas");
   }
+
+  // ---------- Tiempo relativo ----------
+  // "hace 12 min", "hace 3 horas"... Los elementos con data-hace se actualizan solos.
+  ER.hace = function (d) {
+    var s = (Date.now() - d.getTime()) / 1000;
+    if (s < 60) return "hace un momento";
+    if (s < 3600) return "hace " + Math.floor(s / 60) + " min";
+    if (s < 86400) { var h = Math.floor(s / 3600); return "hace " + h + (h === 1 ? " hora" : " horas"); }
+    var dd = Math.floor(s / 86400);
+    return "hace " + dd + (dd === 1 ? " día" : " días");
+  };
+  ER.htmlHace = function (d) {
+    return '<time data-hace="' + d.toISOString() + '" datetime="' + d.toISOString() + '" title="' + ER.fmtLarga(d) + '">' + ER.hace(d) + "</time>";
+  };
+  setInterval(function () {
+    document.querySelectorAll("[data-hace]").forEach(function (el) { el.textContent = ER.hace(new Date(el.getAttribute("data-hace"))); });
+    if (D.estado() !== "cargando") pintarFuente();
+  }, 30000);
+
+  // Últimas 24 horas hasta el final del rango elegido (o hasta ahora, si el rango incluye hoy),
+  // y las 24 horas anteriores para comparar.
+  ER.ventana24h = function () {
+    var fin = new Date(Math.min(Date.now(), ER.estado.hasta.getTime()));
+    var ini = new Date(fin.getTime() - 24 * 3600 * 1000);
+    return { desde: ini, hasta: fin, prevDesde: new Date(ini.getTime() - 24 * 3600 * 1000), prevHasta: new Date(ini.getTime() - 1) };
+  };
+
+  // Cuenta animada de un número (de lo que muestra el elemento al valor nuevo).
+  ER.animarNumero = function (el, valor) {
+    var desde = parseInt((el.textContent || "0").replace(/\D/g, ""), 10) || 0;
+    if (desde === valor || window.matchMedia("(prefers-reduced-motion: reduce)").matches) { el.textContent = ER.fmtNum(valor); return; }
+    var inicio = performance.now(), dur = 600;
+    (function paso(t) {
+      var k = Math.min(1, (t - inicio) / dur);
+      el.textContent = ER.fmtNum(Math.round(desde + (valor - desde) * (1 - Math.pow(1 - k, 3))));
+      if (k < 1) requestAnimationFrame(paso);
+    })(inicio);
+  };
 
   // Texto para listas vacías según el estado de los datos.
   ER.mensajeSinDatos = function (siFiltros) {

@@ -1,6 +1,6 @@
 /*
  * Emergency Radar · vista Principal
- * Mapa (geolocalización / mapa de calor), tweets recientes,
+ * Mapa (geolocalización / mapa de calor), posts recientes,
  * pre alertas y frecuencia de publicaciones por hora del día.
  */
 (function () {
@@ -54,27 +54,27 @@
   }
 
   // Tarjeta de publicación reutilizada en la lista y en el modal "Ver todo".
-  function htmlTweet(p, nuevo) {
+  function htmlPost(p, nuevo) {
     var cat = D.categoria(p.categoria);
-    return '<article class="tweet' + (nuevo ? " nuevo" : "") + '">' +
-      '<div class="tweet-head">' +
+    return '<article class="post' + (nuevo ? " nuevo" : "") + '">' +
+      '<div class="post-head">' +
         '<div class="avatar" style="background:' + p.autor.color + '">' + ER.iniciales(p.autor.nombre) + "</div>" +
         '<div class="who"><b>' + ER.escapar(p.autor.nombre) +
           (p.autor.verificado ? ' <span class="verified" title="Cuenta verificada">' + CHECK + "</span>" : "") +
           "</b><small>@" + ER.escapar(p.autor.usuario) + "</small></div>" +
         (p.url
-          ? '<a class="tweet-src" href="' + ER.escapar(p.url) + '" target="_blank" rel="noopener" title="Ver publicación original">' + iconoX() + "</a>"
-          : '<span class="tweet-src">' + iconoX() + "</span>") +
+          ? '<a class="post-src" href="' + ER.escapar(p.url) + '" target="_blank" rel="noopener" title="Ver publicación original">' + iconoX() + "</a>"
+          : '<span class="post-src">' + iconoX() + "</span>") +
       "</div>" +
       "<p>" + textoEnriquecido(p.texto) + "</p>" +
-      '<div class="tweet-foot"><span>' + ER.fmtLarga(p.fecha) + "</span>" +
+      '<div class="post-foot">' + ER.htmlHace(p.fecha) +
         (p.url ? '<span>·</span><a class="client" href="' + ER.escapar(p.url) + '" target="_blank" rel="noopener">Ver en X</a>' : "") +
         '<span class="cat"><i style="background:' + cat.color + '"></i>' + cat.nombre + " · " + ER.escapar(p.ciudad) + "</span>" +
       "</div>" +
-      (p.emergencia !== null ? '<div class="tweet-modelo">' + etiquetaModelo(p) + "</div>" : "") +
+      (p.emergencia !== null ? '<div class="post-modelo">' + etiquetaModelo(p) + "</div>" : "") +
     "</article>";
   }
-  ER.htmlTweet = htmlTweet;
+  ER.htmlPost = htmlPost;
 
   // ================= Chips y filtros ("Estás viendo") =================
   var CLASES = {
@@ -138,19 +138,28 @@
   }
 
   // ================= Mapa =================
-  function tarjeta(p, total) {
+  function tarjeta(p, total, porCat) {
     var c = D.categoria(p.categoria);
+    var desglose = "";
+    if (total > 1 && porCat) {
+      desglose = '<div class="desglose">' + D.CATEGORIAS.filter(function (x) { return porCat[x.id]; }).map(function (x) {
+        return '<span><i style="background:' + x.color + '"></i>' + porCat[x.id] + " " + x.nombre.toLowerCase() + "</span>";
+      }).join("") + "</div>";
+    }
     return '<div class="t">' + iconoX() + c.nombre + "</div>" +
       '<div class="row">' + window.icon("calendar-event") + ER.fmtFechaCorta(p.fecha) + "</div>" +
-      '<div class="row time">' + ER.fmtHoraH(p.fecha) + "</div>" +
-      (total > 1 ? '<div class="count">' + total + " reportes en esta zona</div>" : "");
+      '<div class="row time">' + ER.fmtHoraH(p.fecha) + " · " + ER.hace(p.fecha) + "</div>" +
+      (total > 1 ? '<div class="count">' + total + " reportes en esta zona (el más reciente arriba)</div>" + desglose : "");
   }
 
   function popupPost(p) {
     var c = D.categoria(p.categoria);
-    return '<div class="popup-post"><div class="meta">' + iconoX() + "<b>" + c.nombre + "</b> · " + ER.escapar(p.ciudad) + "</div>" +
+    return '<div class="popup-post"><div class="meta"><i class="punto" style="background:' + c.color + '"></i><b>' + c.nombre + "</b> · " + ER.escapar(p.ciudad) + "</div>" +
       "<p>" + textoEnriquecido(p.texto) + "</p>" +
-      '<div class="foot">' + ER.escapar(p.autor.nombre) + " · " + ER.fmtLarga(p.fecha) + "</div></div>";
+      '<div class="foot">' + ER.escapar(p.autor.nombre) + " · " + ER.fmtLarga(p.fecha) + " (" + ER.hace(p.fecha) + ")</div>" +
+      '<div class="foot2">' + etiquetaModelo(p) +
+      (p.url ? '<a class="link-x" href="' + ER.escapar(p.url) + '" target="_blank" rel="noopener">' + window.icon("brand-x") + "Ver en X</a>" : "") +
+      "</div></div>";
   }
 
   function iconoGrupo(cluster) {
@@ -165,7 +174,9 @@
 
   function crearMarcador(p, fresco) {
     var m = L.marker([p.lat, p.lng], {
-      icon: L.divIcon({ html: '<div class="halo"><div class="core"></div></div>', className: "er-point" + (fresco ? " fresh" : ""), iconSize: [34, 34] }),
+      icon: L.divIcon({
+        html: '<div class="halo" style="--c:' + D.categoria(p.categoria).color + '"><div class="core"></div></div>',
+        className: "er-point" + (fresco ? " fresh" : ""), iconSize: [30, 30] }),
       keyboard: false
     });
     m._erPost = p;
@@ -174,11 +185,15 @@
   }
 
   function ultimoDe(capa) {
-    if (capa._erPost) return { post: capa._erPost, total: 1 };
+    if (capa._erPost) return { post: capa._erPost, total: 1, porCat: {} };
     var hijos = capa.getAllChildMarkers();
-    var mejor = hijos[0]._erPost;
-    for (var i = 1; i < hijos.length; i++) if (hijos[i]._erPost.fecha > mejor.fecha) mejor = hijos[i]._erPost;
-    return { post: mejor, total: hijos.length };
+    var mejor = hijos[0]._erPost, porCat = {};
+    hijos.forEach(function (h) {
+      var p = h._erPost;
+      porCat[p.categoria] = (porCat[p.categoria] || 0) + 1;
+      if (p.fecha > mejor.fecha) mejor = p;
+    });
+    return { post: mejor, total: hijos.length, porCat: porCat };
   }
 
   // Muestra tarjetas fijas sobre los grupos donde ocurrieron los reportes más recientes.
@@ -195,11 +210,16 @@
       var ll = padre.getLatLng();
       if (!limites.contains(ll)) continue;
       var pt = mapa.latLngToContainerPoint(ll);
-      if (pt.y < 150) continue;
-      var choca = spotlights.some(function (s) { return mapa.latLngToContainerPoint(s.getLatLng()).distanceTo(pt) < 200; });
+      if (pt.y < 170) continue;
+      // La tarjeta ocupa unos 270 x 150 px por encima del punto: se evita que choque con otra tarjeta o su punto.
+      var choca = spotlights.some(function (s) {
+        var q = mapa.latLngToContainerPoint(s.getLatLng());
+        return Math.abs(q.x - pt.x) < 290 && Math.abs(q.y - pt.y) < 170;
+      });
       vistos.push(padre);
       if (choca) continue;
       var info = ultimoDe(padre);
+      // Las tarjetas fijas van compactas; el desglose por categoría se ve al pasar el cursor.
       padre.bindTooltip(tarjeta(info.post, info.total), {
         permanent: true, direction: "top", className: "er-card", offset: [0, -24], interactive: false
       }).openTooltip();
@@ -213,12 +233,24 @@
   function iniciarMapa() {
     mapa = L.map("map", { zoomControl: true, minZoom: 5, maxZoom: 17, worldCopyJump: false })
       .setView([-1.86, -79.75], 8);
-    // Mosaicos oficiales de OpenStreetMap: no requieren API key (solo la atribución).
-    // En CSS se pasan a escala de grises para seguir la línea gráfica del diseño.
-    L.tileLayer("https://tile.openstreetmap.org/{z}/{x}/{y}.png", {
-      attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>',
-      maxZoom: 19
-    }).addTo(mapa);
+    // Mapas base sin API key. "Calles" es el de OpenStreetMap a color; se puede
+    // cambiar desde el control de capas y la elección se recuerda en este navegador.
+    var osm = '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>';
+    var bases = {
+      "Calles": L.tileLayer("https://tile.openstreetmap.org/{z}/{x}/{y}.png", { attribution: osm, maxZoom: 19 }),
+      "Humanitario": L.tileLayer("https://{s}.tile.openstreetmap.fr/hot/{z}/{x}/{y}.png", {
+        attribution: osm + ', estilo <a href="https://www.hotosm.org/">HOT</a>', subdomains: "abc", maxZoom: 19 }),
+      "Gris": L.tileLayer("https://tile.openstreetmap.org/{z}/{x}/{y}.png", { attribution: osm, maxZoom: 19, className: "tiles-gris" }),
+      "Satélite": L.tileLayer("https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}", {
+        attribution: "Imágenes &copy; Esri", maxZoom: 19 })
+    };
+    var elegida = "Calles";
+    try { if (bases[localStorage.getItem("er-mapa-base")]) elegida = localStorage.getItem("er-mapa-base"); } catch (e) { /* sin almacenamiento */ }
+    bases[elegida].addTo(mapa);
+    L.control.layers(bases, null, { position: "topright", collapsed: true }).addTo(mapa);
+    mapa.on("baselayerchange", function (e) {
+      try { localStorage.setItem("er-mapa-base", e.name); } catch (err) { /* sin almacenamiento */ }
+    });
     mapa.zoomControl.setPosition("bottomright");
 
     capaGrupos = L.markerClusterGroup({
@@ -231,7 +263,7 @@
       var c = e.layer;
       if (c._erSpot) return;
       var info = ultimoDe(c);
-      c.bindTooltip(tarjeta(info.post, info.total), { direction: "top", className: "er-card", offset: [0, -24] }).openTooltip();
+      c.bindTooltip(tarjeta(info.post, info.total, info.porCat), { direction: "top", className: "er-card", offset: [0, -24] }).openTooltip();
     });
     capaGrupos.on("clustermouseout", function (e) { if (!e.layer._erSpot) e.layer.unbindTooltip(); });
     capaGrupos.on("animationend", programarSpotlights);
@@ -279,8 +311,11 @@
     total = pintarLeyendaMapa._t || 0;
     var el = document.getElementById("mapLegend");
     var base = "<span>" + ER.fmtNum(total) + " publicaciones geolocalizadas en el periodo</span>";
+    var cats = D.CATEGORIAS.filter(function (c) { return ER.filtros.categorias.indexOf(c.id) >= 0; }).map(function (c) {
+      return '<span><i class="dot-cat" style="background:' + c.color + '"></i>' + c.nombre + "</span>";
+    }).join("");
     el.innerHTML = st.modo === "geo"
-      ? '<span><i class="dot"></i>Reporte o grupo de reportes (el número indica cuántos)</span>' + base
+      ? cats + '<span><i class="dot"></i>Grupo de reportes (el número indica cuántos)</span>' + base
       : "<span>Densidad de reportes: baja<i class=\"ramp\"></i>alta</span>" + base;
   }
 
@@ -300,14 +335,18 @@
     programarSpotlights();
   }
 
-  // ================= Tweets recientes =================
-  function pintarTweets() {
+  // ================= Posts recientes =================
+  // Solo los posts de las últimas 24 horas, con los filtros globales.
+  function pintarPosts() {
     var excluidos = {};
     st.pendientes.forEach(function (p) { excluidos[p.id] = true; });
-    var lista = D.filtrar(filtroBase()).filter(function (p) { return !excluidos[p.id]; }).slice(0, 40);
-    var cont = document.getElementById("tweets");
-    cont.innerHTML = lista.length ? lista.map(function (p) { return htmlTweet(p); }).join("") :
-      '<div class="empty">' + ER.mensajeSinDatos("No hay publicaciones para los filtros seleccionados.") + "</div>";
+    var v = ER.ventana24h();
+    var todos = D.filtrar(ER.consulta({ desde: v.desde, hasta: v.hasta }));
+    var lista = todos.filter(function (p) { return !excluidos[p.id]; });
+    var cont = document.getElementById("posts");
+    cont.innerHTML = lista.length ? lista.slice(0, 150).map(function (p) { return htmlPost(p); }).join("") :
+      '<div class="empty">' + ER.mensajeSinDatos("No hubo posts en las últimas 24 horas con estos filtros.") + "</div>";
+    document.getElementById("conteoPosts").textContent = ER.fmtNum(todos.length) + (todos.length === 1 ? " post" : " posts") + " · últimas 24 horas";
     pintarPildora();
   }
 
@@ -315,15 +354,15 @@
     var visibles = st.pendientes.filter(coincide);
     var pill = document.getElementById("pillNuevos");
     pill.hidden = visibles.length === 0;
-    pill.textContent = visibles.length + (visibles.length === 1 ? " tweet nuevo" : " tweets nuevos");
+    pill.textContent = visibles.length + (visibles.length === 1 ? " post nuevo" : " posts nuevos");
   }
 
   function mostrarPendientes() {
     var nuevos = st.pendientes.filter(coincide);
     st.pendientes = [];
-    pintarTweets();
-    var cont = document.getElementById("tweets");
-    var html = nuevos.map(function (p) { return htmlTweet(p, true); }).join("");
+    pintarPosts();
+    var cont = document.getElementById("posts");
+    var html = nuevos.map(function (p) { return htmlPost(p, true); }).join("");
     var vacio = cont.querySelector(".empty");
     if (vacio) cont.innerHTML = html; else cont.insertAdjacentHTML("afterbegin", html);
     cont.scrollTo({ top: 0, behavior: "smooth" });
@@ -337,7 +376,7 @@
       '<div class="filters"><label class="search"><span class="ic-wrap" data-icon="search"></span>' +
       '<input type="search" id="vtBuscar" placeholder="Buscar texto, autor o ciudad"></label>' +
       '<select id="vtCat" aria-label="Categoría">' + opciones + "</select></div>" +
-      '<p id="vtInfo" style="margin:0 0 10px;font-size:12px"></p><div class="tweets" id="vtLista"></div>',
+      '<p id="vtInfo" style="margin:0 0 10px;font-size:12px"></p><div class="posts" id="vtLista"></div>',
       function (body) {
         function render() {
           var cat = body.querySelector("#vtCat").value;
@@ -348,7 +387,7 @@
           body.querySelector("#vtInfo").textContent = res.length > 100
             ? "Mostrando las 100 más recientes de " + ER.fmtNum(res.length) + " publicaciones"
             : ER.fmtNum(res.length) + " publicaciones";
-          body.querySelector("#vtLista").innerHTML = res.slice(0, 100).map(function (p) { return htmlTweet(p); }).join("") ||
+          body.querySelector("#vtLista").innerHTML = res.slice(0, 100).map(function (p) { return htmlPost(p); }).join("") ||
             '<div class="empty">Sin resultados.</div>';
         }
         body.querySelector("#vtBuscar").addEventListener("input", render);
@@ -358,10 +397,22 @@
   }
 
   // ================= Pre alertas =================
-  function ventanaAlertas() {
-    var fin = new Date(Math.min(Date.now(), ER.estado.hasta.getTime()));
-    var ini = new Date(fin.getTime() - 24 * 3600 * 1000);
-    return { desde: ini, hasta: fin, prevDesde: new Date(ini.getTime() - 24 * 3600 * 1000) };
+  function ventanaAlertas() { return ER.ventana24h(); }
+
+  // Mini gráfico de barras: posts por hora en las últimas 24 horas.
+  function sparkline(posts, desde, color) {
+    var horas = new Array(24).fill(0);
+    posts.forEach(function (p) {
+      var i = Math.floor((p.fecha - desde) / 3600000);
+      if (i >= 0 && i < 24) horas[i]++;
+    });
+    var max = Math.max.apply(null, horas) || 1;
+    var barras = horas.map(function (n, i) {
+      var h = n ? Math.max(2, Math.round(n / max * 20)) : 1;
+      return '<rect x="' + (i * 3) + '" y="' + (22 - h) + '" width="2" height="' + h + '" rx="1" fill="' + (n ? color : "#d9dde7") + '"/>';
+    }).join("");
+    return '<svg class="spark" viewBox="0 0 72 22" width="58" height="22" preserveAspectRatio="none" role="img" aria-label="Posts por hora en las últimas 24 horas">' +
+      "<title>Posts por hora en las últimas 24 horas (máximo " + max + " en una hora)</title>" + barras + "</svg>";
   }
 
   function pintarAlertas() {
@@ -375,7 +426,7 @@
       var n = actual.filter(function (p) { return p.categoria === c.id; }).length;
       var m = previo.filter(function (p) { return p.categoria === c.id; }).length;
       var tend = m === 0 ? (n > 0 ? "up" : "flat") : n / m > 1.1 ? "up" : n / m < 0.9 ? "down" : "flat";
-      return { c: c, n: n, m: m, tend: tend };
+      return { c: c, n: n, m: m, tend: tend, posts: actual.filter(function (p) { return p.categoria === c.id; }) };
     });
     filas.sort(function (x, y) {
       var r = a.orden === "nombre" ? x.c.nombre.localeCompare(y.c.nombre, "es") : x.n - y.n;
@@ -386,7 +437,7 @@
       var titulo = "Últimas 24 h: " + f.n + " · 24 h previas: " + f.m;
       return '<tr class="' + (f.tend === "up" ? "up" : "") + '" title="' + titulo + '">' +
         '<td><div class="alert-cat">' + window.icon(f.c.icono) + f.c.nombre + "</div></td>" +
-        '<td><div class="alert-num"><span class="n">' + ER.fmtNum(f.n) + '</span><span class="lbl">menciones</span>' +
+        '<td><div class="alert-num">' + sparkline(f.posts, v.desde, f.c.color) + '<span class="n">' + ER.fmtNum(f.n) + '</span><span class="lbl">menciones</span>' +
         '<span class="tr" aria-label="' + (f.tend === "up" ? "En aumento" : f.tend === "down" ? "En descenso" : "Estable") + '">' + tr + "</span></div></td></tr>";
     }).join("");
     document.querySelectorAll(".alerts .sort").forEach(function (b) {
@@ -442,7 +493,7 @@
     var i = t.dataPoints[0].dataIndex;
     var ds = ctx.chart.data.datasets;
     tip.innerHTML = '<div class="h">' + ETIQUETAS[i] + "</div>" +
-      '<div class="v"><i></i>' + ER.fmtNum(ds[0].data[i]) + " tweets</div>" +
+      '<div class="v"><i></i>' + ER.fmtNum(ds[0].data[i]) + " posts</div>" +
       '<div class="v prev"><i></i>' + ER.fmtNum(ds[1].data[i]) + " periodo anterior</div>";
     var y = Math.min(ctx.chart.scales.y.getPixelForValue(ds[0].data[i]), ctx.chart.scales.y.getPixelForValue(ds[1].data[i]));
     tip.style.left = (ctx.chart.canvas.offsetLeft + t.caretX) + "px";
@@ -507,17 +558,65 @@
     chart.update();
   }
 
+  // ================= Resumen de las últimas 24 horas =================
+  var previoResumen = {};
+  function pintarResumen() {
+    var v = ER.ventana24h();
+    var actual = D.filtrar(ER.consulta({ desde: v.desde, hasta: v.hasta }));
+    var previo = D.filtrar(ER.consulta({ desde: v.prevDesde, hasta: v.prevHasta }));
+    var ultimaHora = actual.filter(function (p) { return p.fecha >= v.hasta - 3600000; }).length;
+    var todas = D.filtrar(ER.consulta({ desde: v.desde, hasta: v.hasta, clasificacion: "todas" }));
+    var descartadas = todas.filter(function (p) { return p.emergencia === false; }).length;
+
+    var porCat = {}, porCiudad = {};
+    actual.forEach(function (p) {
+      porCat[p.categoria] = (porCat[p.categoria] || 0) + 1;
+      if (p.ciudad !== D.SIN_UBICACION) porCiudad[p.ciudad] = (porCiudad[p.ciudad] || 0) + 1;
+    });
+    var mayor = function (m) { return Object.keys(m).sort(function (a, b) { return m[b] - m[a]; })[0]; };
+    var cat = mayor(porCat), ciudad = mayor(porCiudad);
+
+    var cambio = previo.length ? Math.round((actual.length - previo.length) / previo.length * 100) : null;
+    var tendencia = cambio === null ? "Sin datos de las 24 h previas para comparar"
+      : '<span class="' + (cambio > 0 ? "sube" : cambio < 0 ? "baja" : "") + '">' + window.icon(cambio >= 0 ? "trending-up" : "trending-down") +
+        (cambio > 0 ? "+" : "") + cambio + " %</span> frente a las 24 h previas";
+    var clase = { emergencias: "Emergencias", todas: "Posts", descartadas: "Descartadas" }[ER.filtros.clasificacion];
+
+    var tiles = [
+      { id: "r24", lbl: clase + " · 24 h", valor: actual.length, sub: tendencia },
+      { id: "r1h", lbl: "Última hora", valor: ultimaHora, sub: ultimaHora ? "posts en los últimos 60 minutos" : "Sin reportes en la última hora" },
+      { id: "rcat", lbl: "Categoría con más reportes", texto: cat ? D.categoria(cat).nombre : "–",
+        color: cat ? D.categoria(cat).color : null, sub: cat ? ER.fmtNum(porCat[cat]) + " de " + ER.fmtNum(actual.length) + " posts" : "Sin reportes" },
+      { id: "rzona", lbl: "Zona más activa", texto: ciudad || "–", sub: ciudad ? ER.fmtNum(porCiudad[ciudad]) + " posts ubicados" : "Sin posts ubicados" },
+      { id: "rmod", lbl: "Filtradas por el modelo", valor: descartadas,
+        sub: todas.length ? "de " + ER.fmtNum(todas.length) + " posts analizados no eran emergencias" : "Sin posts analizados" }
+    ];
+    var el = document.getElementById("resumen");
+    el.innerHTML = tiles.map(function (t) {
+      var cuerpo = "valor" in t
+        ? '<b class="r-val" data-id="' + t.id + '">' + ER.fmtNum(previoResumen[t.id] || 0) + "</b>"
+        : '<b class="r-val r-texto">' + (t.color ? '<i style="background:' + t.color + '"></i>' : "") + ER.escapar(t.texto) + "</b>";
+      return '<div class="r-tile"><span class="r-lbl">' + t.lbl + "</span>" + cuerpo + '<span class="r-sub">' + t.sub + "</span></div>";
+    }).join("");
+    tiles.forEach(function (t) {
+      if (!("valor" in t)) return;
+      ER.animarNumero(el.querySelector('[data-id="' + t.id + '"]'), t.valor);
+      previoResumen[t.id] = t.valor;
+    });
+  }
+
   // ================= Ciclo de vida =================
   var refrescoTimer;
   function refrescoDiferido() {
     clearTimeout(refrescoTimer);
-    refrescoTimer = setTimeout(function () { pintarAlertas(); pintarFrecuencia(); }, 400);
+    refrescoTimer = setTimeout(function () { pintarResumen(); pintarAlertas(); pintarFrecuencia(); }, 400);
   }
 
   function pintarTodo(ajustar) {
     pintarChips();
+    pintarResumen();
     pintarMapa(ajustar);
-    pintarTweets();
+    pintarPosts();
     pintarAlertas();
     pintarFrecuencia();
   }

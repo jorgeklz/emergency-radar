@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 /*
- * Emergency Radar · recolector de publicaciones de X (Twitter)
+ * Emergency Radar · recolector de posts de X
  * ------------------------------------------------------------------
  * Consulta el endpoint de búsqueda reciente de la API v2 de X, clasifica cada
  * publicación en una categoría de emergencia, la ubica en una ciudad y guarda
@@ -82,9 +82,9 @@ function ciudadEnTexto(texto) {
  *  2. Lugar etiquetado (place) de X: centro de su recuadro.
  *  3. Ciudad mencionada en el texto: centro de la ciudad con una leve dispersión.
  */
-export function ubicar(tweet, lugar) {
-  const coords = tweet.geo && tweet.geo.coordinates && tweet.geo.coordinates.coordinates;
-  const porTexto = ciudadEnTexto(tweet.text);
+export function ubicar(post, lugar) {
+  const coords = post.geo && post.geo.coordinates && post.geo.coordinates.coordinates;
+  const porTexto = ciudadEnTexto(post.text);
   const porLugar = lugar ? ciudadEnTexto(lugar.full_name || lugar.name) : null;
   const ciudad = porLugar || porTexto;
   if (Array.isArray(coords) && coords.length === 2) {
@@ -95,7 +95,7 @@ export function ubicar(tweet, lugar) {
     return { ciudad: ciudad ? ciudad.nombre : lugar.name, lat: (s + n) / 2, lng: (o + e) / 2 };
   }
   if (ciudad) {
-    const [dy, dx] = dispersion(tweet.id, ciudad.radio);
+    const [dy, dx] = dispersion(post.id, ciudad.radio);
     return { ciudad: ciudad.nombre, lat: +(ciudad.lat + dy).toFixed(5), lng: +(ciudad.lng + dx).toFixed(5) };
   }
   return { ciudad: "Sin ubicación", lat: null, lng: null };
@@ -144,7 +144,7 @@ export async function buscar({ token, consulta, sinceId, maxPaginas, fetchImpl =
     const params = new URLSearchParams({
       query: consulta,
       max_results: "100",
-      "tweet.fields": "created_at,author_id,geo,lang",
+      "tweet.fields": "created_at,author_id,geo,lang", // nombre del parámetro en la API de X
       expansions: "author_id,geo.place_id",
       "user.fields": "name,username,verified",
       "place.fields": "full_name,name,geo,country_code"

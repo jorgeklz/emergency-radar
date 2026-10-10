@@ -8,7 +8,7 @@ Todo lo que muestra el sitio son **publicaciones reales de X** que un recolector
 
 ## Secciones
 
-**Principal.** Mapa con dos modos (Geolocalización con agrupación de reportes y Mapa de Calor), filtro por categorías ("Estás viendo"), tweets recientes con aviso de publicaciones nuevas, Pre Alertas de las últimas 24 horas con tendencia frente a las 24 horas previas y la frecuencia de publicaciones por franja de 30 minutos comparada con el periodo anterior.
+**Principal.** Resumen animado de las últimas 24 horas (emergencias y su tendencia, última hora, categoría y zona más activas, cuántos posts filtró el modelo). Mapa con dos modos (Geolocalización con agrupación de reportes y Mapa de Calor), cuatro mapas base (Calles a color, Humanitario, Gris y Satélite), puntos con el color de su categoría, filtro por categorías ("Estás viendo"), posts recientes de las últimas 24 horas con aviso de publicaciones nuevas, Pre Alertas de las últimas 24 horas con una mini gráfica por hora y la tendencia frente a las 24 horas previas y la frecuencia de publicaciones por franja de 30 minutos comparada con el periodo anterior.
 
 **Histórico.** Publicaciones por día apiladas por categoría y un registro de 10 en 10 con búsqueda, filtros, resultado del modelo, enlace a cada publicación en X y exportación a CSV.
 
@@ -18,7 +18,7 @@ Los filtros (categorías, ciudad y clasificación del modelo) son los mismos en 
 
 En la barra superior están la hora de la última captura, el botón **En Vivo** (relee los datos cada minuto y avisa de las publicaciones nuevas; un clic lo pausa), el selector de rango de fechas (por defecto, los últimos 7 días) y el menú.
 
-## Captura de datos reales desde X (Twitter)
+## Captura de datos reales desde X
 
 La API key **no va en el código del sitio**. GitHub Pages publica todos los archivos, así que cualquier clave escrita en el JavaScript quedaría a la vista de cualquiera. Además, la API de X no acepta llamadas directas desde el navegador.
 
@@ -44,7 +44,7 @@ En *Settings → Secrets and variables → Actions → Variables* puedes crear:
 
 | Variable | Para qué sirve | Por defecto |
 |---|---|---|
-| `X_QUERY` | Consulta de búsqueda de X | Palabras de emergencia + ciudades de Ecuador, en español y sin retuits |
+| `X_QUERY` | Consulta de búsqueda de X | Palabras de emergencia + ciudades de Ecuador, en español y sin reposts |
 | `X_MAX_PAGES` | Páginas de 100 resultados por ejecución (controla el consumo de la API) | `2` |
 | `X_RETENCION_DIAS` | Días que se guardan en `data/posts.json` | `30` |
 
@@ -169,4 +169,4 @@ Las categorías y las ciudades están en `assets/js/catalogo.js`, con su ícono,
 
 ## Créditos
 
-Mapa base © colaboradores de [OpenStreetMap](https://www.openstreetmap.org/copyright). Íconos de [Tabler Icons](https://tabler.io/icons) (MIT). Gráficos con [Chart.js](https://www.chartjs.org/) (MIT). Mapas con [Leaflet](https://leafletjs.com/) (BSD-2).
+Mapas base © colaboradores de [OpenStreetMap](https://www.openstreetmap.org/copyright), estilo humanitario de [HOT](https://www.hotosm.org/) e imágenes satelitales © Esri. Íconos de [Tabler Icons](https://tabler.io/icons) (MIT). Gráficos con [Chart.js](https://www.chartjs.org/) (MIT). Mapas con [Leaflet](https://leafletjs.com/) (BSD-2).

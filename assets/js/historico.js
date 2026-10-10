@@ -68,7 +68,7 @@
     document.getElementById("histBody").innerHTML = filas.length ? filas.map(function (p) {
       var c = D.categoria(p.categoria);
       return "<tr>" +
-        '<td class="nowrap">' + ER.fmtFechaCorta(p.fecha) + "<br><small style=\"color:#8a90a2\">" + ER.fmtHora(p.fecha) + "</small></td>" +
+        '<td class="nowrap">' + ER.fmtFechaCorta(p.fecha) + "<br><small style=\"color:#8a90a2\">" + ER.fmtHora(p.fecha) + " · " + ER.htmlHace(p.fecha) + "</small></td>" +
         '<td><span class="tag-cat"><i style="background:' + c.color + '"></i>' + c.nombre + "</span></td>" +
         '<td class="nowrap">' + ER.escapar(p.ciudad) + (p.lat === null ? "" : ' <span title="Geolocalizada" style="color:#2f7be5">' + window.icon("map-pin", "") + "</span>") + "</td>" +
         '<td class="nowrap">' + ER.escapar(p.autor.nombre) + '<br><small style="color:#8a90a2">@' + ER.escapar(p.autor.usuario) + "</small></td>" +
