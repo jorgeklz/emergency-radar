@@ -1,7 +1,7 @@
 /*
  * Emergency Radar · vista Principal
  * Mapa (geolocalización / mapa de calor), posts recientes,
- * pre-alertas y frecuencia de publicaciones por hora del día.
+ * pre-alertas y frecuencia de publicaciones con detección de picos.
  */
 (function () {
   "use strict";
@@ -188,7 +188,8 @@
 
   function iconoGrupo(cluster) {
     var n = cluster.getChildCount();
-    var s = n < 10 ? 50 : n < 50 ? 56 : n < 200 ? 62 : 70;
+    // Tamaño parecido al de una mancha del mapa de calor (radio 34 px + difuminado).
+    var s = n < 10 ? 76 : n < 50 ? 88 : n < 200 ? 100 : 112;
     var nivel = ER.nivelPorCantidad(n);
     return L.divIcon({
       html: '<div class="halo" style="--c:' + nivel.color + '"><div class="core">' + n + "</div></div>",
@@ -203,12 +204,12 @@
     var m = L.marker([p.lat, p.lng], {
       icon: L.divIcon({
         html: '<div class="halo" style="--c:' + g.color + '"><div class="core">' + window.icon(D.categoria(p.categoria).icono) + "</div></div>",
-        className: "er-point er-" + g.id + (fresco ? " fresh" : "") + (reciente ? " reciente" : ""), iconSize: [34, 34] }),
+        className: "er-point er-" + g.id + (fresco ? " fresh" : "") + (reciente ? " reciente" : ""), iconSize: [60, 60] }),
       keyboard: false
     });
     m._erPost = p;
     m.bindPopup(popupPost(p), { maxWidth: 320 });
-    m.bindTooltip(function () { return etiquetaPunto(p); }, { direction: "top", className: "er-mini", offset: [0, -14] });
+    m.bindTooltip(function () { return etiquetaPunto(p); }, { direction: "top", className: "er-mini", offset: [0, -20] });
     return m;
   }
 
@@ -249,7 +250,7 @@
       var info = ultimoDe(padre);
       // Las tarjetas fijas van compactas; el desglose por categoría se ve al pasar el cursor.
       padre.bindTooltip(etiquetaMini(info.post), {
-        permanent: true, direction: "top", className: "er-mini er-fija", offset: [0, -20], interactive: false
+        permanent: true, direction: "top", className: "er-mini er-fija", offset: [0, -28], interactive: false
       }).openTooltip();
       padre._erSpot = true;
       spotlights.push(padre);
@@ -332,14 +333,14 @@
     capaGrupos.on("clustermouseover", function (e) {
       var c = e.layer, info = ultimoDe(c);
       if (c._erSpot) { c.unbindTooltip(); }
-      c.bindTooltip(tarjeta(info.post, info.total, info.porCat), { direction: "top", className: "er-card", offset: [0, -22] }).openTooltip();
+      c.bindTooltip(tarjeta(info.post, info.total, info.porCat), { direction: "top", className: "er-card", offset: [0, -30] }).openTooltip();
     });
     capaGrupos.on("clustermouseout", function (e) {
       var c = e.layer;
       c.unbindTooltip();
       if (c._erSpot) {
         var info = ultimoDe(c);
-        c.bindTooltip(etiquetaMini(info.post), { permanent: true, direction: "top", className: "er-mini er-fija", offset: [0, -20] }).openTooltip();
+        c.bindTooltip(etiquetaMini(info.post), { permanent: true, direction: "top", className: "er-mini er-fija", offset: [0, -28] }).openTooltip();
       }
     });
     capaGrupos.on("animationend", programarSpotlights);
@@ -618,20 +619,11 @@
   }
 
   // ================= Frecuencia =================
-  // Dos vistas: "tiempo" (línea de tiempo por gravedad, con picos) y "hora" (patrón por hora del día).
+  // Línea de tiempo por gravedad, con detección de picos. El patrón por hora del día vive en Estadísticas.
   var MESES_C = ["ene", "feb", "mar", "abr", "may", "jun", "jul", "ago", "sep", "oct", "nov", "dic"];
   var RANGOS = { "6h": { horas: 6, paso: 15 }, "24h": { horas: 24, paso: 60 }, "3d": { horas: 72, paso: 180 }, "7d": { horas: 168, paso: 360 } };
   var COL = { alta: "#d03b3b", media: "#f0a400", baja: "#2f9e44" };
-  var freq = { vista: "tiempo", rango: "24h", sel: null, bins: [], picos: [], paso: 60 };
-
-  var ETIQUETAS = [];
-  for (var i = 0; i < 48; i++) ETIQUETAS.push(ER.pad(Math.floor(i / 2)) + ":" + (i % 2 ? "30" : "00"));
-
-  function porFranja(posts) {
-    var arr = new Array(48).fill(0);
-    posts.forEach(function (p) { arr[p.fecha.getHours() * 2 + (p.fecha.getMinutes() >= 30 ? 1 : 0)]++; });
-    return arr;
-  }
+  var freq = { rango: "24h", sel: null, bins: [], picos: [], paso: 60 };
 
   function rangoTiempo() {
     var fin = ER.ventana24h().hasta;
@@ -700,7 +692,7 @@
   var marcasPico = {
     id: "marcasPico",
     afterDatasetsDraw: function (c) {
-      if (freq.vista !== "tiempo" || !freq.picos.length) return;
+      if (!freq.picos.length) return;
       var meta = c.getDatasetMeta(c.data.datasets.length - 1), ctx = c.ctx;
       ctx.save();
       ctx.font = "800 10px " + Chart.defaults.font.family;
@@ -721,28 +713,12 @@
     }
   };
 
-  var lineaGuia = {
-    id: "lineaGuia",
-    afterDatasetsDraw: function (c) {
-      if (freq.vista !== "hora") return;
-      var act = c.tooltip && c.tooltip.getActiveElements();
-      if (!act || !act.length) return;
-      var x = act[0].element.x, ctx = c.ctx, a = c.chartArea;
-      ctx.save();
-      ctx.strokeStyle = "rgba(46,49,146,.18)";
-      ctx.lineWidth = 1;
-      ctx.beginPath(); ctx.moveTo(x, a.top); ctx.lineTo(x, a.bottom); ctx.stroke();
-      ctx.restore();
-    }
-  };
-
   function tooltipExterno(ctx) {
     var tip = document.getElementById("tipFreq");
     var t = ctx.tooltip;
     if (!t || t.opacity === 0) { tip.hidden = true; return; }
     var i = t.dataPoints[0].dataIndex, html;
-    if (freq.vista === "tiempo") {
-      var b = freq.bins[i], cat = categoriaPrincipal(b.porCat);
+    var b = freq.bins[i], cat = categoriaPrincipal(b.porCat);
       html = '<div class="h">' + fmtFranja(b, freq.paso) + "</div>" +
         '<div class="v"><b>' + ER.fmtNum(b.total) + (b.total === 1 ? " post" : " posts") + "</b>" + (freq.picos.indexOf(i) >= 0 ?  ' <span class="tip-pico">' + window.icon("chart-line") + "pico</span>" : "") + "</div>" +
         (b.total ? '<div class="tip-grav"><span><i style="background:' + COL.alta + '"></i>' + b.alta + ' alta</span><span><i style="background:' + COL.media + '"></i>' + b.media +
@@ -750,12 +726,6 @@
         (b.nProb ? '<div class="v prev">Confianza media del modelo: ' + Math.round(b.prob / b.nProb * 100) + " %</div>" : "") +
         (cat ? '<div class="v prev">Más reportado: ' + cat.nombre + "</div>" : "") +
         (b.total ? '<div class="v prev tip-ayuda">Clic para ver los posts</div>' : "");
-    } else {
-      var ds = ctx.chart.data.datasets;
-      html = '<div class="h">' + ETIQUETAS[i] + "</div>" +
-        '<div class="v"><i></i>' + ER.fmtNum(ds[0].data[i]) + " posts</div>" +
-        '<div class="v prev"><i></i>' + ER.fmtNum(ds[1].data[i]) + " periodo anterior</div>";
-    }
     tip.innerHTML = html;
     var x = ctx.chart.canvas.offsetLeft + t.caretX;
     tip.style.left = Math.max(110, Math.min(x, ctx.chart.canvas.offsetLeft + ctx.chart.width - 110)) + "px";
@@ -780,44 +750,27 @@
     if (chart) chart.destroy();
     var lienzo = document.getElementById("chartFreq");
     var op = opcionesBase();
-    if (freq.vista === "tiempo") {
-      var color = function (nivel) {
-        return function (c) { return freq.sel !== null && c.dataIndex !== freq.sel ? COL[nivel] + "40" : COL[nivel]; };
-      };
-      op.scales.x = { stacked: true, grid: { display: false }, border: { display: false },
-        ticks: { maxRotation: 0, autoSkip: true, autoSkipPadding: 14, font: { size: 11 }, color: "#6b7184" } };
-      op.onClick = function (ev, els) {
-        if (!els.length) return;
-        seleccionarFranja(els[0].index);
-      };
-      op.onHover = function (ev, els) { ev.native.target.style.cursor = els.length ? "pointer" : "default"; };
-      chart = new Chart(lienzo, {
-        type: "bar",
-        data: { labels: [], datasets: [
-          { label: "Gravedad alta", data: [], backgroundColor: color("alta"), borderColor: "#fff", borderWidth: { top: 1 }, borderSkipped: false, maxBarThickness: 26 },
-          { label: "Gravedad media", data: [], backgroundColor: color("media"), borderColor: "#fff", borderWidth: { top: 1 }, borderSkipped: false, maxBarThickness: 26 },
-          { label: "Gravedad baja", data: [], backgroundColor: color("baja"), borderColor: "#fff", borderWidth: { top: 1 }, borderSkipped: false, maxBarThickness: 26,
-            borderRadius: { topLeft: 3, topRight: 3 } }
-        ] },
-        options: op,
-        plugins: [marcasPico]
-      });
-    } else {
-      op.scales.y.stacked = false;
-      op.scales.x = { grid: { display: false }, border: { display: false },
-        ticks: { autoSkip: false, maxRotation: 0, font: { size: 12 }, color: "#6b7184",
-          callback: function (v, k) { var paso = this.chart.width < 640 ? 12 : 4; return k % paso === 0 ? ETIQUETAS[k] : k === 47 && paso === 4 ? "23:59" : ""; } } };
-      chart = new Chart(lienzo, {
-        type: "line",
-        data: { labels: ETIQUETAS, datasets: [
-          { label: "Periodo seleccionado", data: [], borderColor: "#2f7be5", borderWidth: 2.5, pointRadius: 0, pointHoverRadius: 5, pointHoverBackgroundColor: "#2f7be5", pointHoverBorderColor: "#fff", pointHoverBorderWidth: 2, tension: 0, order: 1 },
-          { label: "Periodo anterior", data: [], borderColor: "#d3dae6", borderWidth: 2, pointRadius: 0, pointHoverRadius: 4, pointHoverBackgroundColor: "#c4ccdb", pointHoverBorderColor: "#fff", tension: 0, order: 2 }
-        ] },
-        options: op,
-        plugins: [lineaGuia]
-      });
-    }
-    chart._vista = freq.vista;
+    var color = function (nivel) {
+      return function (c) { return freq.sel !== null && c.dataIndex !== freq.sel ? COL[nivel] + "40" : COL[nivel]; };
+    };
+    op.scales.x = { stacked: true, grid: { display: false }, border: { display: false },
+      ticks: { maxRotation: 0, autoSkip: true, autoSkipPadding: 14, font: { size: 11 }, color: "#6b7184" } };
+    op.onClick = function (ev, els) {
+      if (!els.length) return;
+      seleccionarFranja(els[0].index);
+    };
+    op.onHover = function (ev, els) { ev.native.target.style.cursor = els.length ? "pointer" : "default"; };
+    chart = new Chart(lienzo, {
+      type: "bar",
+      data: { labels: [], datasets: [
+        { label: "Gravedad alta", data: [], backgroundColor: color("alta"), borderColor: "#fff", borderWidth: { top: 1 }, borderSkipped: false, maxBarThickness: 26 },
+        { label: "Gravedad media", data: [], backgroundColor: color("media"), borderColor: "#fff", borderWidth: { top: 1 }, borderSkipped: false, maxBarThickness: 26 },
+        { label: "Gravedad baja", data: [], backgroundColor: color("baja"), borderColor: "#fff", borderWidth: { top: 1 }, borderSkipped: false, maxBarThickness: 26,
+          borderRadius: { topLeft: 3, topRight: 3 } }
+      ] },
+      options: op,
+      plugins: [marcasPico]
+    });
   }
 
   function seleccionarFranja(k) {
@@ -882,9 +835,6 @@
   function iniciarFrecuencia() {
     Chart.defaults.font.family = getComputedStyle(document.body).fontFamily;
     Chart.defaults.color = "#8a90a2";
-    document.querySelectorAll("#freqVista button").forEach(function (b) {
-      b.addEventListener("click", function () { freq.vista = b.getAttribute("data-vista"); freq.sel = null; pintarFrecuencia(); });
-    });
     document.querySelectorAll("#freqRango button").forEach(function (b) {
       b.addEventListener("click", function () { freq.rango = b.getAttribute("data-rango"); freq.sel = null; pintarFrecuencia(); });
     });
@@ -896,24 +846,9 @@
   }
 
   function pintarFrecuencia() {
-    if (!chart || chart._vista !== freq.vista) crearGrafico();
-    document.querySelectorAll("#freqVista button").forEach(function (b) { b.classList.toggle("active", b.getAttribute("data-vista") === freq.vista); });
+    if (!chart) crearGrafico();
     document.querySelectorAll("#freqRango button").forEach(function (b) { b.classList.toggle("active", b.getAttribute("data-rango") === freq.rango); });
-    document.getElementById("freqRango").hidden = freq.vista !== "tiempo";
     var sub = document.getElementById("freqSub"), ley = document.getElementById("freqLeyenda"), picosEl = document.getElementById("freqPicos");
-
-    if (freq.vista === "hora") {
-      var actual = D.filtrar(filtroBase());
-      var ant = ER.periodoAnterior();
-      chart.data.datasets[0].data = porFranja(actual);
-      chart.data.datasets[1].data = porFranja(D.filtrar(ER.consulta({ desde: ant.desde, hasta: ant.hasta })));
-      chart.update();
-      sub.textContent = "Posts por franja de 30 minutos del día en el periodo elegido, frente al periodo anterior";
-      ley.innerHTML = '<span><i class="sw sw-line"></i>Periodo seleccionado</span><span><i class="sw sw-line prev"></i>Periodo anterior</span>';
-      picosEl.innerHTML = ""; freq.picos = [];
-      pintarDetalleFranja();
-      return;
-    }
 
     var r = rangoTiempo();
     freq.paso = r.paso;

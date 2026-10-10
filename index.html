@@ -56,18 +56,9 @@
         </div>
       </div>
 
-      <div class="popover-anchor">
-        <button id="btnMenu" class="icon-btn" type="button" aria-label="Menú" aria-haspopup="menu">
-          <span class="ic-wrap" data-icon="menu-2"></span>
-        </button>
-        <div id="popMenu" class="popover popover-right menu" hidden role="menu">
-          <a href="#/principal" role="menuitem"><span class="ic-wrap" data-icon="map-2"></span>Principal</a>
-          <a href="#/historico" role="menuitem"><span class="ic-wrap" data-icon="clock"></span>Histórico</a>
-          <a href="#/estadisticas" role="menuitem"><span class="ic-wrap" data-icon="chart-bar"></span>Estadísticas</a>
-          <hr>
-          <button type="button" role="menuitem" id="btnAcerca"><span class="ic-wrap" data-icon="info-circle"></span>Acerca de</button>
-        </div>
-      </div>
+      <button id="btnAcerca" class="icon-btn" type="button" aria-label="Acerca de Emergency Radar" title="Acerca de">
+        <span class="ic-wrap" data-icon="info-circle"></span>
+      </button>
     </div>
   </header>
 
@@ -112,10 +103,6 @@
           <div class="card-head wrap">
             <div class="titulo-con-sub"><h2>Frecuencia de posts</h2><span class="hint" id="freqSub"></span></div>
             <div class="freq-controles">
-              <div class="segmented seg-mini" id="freqVista" role="tablist" aria-label="Vista">
-                <button type="button" data-vista="tiempo" role="tab">Línea de tiempo</button>
-                <button type="button" data-vista="hora" role="tab">Hora del día</button>
-              </div>
               <div class="segmented seg-mini" id="freqRango" role="tablist" aria-label="Intervalo">
                 <button type="button" data-rango="6h" role="tab">6 h</button>
                 <button type="button" data-rango="24h" role="tab">24 h</button>

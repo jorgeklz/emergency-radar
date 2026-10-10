@@ -366,8 +366,6 @@
     pintarFuente();
     iniciarRango();
     iniciarVivo();
-    enlazarPopover("btnMenu", "popMenu");
-    document.querySelectorAll("#popMenu a").forEach(function (a) { a.addEventListener("click", cerrarPopovers); });
     document.getElementById("btnAcerca").addEventListener("click", function () {
       cerrarPopovers();
       ER.abrirModal("Acerca de Emergency Radar",
