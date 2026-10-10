@@ -134,24 +134,38 @@
 
         <article class="card card-alerts">
           <div class="card-head">
-            <h2>Pre Alertas</h2>
-            <div class="popover-anchor">
-              <button type="button" class="btn-soft" id="btnFiltrosAlertas">Filtros</button>
-              <div id="popAlertas" class="popover popover-right" hidden>
-                <label class="field"><span>Ciudad</span><select id="selCiudadAlertas"></select></label>
-                <p class="hint">Las flechas comparan las últimas 24 horas con las 24 horas anteriores. La ciudad elegida aplica en toda la app.</p>
+            <div class="titulo-con-sub"><h2>Pre Alertas</h2><span class="hint" id="alertasSub"></span></div>
+            <div class="alertas-acciones">
+              <div class="segmented seg-mini" id="ventanaAlertas" role="tablist" aria-label="Ventana de tiempo">
+                <button type="button" data-horas="1" role="tab">1 h</button>
+                <button type="button" data-horas="6" role="tab">6 h</button>
+                <button type="button" data-horas="24" role="tab">24 h</button>
+              </div>
+              <div class="popover-anchor">
+                <button type="button" class="btn-soft" id="btnFiltrosAlertas">Filtros</button>
+                <div id="popAlertas" class="popover popover-right" hidden>
+                  <label class="field"><span>Ciudad</span><select id="selCiudadAlertas"></select></label>
+                  <p class="hint">La ciudad elegida aplica en toda la app.</p>
+                </div>
+              </div>
+              <div class="popover-anchor">
+                <button type="button" class="icon-btn small" id="btnAyudaAlertas" aria-label="Cómo se calculan las pre alertas"><span class="ic-wrap" data-icon="info-circle"></span></button>
+                <div id="popAyudaAlertas" class="popover popover-right popover-ayuda" hidden>
+                  <div class="pop-title">Cómo se calculan</div>
+                  <p>Se compara cuántos posts hay en la ventana elegida con <b>lo habitual</b>: la misma franja horaria de los días anteriores (hasta 7). Si todavía no hay días previos, se compara con la ventana inmediatamente anterior.</p>
+                  <ul class="niveles-ayuda">
+                    <li><span class="nivel nivel-alta"></span><b>Alerta alta:</b> muy por encima de lo habitual (z ≥ 3) y al menos 5 posts.</li>
+                    <li><span class="nivel nivel-alerta"></span><b>Alerta:</b> claramente por encima (z ≥ 2) y al menos 3 posts.</li>
+                    <li><span class="nivel nivel-atencion"></span><b>Atención:</b> algo por encima, acelerando en el último tramo o con 3 o más posts que mencionan heridos o fallecidos.</li>
+                    <li><span class="nivel nivel-normal"></span><b>Normal:</b> dentro de lo habitual.</li>
+                  </ul>
+                  <p class="hint" style="max-width:none">z = (observado − habitual) / √(habitual + 1). Solo cuentan los posts que el modelo marcó como emergencia, salvo que cambies la clasificación en los filtros.</p>
+                </div>
               </div>
             </div>
           </div>
-          <table class="alerts">
-            <thead>
-              <tr>
-                <th><button type="button" class="sort" data-sort="nombre">Categoría <span class="ic-wrap" data-icon="selector"></span></button></th>
-                <th class="num"><button type="button" class="sort" data-sort="menciones">Menciones <span class="ic-wrap" data-icon="selector"></span></button></th>
-              </tr>
-            </thead>
-            <tbody id="alertsBody"></tbody>
-          </table>
+          <div class="alertas-resumen" id="alertasResumen"></div>
+          <ul class="alertas-lista" id="alertsBody"></ul>
         </article>
       </div>
     </section>
@@ -262,6 +276,7 @@
   <script src="assets/js/icons.js"></script>
   <script src="assets/js/catalogo.js"></script>
   <script src="assets/js/data.js"></script>
+  <script src="assets/js/alertas.js"></script>
   <script src="assets/js/app.js"></script>
   <script src="assets/js/principal.js"></script>
   <script src="assets/js/historico.js"></script>

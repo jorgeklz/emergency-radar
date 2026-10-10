@@ -36,7 +36,7 @@ jobs:
 
       - name: Probar el recolector y el modelo
         run: |
-          node --test collector/*.test.mjs
+          node --test collector/*.test.mjs tests/*.test.mjs
           python -m unittest modelo.test_modelo
 
       - name: Capturar publicaciones

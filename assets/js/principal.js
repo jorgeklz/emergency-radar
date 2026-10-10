@@ -13,7 +13,7 @@
   // y se comparten con Histórico y Estadísticas.
   var st = {
     modo: "geo",
-    alertas: { orden: "menciones", dir: "desc" },
+    alertas: { horas: 6, abiertas: {} },
     pendientes: []
   };
 
@@ -397,69 +397,134 @@
   }
 
   // ================= Pre alertas =================
-  function ventanaAlertas() { return ER.ventana24h(); }
+  // El cálculo de niveles vive en alertas.js (window.ER_ALERTAS); aquí solo se dibuja.
+  var A = window.ER_ALERTAS;
 
-  // Mini gráfico de barras: posts por hora en las últimas 24 horas.
-  function sparkline(posts, desde, color) {
-    var horas = new Array(24).fill(0);
-    posts.forEach(function (p) {
-      var i = Math.floor((p.fecha - desde) / 3600000);
-      if (i >= 0 && i < 24) horas[i]++;
-    });
-    var max = Math.max.apply(null, horas) || 1;
-    var barras = horas.map(function (n, i) {
+  // Mini gráfico de barras de la ventana (24 tramos).
+  function sparkline(serie, color, horas) {
+    var max = Math.max.apply(null, serie) || 1;
+    var barras = serie.map(function (n, i) {
       var h = n ? Math.max(2, Math.round(n / max * 20)) : 1;
       return '<rect x="' + (i * 3) + '" y="' + (22 - h) + '" width="2" height="' + h + '" rx="1" fill="' + (n ? color : "#d9dde7") + '"/>';
     }).join("");
-    return '<svg class="spark" viewBox="0 0 72 22" width="58" height="22" preserveAspectRatio="none" role="img" aria-label="Posts por hora en las últimas 24 horas">' +
-      "<title>Posts por hora en las últimas 24 horas (máximo " + max + " en una hora)</title>" + barras + "</svg>";
+    var tramo = horas * 60 / 24;
+    return '<svg class="spark" viewBox="0 0 72 22" width="58" height="22" preserveAspectRatio="none" role="img" aria-label="Posts por tramo de ' +
+      Math.round(tramo) + ' minutos"><title>Posts por tramo de ' + Math.round(tramo) + " minutos (máximo " + max + ")</title>" + barras + "</svg>";
   }
 
+  function pastilla(nivel, titulo) {
+    return '<span class="nivel nivel-' + nivel.id + '" title="' + ER.escapar(titulo || "") + '">' + window.icon(nivel.icono) + nivel.nombre + "</span>";
+  }
+
+  function fmtDecimal(x) { return (Math.round(x * 10) / 10).toString().replace(".", ","); }
+
+  function textoBase(base, horas) {
+    if (base.tipo === "dias") return "habitual " + fmtDecimal(base.esperado) + " (promedio de " + base.n + (base.n === 1 ? " día" : " días") + " a esta hora)";
+    if (base.tipo === "previo") return (horas === 1 ? "en la hora previa: " : "en las " + horas + " h previas: ") + fmtDecimal(base.esperado);
+    return "sin historial para comparar";
+  }
+
+  function nombreVentana(h) { return h === 1 ? "la última hora" : "las últimas " + h + " horas"; }
+
   function pintarAlertas() {
-    var a = st.alertas;
-    var v = ventanaAlertas();
-    // Mismos filtros que el resto de la app, pero siempre sobre las últimas 24 horas.
-    var actual = D.filtrar(ER.consulta({ desde: v.desde, hasta: v.hasta }));
-    var previo = D.filtrar(ER.consulta({ desde: v.prevDesde, hasta: new Date(v.desde.getTime() - 1) }));
-    var visibles = D.CATEGORIAS.filter(function (c) { return ER.filtros.categorias.indexOf(c.id) >= 0; });
-    var filas = visibles.map(function (c) {
-      var n = actual.filter(function (p) { return p.categoria === c.id; }).length;
-      var m = previo.filter(function (p) { return p.categoria === c.id; }).length;
-      var tend = m === 0 ? (n > 0 ? "up" : "flat") : n / m > 1.1 ? "up" : n / m < 0.9 ? "down" : "flat";
-      return { c: c, n: n, m: m, tend: tend, posts: actual.filter(function (p) { return p.categoria === c.id; }) };
+    var horas = st.alertas.horas;
+    var todos = D.filtrar(ER.consulta({ desde: null, hasta: null }));
+    var r = A.calcular(todos, {
+      fin: ER.ventana24h().hasta, horas: horas,
+      inicioDatos: D.rangoDisponible().desde,
+      categorias: D.CATEGORIAS.filter(function (c) { return ER.filtros.categorias.indexOf(c.id) >= 0; }),
+      sinUbicacion: D.SIN_UBICACION
     });
-    filas.sort(function (x, y) {
-      var r = a.orden === "nombre" ? x.c.nombre.localeCompare(y.c.nombre, "es") : x.n - y.n;
-      return a.dir === "asc" ? r : -r;
+    document.getElementById("alertasSub").textContent = (horas === 1 ? "Última hora" : "Últimas " + horas + " horas") + " frente a lo habitual";
+    document.querySelectorAll("#ventanaAlertas button").forEach(function (b) {
+      var on = +b.getAttribute("data-horas") === horas;
+      b.classList.toggle("active", on);
+      b.setAttribute("aria-selected", String(on));
     });
-    document.getElementById("alertsBody").innerHTML = filas.map(function (f) {
-      var tr = f.tend === "up" ? window.icon("trending-up") : f.tend === "down" ? window.icon("trending-down") : "";
-      var titulo = "Últimas 24 h: " + f.n + " · 24 h previas: " + f.m;
-      return '<tr class="' + (f.tend === "up" ? "up" : "") + '" title="' + titulo + '">' +
-        '<td><div class="alert-cat">' + window.icon(f.c.icono) + f.c.nombre + "</div></td>" +
-        '<td><div class="alert-num">' + sparkline(f.posts, v.desde, f.c.color) + '<span class="n">' + ER.fmtNum(f.n) + '</span><span class="lbl">menciones</span>' +
-        '<span class="tr" aria-label="' + (f.tend === "up" ? "En aumento" : f.tend === "down" ? "En descenso" : "Estable") + '">' + tr + "</span></div></td></tr>";
+
+    // Resumen: cuántas categorías y zonas están por encima de lo normal.
+    var activas = r.categorias.filter(function (c) { return c.nivel.orden >= 1; });
+    var sinBase = r.categorias.length && r.categorias.every(function (c) { return c.base.tipo === "ninguna"; });
+    var peor = activas[0];
+    var banner;
+    if (!r.categorias.length) banner = '<div class="banner banner-neutro">' + window.icon("info-circle") + "Ninguna categoría seleccionada en los filtros.</div>";
+    else if (sinBase && peor) banner = '<div class="banner banner-' + peor.nivel.id + '">' + window.icon(peor.nivel.icono) + "<span><b>Todavía no hay historial para comparar</b>, pero " +
+      ER.escapar(peor.categoria.nombre) + " queda en " + peor.nivel.nombre + (peor.graves >= 3 ? " por " + peor.graves + " posts que mencionan heridos o fallecidos." : " porque se está acelerando.") + "</span></div>";
+    else if (sinBase) banner = '<div class="banner banner-neutro">' + window.icon("info-circle") + "<span>Reuniendo historial: los niveles aparecen cuando hay capturas anteriores para comparar. Prueba la ventana de 1 h o 6 h.</span></div>";
+    else if (peor) banner = '<div class="banner banner-' + peor.nivel.id + '">' + window.icon(peor.nivel.icono) + "<span><b>" + activas.length +
+      (activas.length === 1 ? " categoría" : " categorías") + " por encima de lo habitual</b> en " + nombreVentana(horas) + ". La más alta: " +
+      ER.escapar(peor.categoria.nombre) + " (" + peor.observado + " posts, " + textoBase(peor.base, horas) + ").</span></div>";
+    else banner = '<div class="banner banner-normal">' + window.icon("circle-check") + "<span><b>Actividad dentro de lo habitual</b> en " + nombreVentana(horas) + ".</span></div>";
+
+    var zonas = r.zonas.slice(0, 3).map(function (z) {
+      return '<button type="button" class="zona" data-zona="' + ER.escapar(z.ciudad) + '" data-cat="' + z.categoria.id + '" title="Ver en el mapa">' +
+        '<i style="background:' + z.categoria.color + '"></i><b>' + ER.escapar(z.categoria.nombre) + " en " + ER.escapar(z.ciudad) + "</b>" +
+        "<span>" + z.observado + " posts · " + textoBase(z.base, horas) + "</span>" + pastilla(z.nivel) + "</button>";
     }).join("");
-    document.querySelectorAll(".alerts .sort").forEach(function (b) {
-      b.classList.remove("asc", "desc");
-      if (b.getAttribute("data-sort") === a.orden) b.classList.add(a.dir);
-    });
+    document.getElementById("alertasResumen").innerHTML = banner +
+      (zonas ? '<div class="zonas"><div class="pop-title">Zonas a vigilar</div>' + zonas + "</div>" : "");
+
+    document.getElementById("alertsBody").innerHTML = r.categorias.map(function (c) {
+      var abierta = !!st.alertas.abiertas[c.categoria.id];
+      var titulo = c.observado + " posts en " + nombreVentana(horas) + "; " + textoBase(c.base, horas) +
+        (c.z !== null ? ". Puntaje z = " + fmtDecimal(c.z) : "");
+      var meta = [textoBase(c.base, horas)];
+      if (c.zonas.length) meta.push(c.zonas.slice(0, 2).map(function (z) { return ER.escapar(z.ciudad) + " " + z.n; }).join(", "));
+      if (c.ultimo) meta.push("último " + ER.htmlHace(c.ultimo));
+      var senales = "";
+      if (c.aceleracion.acelera) senales += '<span class="senal senal-acelera" title="' + c.aceleracion.ultimo + ' posts en los últimos ' + c.aceleracion.minutos +
+        ' minutos, más del doble que antes">' + window.icon("activity") + "Acelerando</span>";
+      if (c.graves) senales += '<span class="senal senal-grave" title="Posts que mencionan heridos, fallecidos o víctimas">' + window.icon("first-aid-kit") +
+        c.graves + (c.graves === 1 ? " con heridos o fallecidos" : " con heridos o fallecidos") + "</span>";
+      if (c.verificados) senales += '<span class="senal" title="Publicados por cuentas verificadas">' + window.icon("discount-check") + c.verificados + " de cuentas verificadas</span>";
+      var detalle = c.recientes.length ? c.recientes.map(function (p) {
+        return '<li><span class="d-meta">' + ER.htmlHace(p.fecha) + " · " + ER.escapar(p.ciudad) + "</span>" +
+          '<span class="d-texto">' + ER.escapar(p.texto.length > 140 ? p.texto.slice(0, 140) + "…" : p.texto) + "</span>" +
+          (p.url ? '<a class="link-x" href="' + ER.escapar(p.url) + '" target="_blank" rel="noopener">' + window.icon("brand-x") + "Ver en X</a>" : "") + "</li>";
+      }).join("") : '<li class="d-vacio">Sin posts en ' + nombreVentana(horas) + ".</li>";
+      return '<li class="alerta-fila alerta-' + c.nivel.id + (abierta ? " abierta" : "") + '" data-cat="' + c.categoria.id + '">' +
+        '<button type="button" class="alerta-cabecera" aria-expanded="' + abierta + '">' +
+          '<span class="alerta-icono" style="color:' + c.categoria.color + '">' + window.icon(c.categoria.icono) + "</span>" +
+          '<span class="alerta-nombre"><b>' + c.categoria.nombre + '</b><small>' + meta.join(" · ") + "</small></span>" +
+          sparkline(c.serie, c.categoria.color, horas) +
+          '<span class="alerta-n">' + ER.fmtNum(c.observado) + "<small>posts</small></span>" +
+          pastilla(c.nivel, titulo) +
+          '<span class="alerta-chev">' + window.icon("chevron-down") + "</span>" +
+        "</button>" +
+        (senales ? '<div class="senales">' + senales + "</div>" : "") +
+        '<div class="alerta-detalle"' + (abierta ? "" : " hidden") + '><ul>' + detalle + "</ul>" +
+          '<button type="button" class="btn-soft ver-mapa" data-cat="' + c.categoria.id + '">' + window.icon("map-pin") + "Ver solo " + c.categoria.nombre.toLowerCase() + " en el mapa</button>" +
+        "</div></li>";
+    }).join("");
   }
 
   function iniciarAlertas() {
     var sel = document.getElementById("selCiudadAlertas");
     ER.enlazarPopover("btnFiltrosAlertas", "popAlertas", function () { opcionesCiudad(sel); });
+    ER.enlazarPopover("btnAyudaAlertas", "popAyudaAlertas");
     sel.addEventListener("change", function () { ER.cambiarFiltros({ ciudad: sel.value }); });
-    document.querySelectorAll(".alerts .sort").forEach(function (b) {
-      b.addEventListener("click", function () {
-        var k = b.getAttribute("data-sort");
-        if (st.alertas.orden === k) st.alertas.dir = st.alertas.dir === "asc" ? "desc" : "asc";
-        else { st.alertas.orden = k; st.alertas.dir = k === "nombre" ? "asc" : "desc"; }
-        pintarAlertas();
-      });
+    document.querySelectorAll("#ventanaAlertas button").forEach(function (b) {
+      b.addEventListener("click", function () { st.alertas.horas = +b.getAttribute("data-horas"); pintarAlertas(); });
     });
-    var h2 = document.querySelector(".card-alerts h2");
-    h2.insertAdjacentHTML("afterend", '<span class="hint" style="margin:0 auto 0 0">Últimas 24 horas</span>');
+    // Delegación: abrir o cerrar una fila, ver una categoría o una zona en el mapa.
+    document.querySelector(".card-alerts").addEventListener("click", function (ev) {
+      var cab = ev.target.closest(".alerta-cabecera");
+      if (cab) {
+        var id = cab.parentNode.getAttribute("data-cat");
+        st.alertas.abiertas[id] = !st.alertas.abiertas[id];
+        cab.setAttribute("aria-expanded", String(st.alertas.abiertas[id]));
+        cab.parentNode.classList.toggle("abierta", st.alertas.abiertas[id]);
+        cab.parentNode.querySelector(".alerta-detalle").hidden = !st.alertas.abiertas[id];
+        return;
+      }
+      var ver = ev.target.closest(".ver-mapa");
+      if (ver) { ER.cambiarFiltros({ categorias: [ver.getAttribute("data-cat")] }); document.getElementById("map").scrollIntoView({ behavior: "smooth", block: "center" }); return; }
+      var zona = ev.target.closest(".zona");
+      if (zona) {
+        ER.cambiarFiltros({ categorias: [zona.getAttribute("data-cat")], ciudad: zona.getAttribute("data-zona") });
+        document.getElementById("map").scrollIntoView({ behavior: "smooth", block: "center" });
+      }
+    });
   }
 
   // ================= Frecuencia =================

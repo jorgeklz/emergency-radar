@@ -8,7 +8,7 @@ Todo lo que muestra el sitio son **publicaciones reales de X** que un recolector
 
 ## Secciones
 
-**Principal.** Resumen animado de las últimas 24 horas (emergencias y su tendencia, última hora, categoría y zona más activas, cuántos posts filtró el modelo). Mapa con dos modos (Geolocalización con agrupación de reportes y Mapa de Calor), cuatro mapas base (Calles a color, Humanitario, Gris y Satélite), puntos con el color de su categoría, filtro por categorías ("Estás viendo"), posts recientes de las últimas 24 horas con aviso de publicaciones nuevas, Pre Alertas de las últimas 24 horas con una mini gráfica por hora y la tendencia frente a las 24 horas previas y la frecuencia de publicaciones por franja de 30 minutos comparada con el periodo anterior.
+**Principal.** Resumen animado de las últimas 24 horas (emergencias y su tendencia, última hora, categoría y zona más activas, cuántos posts filtró el modelo). Mapa con dos modos (Geolocalización con agrupación de reportes y Mapa de Calor), cuatro mapas base (Calles a color, Humanitario, Gris y Satélite), puntos con el color de su categoría, filtro por categorías ("Estás viendo"), posts recientes de las últimas 24 horas con aviso de publicaciones nuevas, Pre Alertas (ver abajo) y la frecuencia de publicaciones por franja de 30 minutos comparada con el periodo anterior.
 
 **Histórico.** Publicaciones por día apiladas por categoría y un registro de 10 en 10 con búsqueda, filtros, resultado del modelo, enlace a cada publicación en X y exportación a CSV.
 
@@ -17,6 +17,19 @@ Los filtros (categorías, ciudad y clasificación del modelo) son los mismos en 
 **Estadísticas.** Indicadores generales, distribución por categoría, ciudades con más reportes, actividad por día y hora, cuántas publicaciones se pudieron ubicar, autores más activos y el desempeño del modelo de clasificación.
 
 En la barra superior están la hora de la última captura, el botón **En Vivo** (relee los datos cada minuto y avisa de las publicaciones nuevas; un clic lo pausa), el selector de rango de fechas (por defecto, los últimos 7 días) y el menú.
+
+## Pre Alertas
+
+Funcionan como alerta temprana. Para la ventana elegida (1, 6 o 24 horas) comparan cuántos posts hay de cada categoría con **lo habitual**: la misma franja horaria de los días anteriores (hasta 7) o, si todavía no hay días previos, la ventana inmediatamente anterior. Con eso asignan un nivel:
+
+| Nivel | Cuándo |
+|---|---|
+| Alerta alta | Muy por encima de lo habitual (z ≥ 3) y al menos 5 posts |
+| Alerta | Claramente por encima (z ≥ 2) y al menos 3 posts |
+| Atención | Algo por encima (z ≥ 1), acelerando en el último cuarto de la ventana o con 3 o más posts que mencionan heridos o fallecidos |
+| Normal | Dentro de lo habitual |
+
+z = (observado − habitual) / √(habitual + 1), una aproximación de Poisson para conteos pequeños. Cada categoría muestra además dónde se concentra, hace cuánto llegó el último reporte, cuántos posts vienen de cuentas verificadas y, al desplegarla, sus últimos posts con un botón para verlos en el mapa. Arriba aparecen las **zonas a vigilar** (combinaciones de ciudad y categoría por encima de lo habitual). El cálculo está en `assets/js/alertas.js` y sus pruebas en `tests/`.
 
 ## Captura de datos reales desde X
 
@@ -64,7 +77,7 @@ Con GitHub Pages el retraso real es de varios minutos: el workflow corre cada 30
 
 ```bash
 X_BEARER_TOKEN=tu_token node collector/x-collector.mjs   # escribe data/posts.json
-node --test collector/*.test.mjs                          # pruebas, sin red
+node --test collector/*.test.mjs tests/*.test.mjs        # pruebas, sin red
 ```
 
 No guardes el token en archivos del repositorio. Si usas un `.env`, ya está en `.gitignore`.
