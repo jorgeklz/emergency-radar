@@ -18,6 +18,11 @@ Los filtros (categorías, ciudad y clasificación del modelo) son los mismos en 
 
 En la barra superior están la hora de la última captura, el botón **En Vivo** (relee los datos cada minuto y avisa de las publicaciones nuevas; un clic lo pausa), el selector de rango de fechas (por defecto, los últimos 7 días) y el menú.
 
+## Colores
+
+- **Gravedad (rojo, amarillo, verde):** el rojo indica más emergencia, el amarillo una gravedad media y el verde menos. Se usa en los puntos y grupos del mapa, en el mapa de calor, en el borde y la etiqueta de cada post, en la actividad por día y hora y en los niveles de Pre Alertas. La gravedad de un post combina la probabilidad del modelo con un plus si menciona heridos o fallecidos; la de un grupo del mapa sigue la cantidad de reportes (verde menos de 5, amarillo de 5 a 14, rojo 15 o más). Siempre va acompañada de texto o ícono.
+- **Categorías (azul, magenta, violeta, cian):** identifican el tipo de emergencia y a propósito no usan rojo, amarillo ni verde, para no confundirse con la gravedad. La paleta pasa las pruebas de separación para daltonismo y de contraste.
+
 ## Pre Alertas
 
 Funcionan como alerta temprana. Para la ventana elegida (1, 6 o 24 horas) comparan cuántos posts hay de cada categoría con **lo habitual**: la misma franja horaria de los días anteriores (hasta 7) o, si todavía no hay días previos, la ventana inmediatamente anterior. Con eso asignan un nivel:

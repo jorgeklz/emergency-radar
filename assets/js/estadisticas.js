@@ -22,8 +22,8 @@
   }
   function pct(a, b) { return b ? Math.round((a / b) * 1000) / 10 : 0; }
 
-  // Escala secuencial de un solo tono (azul claro a índigo).
-  var PASOS = [[238, 244, 254], [156, 194, 245], [47, 123, 229], [46, 49, 146]];
+  // Escala de calor del sistema: verde (poca actividad) a amarillo y rojo (mucha).
+  var PASOS = [[234, 246, 236], [47, 158, 68], [240, 164, 0], [201, 42, 42]];
   function colorSecuencial(t) {
     t = Math.max(0, Math.min(1, t)) * (PASOS.length - 1);
     var i = Math.min(Math.floor(t), PASOS.length - 2), f = t - i, a = PASOS[i], b = PASOS[i + 1];

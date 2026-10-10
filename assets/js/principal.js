@@ -37,9 +37,10 @@
     if (p.emergencia === null) return "";
     var k = (D.modelo() || {}).k || 7;
     var detalle = p.vecinos !== null ? p.vecinos + " de " + k + " publicaciones parecidas del corpus son emergencias" : "";
+    var g = ER.severidad(p).nivel;
     return p.emergencia
-      ? '<span class="modelo si" title="' + detalle + '">Emergencia ' + Math.round(p.prob * 100) + " %</span>"
-      : '<span class="modelo no" title="' + detalle + '">Descartada por el modelo</span>';
+      ? '<span class="modelo grav-' + g.id + '" title="' + g.nombre + ". " + detalle + '"><i></i>Emergencia ' + Math.round(p.prob * 100) + " %</span>"
+      : '<span class="modelo grav-baja" title="' + detalle + '"><i></i>Descartada por el modelo</span>';
   }
   ER.etiquetaModelo = etiquetaModelo;
   function iconoX() {
@@ -56,7 +57,8 @@
   // Tarjeta de publicación reutilizada en la lista y en el modal "Ver todo".
   function htmlPost(p, nuevo) {
     var cat = D.categoria(p.categoria);
-    return '<article class="post' + (nuevo ? " nuevo" : "") + '">' +
+    var g = ER.severidad(p).nivel;
+    return '<article class="post grav-borde-' + g.id + (nuevo ? " nuevo" : "") + '">' +
       '<div class="post-head">' +
         '<div class="avatar" style="background:' + p.autor.color + '">' + ER.iniciales(p.autor.nombre) + "</div>" +
         '<div class="who"><b>' + ER.escapar(p.autor.nombre) +
@@ -138,18 +140,27 @@
   }
 
   // ================= Mapa =================
+  // Etiqueta mínima: punto de gravedad, categoría y hace cuánto. Es lo que queda fijo en el mapa.
+  function etiquetaMini(p, total) {
+    var g = ER.severidad(p).nivel;
+    return '<span class="mini-dot" style="background:' + g.color + '"></span><b>' + D.categoria(p.categoria).nombre + "</b>" +
+      '<span class="mini-hace">' + ER.hace(p.fecha).replace("hace ", "") + "</span>" +
+      (total > 1 ? '<span class="mini-n">+' + (total - 1) + "</span>" : "");
+  }
+
+  // Detalle breve al pasar el cursor: cuántos reportes, de qué y el más reciente.
   function tarjeta(p, total, porCat) {
-    var c = D.categoria(p.categoria);
+    var g = ER.severidad(p).nivel;
     var desglose = "";
     if (total > 1 && porCat) {
       desglose = '<div class="desglose">' + D.CATEGORIAS.filter(function (x) { return porCat[x.id]; }).map(function (x) {
         return '<span><i style="background:' + x.color + '"></i>' + porCat[x.id] + " " + x.nombre.toLowerCase() + "</span>";
       }).join("") + "</div>";
     }
-    return '<div class="t">' + iconoX() + c.nombre + "</div>" +
-      '<div class="row">' + window.icon("calendar-event") + ER.fmtFechaCorta(p.fecha) + "</div>" +
-      '<div class="row time">' + ER.fmtHoraH(p.fecha) + " · " + ER.hace(p.fecha) + "</div>" +
-      (total > 1 ? '<div class="count">' + total + " reportes en esta zona (el más reciente arriba)</div>" + desglose : "");
+    return (total > 1 ? '<div class="count"><b>' + total + " reportes</b> en esta zona</div>" + desglose : "") +
+      '<div class="ultimo"><span class="mini-dot" style="background:' + g.color + '" title="' + g.nombre + '"></span>' +
+      (total > 1 ? "Último: " : "") + "<b>" + D.categoria(p.categoria).nombre + "</b> · " + ER.hace(p.fecha) + "</div>" +
+      '<div class="extracto">' + ER.escapar(p.texto.length > 90 ? p.texto.slice(0, 90) + "…" : p.texto) + "</div>";
   }
 
   function popupPost(p) {
@@ -165,22 +176,26 @@
   function iconoGrupo(cluster) {
     var n = cluster.getChildCount();
     var s = n < 10 ? 50 : n < 50 ? 56 : n < 200 ? 62 : 70;
+    var nivel = ER.nivelPorCantidad(n);
     return L.divIcon({
-      html: '<div class="halo"><div class="core">' + n + "</div></div>",
-      className: "er-cluster",
+      html: '<div class="halo" style="--c:' + nivel.color + '"><div class="core">' + n + "</div></div>",
+      className: "er-cluster er-" + nivel.id,
       iconSize: [s, s]
     });
   }
 
   function crearMarcador(p, fresco) {
+    var g = ER.severidad(p).nivel;
+    var reciente = Date.now() - p.fecha < 3600000;
     var m = L.marker([p.lat, p.lng], {
       icon: L.divIcon({
-        html: '<div class="halo" style="--c:' + D.categoria(p.categoria).color + '"><div class="core"></div></div>',
-        className: "er-point" + (fresco ? " fresh" : ""), iconSize: [30, 30] }),
+        html: '<div class="halo" style="--c:' + g.color + '"><div class="core">' + window.icon(D.categoria(p.categoria).icono) + "</div></div>",
+        className: "er-point er-" + g.id + (fresco ? " fresh" : "") + (reciente ? " reciente" : ""), iconSize: [30, 30] }),
       keyboard: false
     });
     m._erPost = p;
     m.bindPopup(popupPost(p), { maxWidth: 320 });
+    m.bindTooltip(function () { return etiquetaMini(p, 1); }, { direction: "top", className: "er-mini", offset: [0, -14] });
     return m;
   }
 
@@ -210,18 +225,18 @@
       var ll = padre.getLatLng();
       if (!limites.contains(ll)) continue;
       var pt = mapa.latLngToContainerPoint(ll);
-      if (pt.y < 170) continue;
-      // La tarjeta ocupa unos 270 x 150 px por encima del punto: se evita que choque con otra tarjeta o su punto.
+      if (pt.y < 60) continue;
+      // La etiqueta ocupa unos 180 x 30 px por encima del punto: se evita que choque con otra.
       var choca = spotlights.some(function (s) {
         var q = mapa.latLngToContainerPoint(s.getLatLng());
-        return Math.abs(q.x - pt.x) < 290 && Math.abs(q.y - pt.y) < 170;
+        return Math.abs(q.x - pt.x) < 190 && Math.abs(q.y - pt.y) < 44;
       });
       vistos.push(padre);
       if (choca) continue;
       var info = ultimoDe(padre);
       // Las tarjetas fijas van compactas; el desglose por categoría se ve al pasar el cursor.
-      padre.bindTooltip(tarjeta(info.post, info.total), {
-        permanent: true, direction: "top", className: "er-card", offset: [0, -24], interactive: false
+      padre.bindTooltip(etiquetaMini(info.post, info.total), {
+        permanent: true, direction: "top", className: "er-mini er-fija", offset: [0, -20], interactive: false
       }).openTooltip();
       padre._erSpot = true;
       spotlights.push(padre);
@@ -259,13 +274,20 @@
       spiderfyOnMaxZoom: true,
       iconCreateFunction: iconoGrupo
     });
+    // Al pasar el cursor por un grupo aparece el detalle breve; al salir vuelve la etiqueta mínima (o nada).
     capaGrupos.on("clustermouseover", function (e) {
-      var c = e.layer;
-      if (c._erSpot) return;
-      var info = ultimoDe(c);
-      c.bindTooltip(tarjeta(info.post, info.total, info.porCat), { direction: "top", className: "er-card", offset: [0, -24] }).openTooltip();
+      var c = e.layer, info = ultimoDe(c);
+      if (c._erSpot) { c.unbindTooltip(); }
+      c.bindTooltip(tarjeta(info.post, info.total, info.porCat), { direction: "top", className: "er-card", offset: [0, -22] }).openTooltip();
     });
-    capaGrupos.on("clustermouseout", function (e) { if (!e.layer._erSpot) e.layer.unbindTooltip(); });
+    capaGrupos.on("clustermouseout", function (e) {
+      var c = e.layer;
+      c.unbindTooltip();
+      if (c._erSpot) {
+        var info = ultimoDe(c);
+        c.bindTooltip(etiquetaMini(info.post, info.total), { permanent: true, direction: "top", className: "er-mini er-fija", offset: [0, -20] }).openTooltip();
+      }
+    });
     capaGrupos.on("animationend", programarSpotlights);
     mapa.on("moveend", programarSpotlights);
 
@@ -277,7 +299,7 @@
     };
     capaCalor = L.heatLayer([], {
       radius: 26, blur: 22, maxZoom: 12, max: 6, minOpacity: 0.25,
-      gradient: { 0.2: "#cfe0fb", 0.45: "#6aa5f2", 0.7: "#2f7be5", 1: "#2e3192" }
+      gradient: { 0.15: "#a8e0b0", 0.4: "#2f9e44", 0.6: "#f0a400", 0.8: "#ec6a2c", 1: "#c92a2a" }
     });
 
     document.querySelectorAll(".segmented button").forEach(function (b) {
@@ -311,11 +333,15 @@
     total = pintarLeyendaMapa._t || 0;
     var el = document.getElementById("mapLegend");
     var base = "<span>" + ER.fmtNum(total) + " publicaciones geolocalizadas en el periodo</span>";
-    var cats = D.CATEGORIAS.filter(function (c) { return ER.filtros.categorias.indexOf(c.id) >= 0; }).map(function (c) {
-      return '<span><i class="dot-cat" style="background:' + c.color + '"></i>' + c.nombre + "</span>";
-    }).join("");
+    var G = ER.GRAVEDAD;
+    var escala = '<span class="ley-grav"><b>Gravedad</b>' + [G.baja, G.media, G.alta].map(function (g) {
+      return '<span><i class="dot-grav" style="background:' + g.color + '"></i>' + g.corto + "</span>";
+    }).join("") + "</span>";
+    var cats = '<span class="ley-cats">' + D.CATEGORIAS.filter(function (c) { return ER.filtros.categorias.indexOf(c.id) >= 0; }).map(function (c) {
+      return '<span title="' + c.nombre + '">' + window.icon(c.icono) + c.nombre + "</span>";
+    }).join("") + "</span>";
     el.innerHTML = st.modo === "geo"
-      ? cats + '<span><i class="dot"></i>Grupo de reportes (el número indica cuántos)</span>' + base
+      ? escala + cats + '<span class="ley-grupos">Grupos: verde menos de 5 reportes, amarillo de 5 a 14, rojo 15 o más</span>' + base
       : "<span>Densidad de reportes: baja<i class=\"ramp\"></i>alta</span>" + base;
   }
 

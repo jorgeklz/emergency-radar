@@ -6,21 +6,23 @@
 (function (raiz) {
   "use strict";
 
+  // Colores de identidad de cada categoría (validados para daltonismo y contraste).
+  // No usan rojo, amarillo ni verde: esos colores quedan para la gravedad.
   var CATEGORIAS = [
     {
       id: "asaltos", nombre: "Asaltos", icono: "run", color: "#2a78d6",
       claves: ["asalt", "rob(o|aron|ando|an)\\b", "atraco", "delincuen", "extorsi", "secuestr", "sicari", "banda(s)? delictiva", "arranch"]
     },
     {
-      id: "incendios", nombre: "Incendios", icono: "flame", color: "#eb6834",
+      id: "incendios", nombre: "Incendios", icono: "flame", color: "#c2569b",
       claves: ["incendi", "se quema", "en llamas", "fuego", "humareda", "conato", "bomberos"]
     },
     {
-      id: "accidentes", nombre: "Accidente vehicular", icono: "car-crash", color: "#1baf7a",
+      id: "accidentes", nombre: "Accidente vehicular", icono: "car-crash", color: "#6250d6",
       claves: ["accidente", "choque", "chocaron", "colisi", "volcamiento", "se volc", "atropell", "siniestro de transito", "motociclista"]
     },
     {
-      id: "desastres", nombre: "Desastres naturales", icono: "tornado", color: "#eda100",
+      id: "desastres", nombre: "Desastres naturales", icono: "tornado", color: "#0e9fb3",
       claves: ["inundaci", "se inund", "desliz", "deslave", "sismo", "temblor", "terremoto", "aguaje", "desbord", "lluvias? fuerte", "fuertes lluvias", "erupci", "derrumbe"]
     }
   ];

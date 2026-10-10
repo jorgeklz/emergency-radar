@@ -228,6 +228,29 @@
       : "Última captura desde la API de X: " + (act ? ER.fmtLarga(act) : "aún no hay capturas");
   }
 
+  // ---------- Escala de gravedad (colores de mapa de calor) ----------
+  // Rojo = más emergencia, amarillo = media, verde = menos. Se usa en el mapa, las
+  // tarjetas, el mapa de calor y las etiquetas del modelo. Siempre va con texto.
+  ER.GRAVEDAD = {
+    alta: { id: "alta", nombre: "Gravedad alta", corto: "Alta", color: "#d03b3b", suave: "#fbe1e1" },
+    media: { id: "media", nombre: "Gravedad media", corto: "Media", color: "#f0a400", suave: "#fff1cc" },
+    baja: { id: "baja", nombre: "Gravedad baja", corto: "Baja", color: "#2f9e44", suave: "#e3f5e6" }
+  };
+  // Puntaje de 0 a 1: la probabilidad del modelo, más un plus si menciona heridos o
+  // fallecidos. Lo que el modelo descartó queda en gravedad baja.
+  ER.severidad = function (p) {
+    var score = typeof p.prob === "number" ? p.prob : 0.6;
+    if (window.ER_ALERTAS && window.ER_ALERTAS.GRAVEDAD.test(p.texto || "")) score += 0.25;
+    if (p.emergencia === false) score = Math.min(score, 0.3);
+    score = Math.max(0, Math.min(1, score));
+    var nivel = score >= 0.75 ? ER.GRAVEDAD.alta : score >= 0.5 ? ER.GRAVEDAD.media : ER.GRAVEDAD.baja;
+    return { score: score, nivel: nivel };
+  };
+  // Grupos del mapa: el color sigue la cantidad de reportes, como un mapa de calor.
+  ER.nivelPorCantidad = function (n) {
+    return n >= 15 ? ER.GRAVEDAD.alta : n >= 5 ? ER.GRAVEDAD.media : ER.GRAVEDAD.baja;
+  };
+
   // ---------- Tiempo relativo ----------
   // "hace 12 min", "hace 3 horas"... Los elementos con data-hace se actualizan solos.
   ER.hace = function (d) {
