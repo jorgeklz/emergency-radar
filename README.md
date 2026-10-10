@@ -137,6 +137,27 @@ python -m modelo.palabras_clave      # sugiere palabras clave y una consulta par
 python -m unittest modelo.test_modelo
 ```
 
+## Contador de visitas
+
+Al final de la barra superior hay un contador de visitas y, en pantallas anchas, una pastilla que va mostrando desde dónde llegaron las últimas visitas (bandera, ciudad y país). Al hacer clic se abre el detalle: total, visitas de las últimas 24 h, países, visitas recientes y países con más visitas.
+
+GitHub Pages solo sirve archivos estáticos, así que el conteo vive en [Supabase](https://supabase.com) (plan gratuito):
+
+- **La IP la toma el servidor**, del encabezado de la petición, y no el navegador, así que no se puede falsear desde la página.
+- **No se guarda la IP.** Se guarda su huella SHA-256 con una sal secreta: alcanza para reconocer al mismo visitante sin conservar un dato personal.
+- **Recargar no suma.** La misma IP vuelve a contar como visita nueva solo después de 6 horas (se cambia en `supabase/visitas.sql`, en `interval '6 hours'`).
+- **País y ciudad aproximados**, de [geojs.io](https://www.geojs.io/) (sin clave). Si no responde, se usa el país que informa la red.
+- Con la clave pública nadie puede leer ni escribir la tabla: solo se pueden llamar las funciones `registrar_visita` y `resumen_visitas`.
+
+Para activarlo:
+
+1. Crea un proyecto en Supabase.
+2. En *SQL Editor → New query*, pega el contenido de `supabase/visitas.sql` y pulsa *Run*.
+3. En *Project Settings → API* copia la *Project URL* y la clave *anon public*.
+4. Pégalas en `assets/js/config.js` (`url` y `clave`) y sube el cambio. Nunca uses la clave *service_role*.
+
+Mientras `config.js` esté vacío, el contador no se muestra.
+
 ## Ejecutarlo en local
 
 Los datos se leen con `fetch`, así que hace falta un servidor (abrir `index.html` directamente no carga las publicaciones):
@@ -169,6 +190,9 @@ assets/js/app.js            Estado global, navegación, rango de fechas, modo En
 assets/js/principal.js      Vista Principal
 assets/js/historico.js      Vista Histórico
 assets/js/estadisticas.js   Vista Estadísticas
+assets/js/config.js         Configuración pública (contador de visitas)
+assets/js/visitas.js        Contador de visitas
+supabase/visitas.sql        Tabla y funciones del contador en Supabase
 assets/js/icons.js          Íconos SVG (Tabler Icons)
 assets/vendor/              Leaflet, Leaflet.markercluster, Leaflet.heat y Chart.js
 collector/                  Recolector de X (Node 20, sin dependencias) y sus pruebas

@@ -36,6 +36,8 @@ window.ICONS = {
   "chart-line": " <path d=\"M4 19l16 0\" /> <path d=\"M4 15l4 -6l4 2l4 -5l4 4\" />",
   "current-location": " <path d=\"M12 12m-3 0a3 3 0 1 0 6 0a3 3 0 1 0 -6 0\" /> <path d=\"M12 12m-8 0a8 8 0 1 0 16 0a8 8 0 1 0 -16 0\" /> <path d=\"M12 2l0 2\" /> <path d=\"M12 20l0 2\" /> <path d=\"M20 12l2 0\" /> <path d=\"M2 12l2 0\" />",
   "loader-2": " <path d=\"M12 3a9 9 0 1 0 9 9\" />",
+  "users": " <path d=\"M9 7m-4 0a4 4 0 1 0 8 0a4 4 0 1 0 -8 0\" /> <path d=\"M3 21v-2a4 4 0 0 1 4 -4h4a4 4 0 0 1 4 4v2\" /> <path d=\"M16 3.13a4 4 0 0 1 0 7.75\" /> <path d=\"M21 21v-2a4 4 0 0 0 -3 -3.85\" />",
+  "world": " <path d=\"M3 12a9 9 0 1 0 18 0a9 9 0 0 0 -18 0\" /> <path d=\"M3.6 9h16.8\" /> <path d=\"M3.6 15h16.8\" /> <path d=\"M11.5 3a17 17 0 0 0 0 18\" /> <path d=\"M12.5 3a17 17 0 0 1 0 18\" />",
 };
 window.icon = function (name, cls) {
   var body = window.ICONS[name] || "";

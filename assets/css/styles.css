@@ -723,10 +723,62 @@ body[data-vista="estadisticas"] .anchor-rango { display: none; }
   box-shadow: 0 10px 30px rgba(0,0,0,.2);
 }
 
+/* ---------------- Contador de visitas ---------------- */
+.visitas { display: flex; align-items: center; gap: 8px; }
+.visitas[hidden] { display: none; }
+.vis-btn, .vis-reciente {
+  display: inline-flex; align-items: center; gap: 6px; height: 32px; padding: 0 11px;
+  border: 1px solid var(--line-2); border-radius: 999px; background: #fff; color: var(--ink-2);
+  font-size: 12.5px; white-space: nowrap; cursor: pointer;
+}
+.vis-btn:hover, .vis-reciente:hover { border-color: var(--blue); }
+.vis-btn .ic { width: 16px; height: 16px; color: #000; }
+.vis-btn b { color: var(--ink); font-variant-numeric: tabular-nums; }
+.vis-reciente { max-width: 230px; background: #f6f7fb; border-color: transparent; }
+.vis-reciente[hidden] { display: none; }
+.vis-reciente .vis-lugar { overflow: hidden; text-overflow: ellipsis; color: var(--ink); }
+.vis-reciente small { color: var(--muted); font-size: 11px; }
+.vis-reciente.entra .vis-lugar, .vis-reciente.entra small, .vis-reciente.entra .vis-bandera { animation: vis-entra .35s ease-out; }
+@keyframes vis-entra { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: none; } }
+.vis-bandera { width: 18px; height: 13px; border-radius: 2px; object-fit: cover; flex: none; box-shadow: 0 0 0 1px rgba(0, 0, 0, .08); }
+.vis-bandera.vacia { display: inline-flex; align-items: center; justify-content: center; box-shadow: none; }
+.vis-bandera.vacia .ic { width: 15px; height: 15px; color: var(--muted); }
+.vis-pop { width: 300px; padding: 14px 16px; }
+.vis-stats { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 6px; margin: 4px 0 12px; }
+.vis-stats div { background: #f6f7fb; border-radius: 8px; padding: 8px; display: flex; flex-direction: column; gap: 1px; }
+.vis-stats b { font-size: 18px; color: var(--ink); font-variant-numeric: tabular-nums; }
+.vis-stats span { font-size: 10.5px; font-weight: 700; color: var(--muted); text-transform: uppercase; letter-spacing: .4px; }
+.vis-sub { font-size: 11px; font-weight: 800; color: var(--muted); text-transform: uppercase; letter-spacing: .6px; margin: 2px 0 6px; }
+.vis-lista { list-style: none; margin: 0 0 12px; padding: 0; display: flex; flex-direction: column; gap: 7px; }
+.vis-lista li { display: flex; align-items: center; gap: 8px; font-size: 13px; color: var(--ink); min-width: 0; }
+.vis-lista .vis-lugar { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.vis-lista small { color: var(--muted); font-size: 11px; white-space: nowrap; }
+.vis-top { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 10px; }
+.vis-chip { display: inline-flex; align-items: center; gap: 5px; background: #f6f7fb; border-radius: 999px; padding: 3px 9px 3px 6px; font-size: 12px; color: var(--ink-2); }
+.vis-chip b { color: var(--ink); }
+.vis-nota { margin: 0; font-size: 11px; line-height: 1.45; color: var(--muted); }
+
 /* ---------------- Responsivo ---------------- */
+@media (max-width: 1500px) {
+  .topbar { gap: 16px; }
+  .brand { margin-right: 20px; }
+  .topbar-actions { gap: 12px; }
+  .vis-reciente { max-width: 170px; }
+}
 @media (max-width: 1280px) {
   .view-principal { grid-template-columns: minmax(0, 1fr) 420px; }
   .brand { margin-right: 12px; }
+}
+@media (max-width: 1320px) {
+  .vis-reciente { display: none !important; }
+}
+@media (max-width: 1180px) and (min-width: 821px) {
+  /* El rango de fechas pasa a un botón de calendario para que todo quepa en una fila. */
+  .date-range { width: 38px; height: 38px; padding: 0; justify-content: center; gap: 0; }
+  .date-range #rangoDesde, .date-range #rangoHasta, .date-range .ic-wrap:not(.cal) { display: none; }
+}
+@media (max-width: 1200px) {
+  .tabs a { padding: 0 14px; }
 }
 @media (max-width: 1100px) {
   .modelo-tiles { grid-template-columns: repeat(3, minmax(0, 1fr)); }
@@ -799,6 +851,19 @@ body[data-vista="estadisticas"] .anchor-rango { display: none; }
   .brand-text b, .brand-text i { font-size: 16px; }
   .topbar-actions { gap: 6px; }
   .btn-live { padding: 0 10px; font-size: 13px; }
+  .vis-btn { padding: 0 8px; gap: 4px; height: 30px; font-size: 12px; }
+  .vis-btn .ic { width: 15px; height: 15px; }
+  .visitas { gap: 0; }
+  .topbar-actions .icon-btn { width: 32px; }
+  /* En teléfonos el contador de visitas va al final de la fila de pestañas. */
+  .topbar-actions { display: contents; }
+  .brand { order: 1; }
+  #btnLive { order: 2; }
+  .anchor-rango { order: 3; }
+  #btnAcerca { order: 4; }
+  .tabs { order: 5; flex: 1 1 calc(100% - 100px); width: auto; min-width: 0; }
+  .tabs a { padding: 0 10px; font-size: 14px; }
+  .visitas { order: 6; align-self: center; }
   .date-range { width: 38px; height: 38px; padding: 0; justify-content: center; gap: 0; }
   .date-range #rangoDesde, .date-range #rangoHasta, .date-range .ic-wrap:not(.cal) { display: none; }
   .toolbar-left .toolbar-label { display: none; }

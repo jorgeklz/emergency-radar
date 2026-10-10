@@ -11,7 +11,7 @@
   <link href="https://fonts.googleapis.com/css2?family=Nunito+Sans:opsz,wght@6..12,400;6..12,600;6..12,700;6..12,800&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="assets/vendor/leaflet/leaflet.css">
   <link rel="stylesheet" href="assets/vendor/leaflet/MarkerCluster.css">
-  <link rel="stylesheet" href="assets/css/styles.css?v=20261010-2045">
+  <link rel="stylesheet" href="assets/css/styles.css?v=20261010-2115">
 </head>
 <body>
   <header class="topbar">
@@ -59,6 +59,17 @@
       <button id="btnAcerca" class="icon-btn" type="button" aria-label="Acerca de Emergency Radar" title="Acerca de">
         <span class="ic-wrap" data-icon="info-circle"></span>
       </button>
+
+      <!-- Contador de visitas (se muestra solo si está configurado en assets/js/config.js). -->
+      <div class="visitas" id="visitas" hidden>
+        <button id="visReciente" class="vis-reciente" type="button" hidden></button>
+        <div class="popover-anchor">
+          <button id="btnVisitas" class="vis-btn" type="button" aria-haspopup="dialog">
+            <span class="ic-wrap" data-icon="users"></span><b id="visTotal">0</b>
+          </button>
+          <div id="visPop" class="popover popover-right vis-pop" hidden></div>
+        </div>
+      </div>
     </div>
   </header>
 
@@ -307,14 +318,16 @@
   <script src="assets/vendor/leaflet/leaflet.markercluster.js"></script>
   <script src="assets/vendor/leaflet/leaflet-heat.js"></script>
   <script src="assets/vendor/chartjs/chart.umd.js"></script>
-  <script src="assets/js/icons.js?v=20261010-2045"></script>
-  <script src="assets/js/catalogo.js?v=20261010-2045"></script>
-  <script src="assets/js/data.js?v=20261010-2045"></script>
-  <script src="assets/js/alertas.js?v=20261010-2045"></script>
-  <script src="assets/js/app.js?v=20261010-2045"></script>
-  <script src="assets/js/principal.js?v=20261010-2045"></script>
-  <script src="assets/js/historico.js?v=20261010-2045"></script>
-  <script src="assets/js/estadisticas.js?v=20261010-2045"></script>
+  <script src="assets/js/icons.js?v=20261010-2115"></script>
+  <script src="assets/js/catalogo.js?v=20261010-2115"></script>
+  <script src="assets/js/data.js?v=20261010-2115"></script>
+  <script src="assets/js/alertas.js?v=20261010-2115"></script>
+  <script src="assets/js/app.js?v=20261010-2115"></script>
+  <script src="assets/js/principal.js?v=20261010-2115"></script>
+  <script src="assets/js/historico.js?v=20261010-2115"></script>
+  <script src="assets/js/estadisticas.js?v=20261010-2115"></script>
+  <script src="assets/js/config.js?v=20261010-2115"></script>
+  <script src="assets/js/visitas.js?v=20261010-2115"></script>
   <script>ER.iniciar();</script>
 </body>
 </html>

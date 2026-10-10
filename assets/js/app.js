@@ -378,7 +378,8 @@
         "<p>Parraga-Alava, J., Rodas-Silva, J., Franco, J. y Vélez, M.-J. (2026). <i>A graph-based semi-supervised approach for automatic text corpus " +
         "emergency events labelling in X (Twitter)</i>. Big Data Research, 45, 100630.</p>" +
         "<p>DOI: <a href='https://doi.org/10.1016/j.bdr.2026.100630' target='_blank' rel='noopener'>https://doi.org/10.1016/j.bdr.2026.100630</a></p></div>" +
-        "<p style='font-size:12px;color:#8a90a2'>Mapas © colaboradores de OpenStreetMap, HOT y Esri. Íconos Tabler Icons. Gráficos Chart.js.</p>");
+        "<p style='font-size:12px;color:#8a90a2'>Contador de visitas: cada persona cuenta una vez cada 6 horas. No se guarda la IP, solo una huella cifrada (SHA-256 con sal secreta) para no contar recargas, junto con el país y la ciudad aproximados.</p>" +
+        "<p style='font-size:12px;color:#8a90a2'>Mapas © colaboradores de OpenStreetMap, HOT y Esri. Banderas de flagcdn.com. Íconos Tabler Icons. Gráficos Chart.js.</p>");
     });
     document.querySelectorAll("#modal [data-close]").forEach(function (b) { b.addEventListener("click", ER.cerrarModal); });
     document.addEventListener("click", cerrarPopovers);
