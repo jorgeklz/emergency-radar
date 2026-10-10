@@ -156,6 +156,8 @@ Hay dos formas. Elige una.
 
 La navegación usa rutas con `#` (`#/principal`, `#/historico`, `#/estadisticas`), así que funciona en Pages sin configuración extra.
 
+GitHub Pages deja los archivos en caché del navegador unos 10 minutos. Para que nadie vea una mezcla de versiones (HTML nuevo con CSS o JavaScript viejos), `index.html` carga `styles.css` y los scripts de `assets/js/` con un parámetro de versión (`?v=AAAAMMDD-HHMM`). Cada vez que cambies esos archivos, actualiza ese valor en `index.html`.
+
 ## Estructura
 
 ```
