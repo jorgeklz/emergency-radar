@@ -228,6 +228,8 @@ export async function main(env = process.env) {
     fuente: "x-api-v2/search/recent",
     consulta,
     ultimoId: resultado.masReciente || previo.ultimoId || null,
+    // Se conserva el bloque del modelo para que solo se clasifique lo nuevo.
+    ...(previo.modelo ? { modelo: previo.modelo } : {}),
     publicaciones
   };
   await mkdir(dirname(ARCHIVO), { recursive: true });
