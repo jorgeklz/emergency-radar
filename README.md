@@ -153,8 +153,8 @@ Para activarlo:
 
 1. Crea un proyecto en Supabase.
 2. En *SQL Editor → New query*, pega el contenido de `supabase/visitas.sql` y pulsa *Run*.
-3. En *Project Settings → API* copia la *Project URL* y la clave *anon public*.
-4. Pégalas en `assets/js/config.js` (`url` y `clave`) y sube el cambio. Nunca uses la clave *service_role*.
+3. Copia la *Project URL* y la clave pública: en *Project Settings → API Keys* es la *Publishable key* (`sb_publishable_...`), o la *anon public* (`eyJ...`) en la pestaña *Legacy API Keys*. También aparecen con el botón *Connect* del panel.
+4. Pégalas en `assets/js/config.js` (`url` y `clave`) y sube el cambio. Nunca uses la clave *secret* (`sb_secret_...`) ni la *service_role*.
 
 Mientras `config.js` esté vacío, el contador no se muestra.
 

@@ -22,10 +22,15 @@
 
   var datos = null, giro = 0, timerGiro = null;
 
+  // La clave nueva (sb_publishable_...) va solo en "apikey"; la antigua "anon" es un JWT y
+  // también se envía como Authorization.
+  var cabeceras = { apikey: cfg.clave, "Content-Type": "application/json" };
+  if (/^eyJ/.test(cfg.clave)) cabeceras.Authorization = "Bearer " + cfg.clave;
+
   function rpc(nombre, cuerpo) {
     return fetch(base + nombre, {
       method: "POST",
-      headers: { apikey: cfg.clave, Authorization: "Bearer " + cfg.clave, "Content-Type": "application/json" },
+      headers: cabeceras,
       body: JSON.stringify(cuerpo || {})
     }).then(function (r) {
       if (!r.ok) throw new Error("HTTP " + r.status);
