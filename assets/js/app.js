@@ -397,7 +397,7 @@
         "<p>Los posts se capturan cada 30 minutos. Un modelo decide si cada uno es una emergencia y se ubica por la ciudad que menciona. " +
         "Todas las fechas y horas están en hora de Ecuador (GMT-5).</p>" +
         "<p class='acerca-sub'>Visitas</p>" +
-        "<p class='acerca-nota'>Cada persona cuenta una vez cada 6 horas. No se guarda la IP, solo una huella cifrada, el país y la ciudad aproximados.</p>" +
+        "<p>Cada persona cuenta una vez cada 6 horas. No se guarda la IP, solo una huella cifrada, el país y la ciudad aproximados.</p>" +
         "<p class='acerca-cita'>Esta app es la implementación del modelo propuesto en Parraga-Alava, J., Rodas-Silva, J., Franco, J. y Vélez, M.-J. (2026). " +
         "<i>A graph-based semi-supervised approach for automatic text corpus emergency events labelling in X (Twitter)</i>. Big Data Research, 45, 100630. " +
         "<a href='https://doi.org/10.1016/j.bdr.2026.100630' target='_blank' rel='noopener'>https://doi.org/10.1016/j.bdr.2026.100630</a></p>");
