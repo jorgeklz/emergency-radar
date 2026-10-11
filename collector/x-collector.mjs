@@ -46,7 +46,7 @@ const TERMINOS = [
   "Tena", "Puyo", "Macas", "\"Lago Agrio\"", "\"El Coca\"", "Galápagos", "Sucumbíos", "Orellana", "Pastaza", "Napo",
   "Montecristi", "Jaramijó", "Rocafuerte", "Tosagua", "\"Bahía de Caráquez\"", "Calceta", "Paján", "\"Puerto López\"",
   "Pedernales", "\"Flavio Alfaro\"", "Jipijapa",
-  "Machachi", "Cayambe", "Tabacundo", "Sangolquí", "\"Los Bancos\"", "\"Puerto Quito\"",
+  "Machachi", "Cayambe", "Tabacundo", "Sangolquí", "\"San Miguel de los Bancos\"", "\"Puerto Quito\"",
   "Jujan", "Balao", "Balzar", "Colimes", "\"El Empalme\"", "\"Pedro Carbo\"", "Naranjal", "Naranjito", "Nobol",
   "Yaguachi", "Bucay", "\"Lomas de Sargentillo\"", "\"Isidro Ayora\"",
   "Gualaceo", "Paute", "Sígsig", "Chordeleg", "Nabón", "Guachapala", "\"Sevilla de Oro\"", "\"Ponce Enríquez\""

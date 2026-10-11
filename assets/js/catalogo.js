@@ -79,7 +79,7 @@
     { nombre: "Cayambe", provincia: "Pichincha", lat: 0.041, lng: -78.146, peso: 2, radio: 0.02, alias: ["cayambe"] },
     { nombre: "Tabacundo", provincia: "Pichincha", lat: 0.048, lng: -78.219, peso: 1, radio: 0.015, alias: ["tabacundo", "pedro moncayo"] },
     { nombre: "Sangolquí", provincia: "Pichincha", lat: -0.334, lng: -78.452, peso: 2, radio: 0.02, alias: ["sangolqui", "rumiñahui", "ruminahui"] },
-    { nombre: "San Miguel de los Bancos", provincia: "Pichincha", lat: 0.022, lng: -78.894, peso: 1, radio: 0.015, alias: ["san miguel de los bancos", "los bancos"] },
+    { nombre: "San Miguel de los Bancos", provincia: "Pichincha", lat: 0.022, lng: -78.894, peso: 1, radio: 0.015, alias: ["san miguel de los bancos"] },
     { nombre: "Pedro Vicente Maldonado", provincia: "Pichincha", lat: 0.087, lng: -79.051, peso: 1, radio: 0.015, alias: ["pedro vicente maldonado"] },
     { nombre: "Puerto Quito", provincia: "Pichincha", lat: 0.124, lng: -79.253, peso: 1, radio: 0.015, alias: ["puerto quito"] },
     { nombre: "Jujan", provincia: "Guayas", lat: -1.889, lng: -79.495, peso: 1, radio: 0.015, alias: ["jujan", "alfredo baquerizo moreno"] },
