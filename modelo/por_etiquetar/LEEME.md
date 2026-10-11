@@ -13,5 +13,5 @@ Cómo llenarlo (se abre con Excel o Google Sheets):
 - **notas** (opcional): cualquier comentario.
 - No cambies `id` ni `texto`. Las filas sin etiqueta se ignoran, así que puedes devolverlo a medias.
 
-Al devolverlo, el archivo se copia a `modelo/corpus/` y el modelo se vuelve a entrenar y evaluar
-con validación cruzada 5 × 5.
+Al devolverlo, se compara el modelo con y sin esas etiquetas sobre posts reales (ver
+`modelo/validacion/`). Solo pasan al corpus de entrenamiento si mejoran el resultado.
