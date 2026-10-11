@@ -120,3 +120,12 @@ test("cantones con nombres de otros países solo cuentan con su provincia o Ecua
   assert.equal(m.ciudadEnTexto("Choque en Pedernales deja tres heridos").nombre, "Pedernales");
   assert.equal(m.ciudadEnTexto("Asalto en Sangolquí").nombre, "Sangolquí");
 });
+
+test("descarta emergencias de otros países salvo que mencionen Ecuador", async () => {
+  const m = await import("./x-collector.mjs");
+  assert.equal(m.deOtroPais("Un sismo de magnitud 7,6 sacudió Panamá este viernes"), true);
+  assert.equal(m.deOtroPais("Accidente en la carretera federal Puebla-Tlaxcala"), true);
+  assert.equal(m.deOtroPais("INOCAR cancela alerta de tsunami para Ecuador tras sismo en Panamá"), false);
+  assert.equal(m.deOtroPais("El sismo de Panamá se sintió en Guayaquil"), false);
+  assert.equal(m.deOtroPais("Choque en la vía a Daule"), false);
+});

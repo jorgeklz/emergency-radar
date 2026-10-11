@@ -144,6 +144,22 @@ export function ubicar(post, lugar) {
   return { ciudad: "Sin ubicación", lat: null, lng: null };
 }
 
+// Posts de emergencias de otros países (por ejemplo, un sismo en Panamá o un choque en
+// Puebla): mencionan un país o ciudad extranjera y ningún lugar de Ecuador ni la palabra
+// "Ecuador". Se descartan al capturar y al limpiar el archivo.
+const EXTRANJERO = new RegExp("(^|[^a-z])(" + [
+  "panama", "peru", "colombia", "mexico", "costa rica", "venezuela", "chile", "argentina", "bolivia", "guatemala",
+  "honduras", "el salvador", "nicaragua", "cuba", "republica dominicana", "puerto rico", "espana", "estados unidos",
+  "eeuu", "ee uu", "brasil", "uruguay", "paraguay", "bogota", "medellin", "pereira", "lima", "caracas", "buenos aires",
+  "cdmx", "ciudad de mexico", "puebla", "tlaxcala", "jalisco", "madrid", "miami", "nueva york", "california", "texas", "florida"
+].join("|") + ")([^a-z]|$)");
+export function deOtroPais(texto) {
+  const t = normalizar(texto);
+  if (!EXTRANJERO.test(t)) return false;
+  if (/ecuador|ecuatorian/.test(t)) return false;
+  return !ciudadEnTexto(texto);
+}
+
 // Vuelve a ubicar por el texto los posts que quedaron "Sin ubicación" (por ejemplo, al sumar
 // ciudades nuevas al catálogo). No usa la API.
 export function reubicar(publicaciones) {
@@ -166,7 +182,7 @@ export function transformar(respuesta) {
   const salida = [];
   for (const t of respuesta.data || []) {
     const categoria = clasificar(t.text);
-    if (!categoria) continue;
+    if (!categoria || deOtroPais(t.text)) continue;
     const u = usuarios.get(t.author_id) || {};
     const lugar = t.geo && t.geo.place_id ? lugares.get(t.geo.place_id) : null;
     const pos = ubicar(t, lugar);
@@ -291,6 +307,7 @@ export async function main(env = process.env) {
   if (grupo) ids[grupo.id] = resultado.masReciente;
   const publicaciones = combinar(previo.publicaciones || [], resultado.publicaciones, retencion);
   const reubicadas = reubicar(publicaciones);
+  for (let i = publicaciones.length - 1; i >= 0; i--) if (deOtroPais(publicaciones[i].texto)) publicaciones.splice(i, 1);
   if (reubicadas) console.log(`Reubicadas por texto: ${reubicadas}.`);
   const salida = {
     generado: new Date().toISOString(),
