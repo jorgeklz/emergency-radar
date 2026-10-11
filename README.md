@@ -67,7 +67,7 @@ En *Settings → Secrets and variables → Actions → Variables* puedes crear:
 
 | Variable | Para qué sirve | Por defecto |
 |---|---|---|
-| `X_QUERY` | Consulta de búsqueda de X | Palabras de emergencia + ciudades de Ecuador, en español y sin reposts |
+| `X_QUERY` | Consulta de búsqueda de X. Si la defines, se usa solo esa y se desactiva la rotación por grupos | Vacía: rota entre tres grupos de lugares (ver abajo) |
 | `X_MAX_PAGES` | Páginas de 100 resultados por ejecución (controla el consumo de la API) | `2` |
 | `X_RETENCION_DIAS` | Días que se guardan en `data/posts.json` | `30` |
 
@@ -81,6 +81,8 @@ El `cron` de GitHub se salta ejecuciones cuando hay carga, así que la captura a
 - Los pasos de cada captura están en `scripts/captura.sh` (X, modelo, commit y publicación en Pages).
 
 Cada captura pide solo lo nuevo desde la anterior (`since_id`), con un tope de `X_MAX_PAGES` páginas de 100 posts. Ten en cuenta los límites y costos de tu plan de X: son hasta 48 capturas por día.
+
+Para cubrir todo Ecuador sin gastar más, los lugares se reparten en tres grupos que se turnan cada 30 minutos (una sola consulta por captura, como antes): **costa** (Guayaquil, Durán, Samborondón, Daule, Milagro, Santa Elena, Salinas, Babahoyo, Quevedo, Portoviejo, Manta, Chone, Machala, Esmeraldas, Santo Domingo), **sierra** (Quito, Cuenca, Ambato, Riobamba, Loja, Ibarra, Latacunga, Tulcán, Azogues, Guaranda, Otavalo y provincias de la sierra) y **oriente y Galápagos** (Ecuador, Tena, Puyo, Macas, Nueva Loja, El Coca y provincias amazónicas y Galápagos). Cada grupo guarda su propio `since_id` en `ultimosIds`, así nada se descarga dos veces, y un grupo nuevo empieza desde el último post ya capturado para no bajar los 7 días anteriores. Al guardar, los posts sin ubicación se vuelven a ubicar por el texto con el catálogo actual.
 
 ### Cómo se procesa cada publicación
 

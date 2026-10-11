@@ -27,11 +27,29 @@ export const ARCHIVO = resolve(RAIZ, "data/posts.json");
 export const ENDPOINT = "https://api.x.com/2/tweets/search/recent";
 export const MAX_PUBLICACIONES = 5000;
 
-export const CONSULTA_POR_DEFECTO =
+// Para cubrir todo Ecuador sin gastar más de la API, los lugares se reparten en grupos que
+// se turnan: cada captura (cada 30 min) consulta un solo grupo, con el mismo límite de
+// páginas de siempre. Cada grupo guarda su propio since_id, así nunca se baja dos veces lo
+// mismo. Cada consulta cabe en el límite de 512 caracteres del plan básico de X.
+const PALABRAS =
   "(asalto OR robo OR atraco OR incendio OR accidente OR choque OR volcamiento OR atropellado " +
-  "OR inundación OR deslave OR sismo OR temblor OR aguaje) " +
-  "(Ecuador OR Guayaquil OR Quito OR Portoviejo OR Durán OR Machala OR Cuenca " +
-  "OR Babahoyo OR Daule OR \"Santa Elena\") lang:es -is:retweet";
+  "OR inundación OR deslave OR sismo OR temblor OR aguaje)";
+const SUFIJO = "lang:es -is:retweet";
+export const GRUPOS_CONSULTA = [
+  { id: "costa", lugares: ["Guayaquil", "Durán", "Samborondón", "Daule", "Milagro", "\"Santa Elena\"", "Salinas", "Babahoyo", "Quevedo",
+    "Portoviejo", "Manta", "Chone", "Machala", "Esmeraldas", "\"Santo Domingo\""] },
+  { id: "sierra", lugares: ["Quito", "Cuenca", "Ambato", "Riobamba", "Loja", "Ibarra", "Latacunga", "Tulcán", "Azogues", "Guaranda",
+    "Otavalo", "Pichincha", "Azuay", "Tungurahua", "Imbabura"] },
+  { id: "oriente", lugares: ["Ecuador", "Tena", "Puyo", "Macas", "\"Nueva Loja\"", "\"Lago Agrio\"", "\"El Coca\"", "Orellana",
+    "Sucumbíos", "Galápagos", "Pastaza", "Napo", "\"Morona Santiago\"", "\"Zamora Chinchipe\""] }
+];
+export function consultaDeGrupo(g) { return PALABRAS + " (" + g.lugares.join(" OR ") + ") " + SUFIJO; }
+// Turno por reloj (no necesita guardar estado): cambia cada 30 minutos.
+export function grupoDelTurno(ahora = new Date()) {
+  return GRUPOS_CONSULTA[Math.floor(ahora.getTime() / 1800000) % GRUPOS_CONSULTA.length];
+}
+// Se mantiene por compatibilidad: la consulta del primer grupo.
+export const CONSULTA_POR_DEFECTO = consultaDeGrupo(GRUPOS_CONSULTA[0]);
 
 export function normalizar(t) {
   return String(t || "").toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g, "");
@@ -65,7 +83,7 @@ const ESCRITURA_PROPIA = new Map(
   CIUDADES.filter((c) => c.ambiguo).map((c) => [c.nombre, new RegExp(`(^|[^\\p{L}])#?${c.nombre}(?=$|[^\\p{L}])`, "u")])
 );
 
-function ciudadEnTexto(texto) {
+export function ciudadEnTexto(texto) {
   const t = " " + normalizar(texto).replace(/[^a-z0-9#@ ]/g, " ") + " ";
   for (const c of CIUDADES) {
     if (c.ambiguo && !ESCRITURA_PROPIA.get(c.nombre).test(String(texto || ""))) continue;
@@ -99,6 +117,21 @@ export function ubicar(post, lugar) {
     return { ciudad: ciudad.nombre, lat: +(ciudad.lat + dy).toFixed(5), lng: +(ciudad.lng + dx).toFixed(5) };
   }
   return { ciudad: "Sin ubicación", lat: null, lng: null };
+}
+
+// Vuelve a ubicar por el texto los posts que quedaron "Sin ubicación" (por ejemplo, al sumar
+// ciudades nuevas al catálogo). No usa la API.
+export function reubicar(publicaciones) {
+  let n = 0;
+  for (const p of publicaciones) {
+    if (p.ciudad !== "Sin ubicación" || p.lat !== null) continue;
+    const c = ciudadEnTexto(p.texto);
+    if (!c) continue;
+    const [dy, dx] = dispersion(p.id, c.radio);
+    Object.assign(p, { ciudad: c.nombre, lat: +(c.lat + dy).toFixed(5), lng: +(c.lng + dx).toFixed(5) });
+    n++;
+  }
+  return n;
 }
 
 // Convierte una respuesta de la API en publicaciones del modelo de la app.
@@ -192,14 +225,22 @@ export async function main(env = process.env) {
     console.log("::warning::Falta X_BEARER_TOKEN. Agrega el secreto en Settings > Secrets and variables > Actions. No se capturó nada.");
     return { cambios: 0 };
   }
-  const consulta = (env.X_QUERY || "").trim() || CONSULTA_POR_DEFECTO;
+  // Con X_QUERY definida se usa esa sola consulta; si no, el grupo que toca en este turno.
+  const propia = (env.X_QUERY || "").trim();
+  const grupo = propia ? null : grupoDelTurno();
+  const consulta = propia || consultaDeGrupo(grupo);
   const maxPaginas = Math.max(1, parseInt(env.X_MAX_PAGES || "2", 10) || 2);
   const retencion = Math.max(1, parseInt(env.X_RETENCION_DIAS || "30", 10) || 30);
 
   const previo = await leerArchivo();
+  const ids = Object.assign({}, previo.ultimosIds || {});
+  // Un grupo nuevo arranca desde el último post ya capturado: no se descargan los 7 días
+  // anteriores, así la primera vuelta no gasta lecturas extra.
+  const sinceId = grupo ? (ids[grupo.id] || previo.ultimoId || null) : (previo.ultimoId || null);
+  if (grupo) console.log(`Grupo de lugares en este turno: ${grupo.id}.`);
   let resultado;
   try {
-    resultado = await buscar({ token, consulta, sinceId: previo.ultimoId || null, maxPaginas });
+    resultado = await buscar({ token, consulta, sinceId, maxPaginas });
   } catch (e) {
     if (e instanceof ErrorAPI && e.estado === 429) {
       const cuando = e.reinicio ? new Date(+e.reinicio * 1000).toISOString() : "más tarde";
@@ -218,16 +259,20 @@ export async function main(env = process.env) {
   }
 
   // Sin publicaciones nuevas en X no se reescribe el archivo, así no hay commits vacíos.
-  if (!resultado.masReciente || resultado.masReciente === previo.ultimoId) {
+  if (!resultado.masReciente || resultado.masReciente === sinceId) {
     console.log("No hay publicaciones nuevas en X desde la última captura.");
     return { cambios: 0 };
   }
+  if (grupo) ids[grupo.id] = resultado.masReciente;
   const publicaciones = combinar(previo.publicaciones || [], resultado.publicaciones, retencion);
+  const reubicadas = reubicar(publicaciones);
+  if (reubicadas) console.log(`Reubicadas por texto: ${reubicadas}.`);
   const salida = {
     generado: new Date().toISOString(),
     fuente: "x-api-v2/search/recent",
     consulta,
-    ultimoId: resultado.masReciente || previo.ultimoId || null,
+    ultimoId: grupo ? (previo.ultimoId || null) : resultado.masReciente,
+    ultimosIds: ids,
     // Se conserva el bloque del modelo para que solo se clasifique lo nuevo.
     ...(previo.modelo ? { modelo: previo.modelo } : {}),
     publicaciones

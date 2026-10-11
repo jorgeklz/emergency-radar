@@ -55,7 +55,26 @@
     { nombre: "Machala", provincia: "El Oro", lat: -3.258, lng: -79.955, peso: 4, radio: 0.03, alias: ["machala"] },
     { nombre: "Riobamba", provincia: "Chimborazo", lat: -1.664, lng: -78.654, peso: 3, radio: 0.03, alias: ["riobamba"] },
     { nombre: "Cuenca", provincia: "Azuay", lat: -2.900, lng: -79.005, peso: 4, radio: 0.04, ambiguo: true, alias: ["cuenca"] },
-    { nombre: "Quito", provincia: "Pichincha", lat: -0.180, lng: -78.468, peso: 9, radio: 0.06, ambiguo: true, alias: ["quito", "uio"] }
+    { nombre: "Quito", provincia: "Pichincha", lat: -0.180, lng: -78.468, peso: 9, radio: 0.06, ambiguo: true, alias: ["quito", "uio"] },
+    // Resto de capitales de provincia y ciudades grandes. "Nueva Loja" va antes que "Loja".
+    { nombre: "Esmeraldas", provincia: "Esmeraldas", lat: 0.968, lng: -79.652, peso: 3, radio: 0.03, alias: ["esmeraldas"] },
+    { nombre: "Santo Domingo", provincia: "Santo Domingo de los Tsáchilas", lat: -0.254, lng: -79.172, peso: 4, radio: 0.04, ambiguo: true, alias: ["santo domingo de los tsachilas", "santo domingo"] },
+    { nombre: "Ambato", provincia: "Tungurahua", lat: -1.249, lng: -78.617, peso: 4, radio: 0.03, alias: ["ambato"] },
+    { nombre: "Latacunga", provincia: "Cotopaxi", lat: -0.935, lng: -78.616, peso: 3, radio: 0.025, alias: ["latacunga"] },
+    { nombre: "Guaranda", provincia: "Bolívar", lat: -1.593, lng: -79.001, peso: 2, radio: 0.02, alias: ["guaranda"] },
+    { nombre: "Azogues", provincia: "Cañar", lat: -2.739, lng: -78.847, peso: 2, radio: 0.02, alias: ["azogues"] },
+    { nombre: "Nueva Loja", provincia: "Sucumbíos", lat: 0.085, lng: -76.894, peso: 2, radio: 0.02, alias: ["nueva loja", "lago agrio"] },
+    { nombre: "Loja", provincia: "Loja", lat: -3.993, lng: -79.204, peso: 3, radio: 0.03, alias: ["loja"] },
+    { nombre: "Zamora", provincia: "Zamora Chinchipe", lat: -4.069, lng: -78.956, peso: 1, radio: 0.02, ambiguo: true, alias: ["zamora chinchipe", "zamora"] },
+    { nombre: "Ibarra", provincia: "Imbabura", lat: 0.351, lng: -78.122, peso: 3, radio: 0.03, ambiguo: true, alias: ["ibarra"] },
+    { nombre: "Otavalo", provincia: "Imbabura", lat: 0.234, lng: -78.262, peso: 2, radio: 0.02, alias: ["otavalo"] },
+    { nombre: "Tulcán", provincia: "Carchi", lat: 0.812, lng: -77.717, peso: 2, radio: 0.02, alias: ["tulcan"] },
+    { nombre: "Tena", provincia: "Napo", lat: -0.993, lng: -77.813, peso: 1, radio: 0.02, ambiguo: true, alias: ["tena"] },
+    { nombre: "Puyo", provincia: "Pastaza", lat: -1.483, lng: -77.987, peso: 1, radio: 0.02, alias: ["puyo"] },
+    { nombre: "Macas", provincia: "Morona Santiago", lat: -2.305, lng: -78.117, peso: 1, radio: 0.02, alias: ["macas"] },
+    { nombre: "El Coca", provincia: "Orellana", lat: -0.466, lng: -76.987, peso: 1, radio: 0.02, alias: ["el coca", "francisco de orellana"] },
+    { nombre: "Puerto Ayora", provincia: "Galápagos", lat: -0.743, lng: -90.313, peso: 1, radio: 0.02, alias: ["puerto ayora", "santa cruz galapagos"] },
+    { nombre: "Puerto Baquerizo", provincia: "Galápagos", lat: -0.902, lng: -89.610, peso: 1, radio: 0.02, alias: ["puerto baquerizo", "san cristobal galapagos"] }
   ];
 
   var catalogo = { CATEGORIAS: CATEGORIAS, CIUDADES: CIUDADES };

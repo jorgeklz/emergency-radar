@@ -91,3 +91,24 @@ test("sin créditos (402) termina sin error y sin tocar el archivo", async () =>
     globalThis.fetch = original;
   }
 });
+
+test("reparte los lugares en grupos que se turnan y caben en 512 caracteres", async () => {
+  const m = await import("./x-collector.mjs");
+  for (const g of m.GRUPOS_CONSULTA) assert.ok(m.consultaDeGrupo(g).length <= 512, g.id);
+  const t0 = new Date("2026-10-11T00:00:00Z");
+  const vistos = new Set([0, 1, 2].map((k) => m.grupoDelTurno(new Date(t0.getTime() + k * 1800000)).id));
+  assert.equal(vistos.size, m.GRUPOS_CONSULTA.length);
+});
+
+test("reubica por texto los posts sin ubicación con el catálogo actual", async () => {
+  const m = await import("./x-collector.mjs");
+  const ps = [
+    { id: "1", texto: "Choque en la vía a Ambato deja dos heridos", ciudad: "Sin ubicación", lat: null, lng: null },
+    { id: "2", texto: "Incendio en Nueva Loja", ciudad: "Sin ubicación", lat: null, lng: null },
+    { id: "3", texto: "Robo en un local", ciudad: "Sin ubicación", lat: null, lng: null }
+  ];
+  assert.equal(m.reubicar(ps), 2);
+  assert.equal(ps[0].ciudad, "Ambato");
+  assert.equal(ps[1].ciudad, "Nueva Loja");
+  assert.equal(ps[2].ciudad, "Sin ubicación");
+});
