@@ -275,6 +275,23 @@ export async function main(env = process.env) {
 
   const previo = await leerArchivo();
   const ids = Object.assign({}, previo.ultimosIds || {});
+
+  // Descarga única de los últimos 7 días para todos los grupos (X_DESCARGA_COMPLETA=1).
+  // Se lanza a mano; después las capturas siguen con su since_id normal.
+  if (!propia && /^(1|true|si|sí)$/i.test(env.X_DESCARGA_COMPLETA || "")) {
+    let nuevas = [];
+    for (const g of GRUPOS_CONSULTA) {
+      try {
+        const r = await buscar({ token, consulta: consultaDeGrupo(g), sinceId: null, maxPaginas });
+        console.log(`Descarga completa, grupo ${g.id}: ${r.publicaciones.length} publicaciones de emergencia.`);
+        nuevas = nuevas.concat(r.publicaciones);
+        if (r.masReciente && (!ids[g.id] || BigInt(r.masReciente) > BigInt(ids[g.id]))) ids[g.id] = r.masReciente;
+      } catch (e) {
+        console.log(`::warning::Descarga completa, grupo ${g.id}: ${e.message}`);
+      }
+    }
+    return guardar(previo, nuevas, ids, retencion, "descarga completa de 7 días");
+  }
   // Un grupo nuevo arranca desde el último post ya capturado: no se descargan los 7 días
   // anteriores, así la primera vuelta no gasta lecturas extra.
   const sinceId = grupo ? (ids[grupo.id] || previo.ultimoId || null) : (previo.ultimoId || null);
@@ -305,15 +322,19 @@ export async function main(env = process.env) {
     return { cambios: 0 };
   }
   if (grupo) ids[grupo.id] = resultado.masReciente;
-  const publicaciones = combinar(previo.publicaciones || [], resultado.publicaciones, retencion);
+  return guardar(previo, resultado.publicaciones, ids, retencion, consulta, grupo ? null : resultado.masReciente);
+}
+
+async function guardar(previo, nuevas, ids, retencion, consulta, ultimoId = null) {
+  const publicaciones = combinar(previo.publicaciones || [], nuevas, retencion);
   const reubicadas = reubicar(publicaciones);
-  for (let i = publicaciones.length - 1; i >= 0; i--) if (deOtroPais(publicaciones[i].texto)) publicaciones.splice(i, 1);
   if (reubicadas) console.log(`Reubicadas por texto: ${reubicadas}.`);
+  for (let i = publicaciones.length - 1; i >= 0; i--) if (deOtroPais(publicaciones[i].texto)) publicaciones.splice(i, 1);
   const salida = {
     generado: new Date().toISOString(),
     fuente: "x-api-v2/search/recent",
     consulta,
-    ultimoId: grupo ? (previo.ultimoId || null) : resultado.masReciente,
+    ultimoId: ultimoId || previo.ultimoId || null,
     ultimosIds: ids,
     // Se conserva el bloque del modelo para que solo se clasifique lo nuevo.
     ...(previo.modelo ? { modelo: previo.modelo } : {}),
@@ -321,8 +342,8 @@ export async function main(env = process.env) {
   };
   await mkdir(dirname(ARCHIVO), { recursive: true });
   await writeFile(ARCHIVO, JSON.stringify(salida) + "\n");
-  console.log(`Capturadas ${resultado.publicaciones.length} publicaciones nuevas clasificadas. Total en archivo: ${publicaciones.length}.`);
-  return { cambios: resultado.publicaciones.length };
+  console.log(`Capturadas ${nuevas.length} publicaciones nuevas clasificadas. Total en archivo: ${publicaciones.length}.`);
+  return { cambios: nuevas.length };
 }
 
 if (process.argv[1] && resolve(process.argv[1]) === fileURLToPath(import.meta.url)) {

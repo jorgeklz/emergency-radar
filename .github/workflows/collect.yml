@@ -4,6 +4,11 @@ name: Captura de publicaciones de X
 # La captura automática cada 30 minutos la hace "Captura continua" (captura-continua.yml).
 on:
   workflow_dispatch:
+    inputs:
+      descarga_completa:
+        description: "Descarga única de los últimos 7 días para todos los grupos de lugares (hasta ~600 lecturas)"
+        type: boolean
+        default: false
 
 permissions:
   contents: write
@@ -43,6 +48,7 @@ jobs:
           X_BEARER_TOKEN: ${{ secrets.X_BEARER_TOKEN }}
           X_MAX_PAGES: ${{ vars.X_MAX_PAGES }}
           X_RETENCION_DIAS: ${{ vars.X_RETENCION_DIAS }}
+          X_DESCARGA_COMPLETA: ${{ inputs.descarga_completa }}
           GH_TOKEN: ${{ github.token }}
         run: |
           git config user.name "github-actions[bot]"
