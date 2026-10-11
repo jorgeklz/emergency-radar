@@ -17,7 +17,7 @@ def cargar(carpeta=CARPETA):
     textos, etiquetas, anotaciones = [], [], []
     vistos = set()
     for ruta in sorted(Path(carpeta).glob("*.csv")):
-        with ruta.open(encoding="utf-8", newline="") as f:
+        with ruta.open(encoding="utf-8-sig", newline="") as f:
             for fila in csv.DictReader(f):
                 texto = (fila.get("texto") or "").strip()
                 if not texto or texto in vistos or fila.get("etiqueta") not in ("0", "1"):
