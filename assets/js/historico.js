@@ -22,14 +22,19 @@
   function sincronizarSelectores() {
     var f = ER.filtros;
     var selCat = document.getElementById("histCategoria");
+    // La opción "N categorías elegidas" solo existe mientras hay una selección parcial
+    // (hecha en el mapa). Algunos navegadores muestran las opciones ocultas como una línea vacía.
     var parcial = selCat.querySelector('option[value="__sel"]');
+    if (parcial) parcial.remove();
     if (f.categorias.length === D.CATEGORIAS.length) selCat.value = "";
     else if (f.categorias.length === 1) selCat.value = f.categorias[0];
     else {
+      parcial = document.createElement("option");
+      parcial.value = "__sel";
       parcial.textContent = f.categorias.length + " categorías elegidas";
+      selCat.appendChild(parcial);
       selCat.value = "__sel";
     }
-    parcial.hidden = selCat.value !== "__sel";
     document.getElementById("histClase").value = f.clasificacion;
   }
 
@@ -139,8 +144,7 @@
   ER.registrarVista("historico", {
     iniciar: function () {
       document.getElementById("histCategoria").innerHTML = '<option value="">Todas las categorías</option>' +
-        D.CATEGORIAS.map(function (c) { return '<option value="' + c.id + '">' + c.nombre + "</option>"; }).join("") +
-        '<option value="__sel" hidden></option>';
+        D.CATEGORIAS.map(function (c) { return '<option value="' + c.id + '">' + c.nombre + "</option>"; }).join("");
       document.getElementById("legendHist").innerHTML = D.CATEGORIAS.map(function (c) {
         return '<span><i class="sw" style="background:' + c.color + '"></i>' + window.icon(c.icono) + c.nombre + "</span>";
       }).join("");
