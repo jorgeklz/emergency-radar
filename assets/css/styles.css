@@ -551,7 +551,8 @@ a { color: inherit; }
 .zonas { display: flex; flex-direction: column; gap: 6px; background: #f6f7fb; border-radius: 8px; padding: 10px 12px; }
 .al-sec { display: flex; align-items: center; gap: 6px; font-size: 13px; color: var(--ink); }
 .al-sec .ic { width: 16px; height: 16px; color: #000; }
-.al-sec-cat { margin-top: 6px; }
+.al-bloque { display: flex; flex-direction: column; gap: 6px; background: #f6f7fb; border-radius: 8px; padding: 10px 12px; margin: 4px 16px 16px; }
+.al-bloque .alertas-lista { background: #fff; border-radius: 8px; padding: 0 10px; margin: 0; }
 .al-ayuda { margin: -2px 0 4px; font-size: 11.5px; line-height: 1.4; color: var(--muted); }
 .zona { display: grid; grid-template-columns: 16px 1fr auto; grid-template-rows: auto auto; column-gap: 8px; align-items: center; text-align: left;
   border: 1px solid var(--line); background: #fff; border-radius: 8px; padding: 7px 10px; }

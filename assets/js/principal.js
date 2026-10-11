@@ -536,13 +536,11 @@
         window.icon(z.categoria.icono) + "<b>" + ER.escapar(z.categoria.nombre) + " en " + ER.escapar(z.ciudad) + "</b>" +
         "<span>" + z.observado + " posts · " + textoBase(z.base, horas) + "</span>" + pastilla(z.nivel) + "</button>";
     }).join("");
-    // Dos niveles distintos: "Zonas a vigilar" mira una ciudad y un tipo de emergencia a la vez;
-    // la lista "Por categoría" mira cada tipo de emergencia en todo el país.
+    // Dos niveles distintos: "Por zonas" mira una ciudad y un tipo de emergencia a la vez;
+    // "Por tipo de emergencia" (en index.html) mira cada tipo de emergencia en todo el país.
     document.getElementById("alertasResumen").innerHTML = banner +
-      (zonas ? '<section class="zonas"><div class="al-sec">' + window.icon("map-pin") + "<b>Zonas a vigilar</b></div>" +
-        '<p class="al-ayuda">Ciudades donde un tipo de emergencia se concentra más de lo normal. Toca una para verla en el mapa.</p>' + zonas + "</section>" : "") +
-      '<div class="al-sec al-sec-cat">' + window.icon("chart-bar") + "<b>Por categoría</b></div>" +
-      '<p class="al-ayuda">Nivel de cada tipo de emergencia en todo el país, frente a lo habitual.</p>';
+      (zonas ? '<section class="zonas"><div class="al-sec">' + window.icon("map-pin") + "<b>Por zonas</b></div>" +
+        '<p class="al-ayuda">Ciudades donde un tipo de emergencia se concentra más de lo normal. Toca una para verla en el mapa.</p>' + zonas + "</section>" : "");
 
     document.getElementById("alertsBody").innerHTML = r.categorias.map(function (c) {
       var abierta = !!st.alertas.abiertas[c.categoria.id];
