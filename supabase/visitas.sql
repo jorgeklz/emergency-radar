@@ -85,6 +85,8 @@ begin
     return (json_build_object('nueva', false)::jsonb || resumen_visitas()::jsonb)::json;
   end if;
   if v_codigo !~ '^[A-Z]{2}$' or v_codigo in ('XX', 'T1') then v_codigo := null; end if;
+  -- La ciudad la envía el navegador: solo letras, espacios y . ' - (máximo 40).
+  v_ciudad := nullif(left(trim(regexp_replace(coalesce(v_ciudad, ''), '[^[:alpha:][:space:].''-]', '', 'g')), 40), '');
   h := encode(digest(ip || (select sal from visitas_config where id = 1), 'sha256'), 'hex');
 
   select id, ultima into previa from visitas where huella = h order by ultima desc limit 1;

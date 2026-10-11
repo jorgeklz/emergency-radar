@@ -56,7 +56,10 @@
     if (!codigo || !/^[A-Z]{2}$/.test(codigo)) return '<span class="vis-bandera vacia">' + window.icon("world") + "</span>";
     return '<img class="vis-bandera" src="https://flagcdn.com/' + codigo.toLowerCase() + '.svg" alt="" width="18" height="13" loading="lazy">';
   }
+  // La ciudad la informa cada navegador: solo se muestran letras, espacios y signos de un nombre de lugar.
+  function limpiarCiudad(c) { return String(c || "").replace(/[^\p{L}\s.'-]/gu, "").trim().slice(0, 40); }
   function lugar(v) {
+    v = Object.assign({}, v, { ciudad: limpiarCiudad(v.ciudad) });
     var p = pais(v.codigo);
     return v.ciudad ? ER.escapar(v.ciudad) + ", " + ER.escapar(p) : ER.escapar(p);
   }
