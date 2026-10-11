@@ -112,3 +112,11 @@ test("reubica por texto los posts sin ubicación con el catálogo actual", async
   assert.equal(ps[1].ciudad, "Nueva Loja");
   assert.equal(ps[2].ciudad, "Sin ubicación");
 });
+
+test("cantones con nombres de otros países solo cuentan con su provincia o Ecuador", async () => {
+  const m = await import("./x-collector.mjs");
+  assert.equal(m.ciudadEnTexto("Incendio en Santa Ana, California"), null);
+  assert.equal(m.ciudadEnTexto("Incendio en Santa Ana, Manabí").nombre, "Santa Ana");
+  assert.equal(m.ciudadEnTexto("Choque en Pedernales deja tres heridos").nombre, "Pedernales");
+  assert.equal(m.ciudadEnTexto("Asalto en Sangolquí").nombre, "Sangolquí");
+});

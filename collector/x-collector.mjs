@@ -35,15 +35,38 @@ const PALABRAS =
   "(asalto OR robo OR atraco OR incendio OR accidente OR choque OR volcamiento OR atropellado " +
   "OR inundación OR deslave OR sismo OR temblor OR aguaje)";
 const SUFIJO = "lang:es -is:retweet";
-export const GRUPOS_CONSULTA = [
-  { id: "costa", lugares: ["Guayaquil", "Durán", "Samborondón", "Daule", "Milagro", "\"Santa Elena\"", "Salinas", "Babahoyo", "Quevedo",
-    "Portoviejo", "Manta", "Chone", "Machala", "Esmeraldas", "\"Santo Domingo\""] },
-  { id: "sierra", lugares: ["Quito", "Cuenca", "Ambato", "Riobamba", "Loja", "Ibarra", "Latacunga", "Tulcán", "Azogues", "Guaranda",
-    "Otavalo", "Pichincha", "Azuay", "Tungurahua", "Imbabura"] },
-  { id: "oriente", lugares: ["Ecuador", "Tena", "Puyo", "Macas", "\"Nueva Loja\"", "\"Lago Agrio\"", "\"El Coca\"", "Orellana",
-    "Sucumbíos", "Galápagos", "Pastaza", "Napo", "\"Morona Santiago\"", "\"Zamora Chinchipe\""] }
+// Términos de lugar, de más a menos importantes. Los cantones con nombres que existen en otros
+// países (marcados "contexto" en el catálogo) no se buscan por nombre: traerían posts de fuera
+// y gastarían lecturas; se cubren con el nombre de su provincia.
+const TERMINOS = [
+  "Ecuador", "Guayaquil", "Quito", "Cuenca", "Portoviejo", "Manta", "Durán", "Machala", "\"Santo Domingo\"", "Ambato",
+  "Manabí", "Guayas", "Azuay", "Pichincha",
+  "Samborondón", "Daule", "Milagro", "\"Santa Elena\"", "Babahoyo", "Quevedo", "Chone", "Esmeraldas",
+  "Riobamba", "Loja", "Ibarra", "Latacunga", "Tulcán", "Azogues", "Guaranda", "Otavalo",
+  "Tena", "Puyo", "Macas", "\"Lago Agrio\"", "\"El Coca\"", "Galápagos", "Sucumbíos", "Orellana", "Pastaza", "Napo",
+  "Montecristi", "Jaramijó", "Rocafuerte", "Tosagua", "\"Bahía de Caráquez\"", "Calceta", "Paján", "\"Puerto López\"",
+  "Pedernales", "\"Flavio Alfaro\"", "Jipijapa",
+  "Machachi", "Cayambe", "Tabacundo", "Sangolquí", "\"Los Bancos\"", "\"Puerto Quito\"",
+  "Jujan", "Balao", "Balzar", "Colimes", "\"El Empalme\"", "\"Pedro Carbo\"", "Naranjal", "Naranjito", "Nobol",
+  "Yaguachi", "Bucay", "\"Lomas de Sargentillo\"", "\"Isidro Ayora\"",
+  "Gualaceo", "Paute", "Sígsig", "Chordeleg", "Nabón", "Guachapala", "\"Sevilla de Oro\"", "\"Ponce Enríquez\""
 ];
-export function consultaDeGrupo(g) { return PALABRAS + " (" + g.lugares.join(" OR ") + ") " + SUFIJO; }
+const LIMITE_CONSULTA = 512;
+// Reparte los términos en grupos cuya consulta completa no pase del límite de X.
+function armarGrupos(terminos) {
+  const grupos = [];
+  let actual = [];
+  for (const t of terminos) {
+    const prueba = actual.concat(t);
+    if (actual.length && consultaDe(prueba).length > LIMITE_CONSULTA) { grupos.push(actual); actual = [t]; }
+    else actual = prueba;
+  }
+  if (actual.length) grupos.push(actual);
+  return grupos.map((lugares, i) => ({ id: "g" + (i + 1), lugares }));
+}
+function consultaDe(lugares) { return PALABRAS + " (" + lugares.join(" OR ") + ") " + SUFIJO; }
+export const GRUPOS_CONSULTA = armarGrupos(TERMINOS);
+export function consultaDeGrupo(g) { return consultaDe(g.lugares); }
 // Turno por reloj (no necesita guardar estado): cambia cada 30 minutos.
 export function grupoDelTurno(ahora = new Date()) {
   return GRUPOS_CONSULTA[Math.floor(ahora.getTime() / 1800000) % GRUPOS_CONSULTA.length];
@@ -87,6 +110,8 @@ export function ciudadEnTexto(texto) {
   const t = " " + normalizar(texto).replace(/[^a-z0-9#@ ]/g, " ") + " ";
   for (const c of CIUDADES) {
     if (c.ambiguo && !ESCRITURA_PROPIA.get(c.nombre).test(String(texto || ""))) continue;
+    // Nombres que existen en otros países: hace falta que el post mencione la provincia o Ecuador.
+    if (c.contexto && !t.includes(" " + normalizar(c.provincia) + " ") && !/ecuador|ecuatorian/.test(t)) continue;
     for (const alias of c.alias) {
       if (t.includes(" " + alias + " ") || t.includes("#" + alias.replace(/ /g, "") + " ")) return c;
     }

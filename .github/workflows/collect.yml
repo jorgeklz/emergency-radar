@@ -41,7 +41,6 @@ jobs:
         env:
           # La API key vive solo como secreto del repositorio; nunca en el código.
           X_BEARER_TOKEN: ${{ secrets.X_BEARER_TOKEN }}
-          X_QUERY: ${{ vars.X_QUERY }}
           X_MAX_PAGES: ${{ vars.X_MAX_PAGES }}
           X_RETENCION_DIAS: ${{ vars.X_RETENCION_DIAS }}
           GH_TOKEN: ${{ github.token }}

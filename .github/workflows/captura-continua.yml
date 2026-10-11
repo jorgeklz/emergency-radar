@@ -52,7 +52,6 @@ jobs:
       - name: Capturar cada 30 minutos (unas 5,5 horas)
         env:
           X_BEARER_TOKEN: ${{ secrets.X_BEARER_TOKEN }}
-          X_QUERY: ${{ vars.X_QUERY }}
           X_MAX_PAGES: ${{ vars.X_MAX_PAGES }}
           X_RETENCION_DIAS: ${{ vars.X_RETENCION_DIAS }}
           GH_TOKEN: ${{ github.token }}
