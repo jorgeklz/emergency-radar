@@ -538,8 +538,8 @@
     }).join("");
     // Dos niveles distintos: "Por zonas" mira una ciudad y un tipo de emergencia a la vez;
     // "Por tipo de emergencia" (en index.html) mira cada tipo de emergencia en todo el país.
-    document.getElementById("alertasResumen").innerHTML = banner +
-      (zonas ? '<section class="zonas"><div class="al-sec">' + window.icon("map-pin") + "<b>Por zonas</b></div>" +
+    document.getElementById("alertasResumen").innerHTML = banner;
+    document.getElementById("alertasZonas").innerHTML = (zonas ? '<section class="zonas"><div class="al-sec">' + window.icon("map-pin") + "<b>Por zonas</b></div>" +
         '<p class="al-ayuda">Ciudades donde un tipo de emergencia se concentra más de lo normal. Toca una para verla en el mapa.</p>' + zonas + "</section>" : "");
 
     document.getElementById("alertsBody").innerHTML = r.categorias.map(function (c) {

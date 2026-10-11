@@ -549,6 +549,8 @@ a { color: inherit; }
 .banner-alta { background: #fbe6e6; } .banner-alta .ic { color: #d03b3b; }
 .banner-neutro .ic { color: var(--muted); }
 .zonas { display: flex; flex-direction: column; gap: 6px; background: #f6f7fb; border-radius: 8px; padding: 10px 12px; }
+.alertas-zonas { margin: 0 16px 16px; }
+.alertas-zonas:empty { display: none; }
 .al-sec { display: flex; align-items: center; gap: 6px; font-size: 13px; color: var(--ink); }
 .al-sec .ic { width: 16px; height: 16px; color: #000; }
 .al-bloque { display: flex; flex-direction: column; gap: 6px; background: #f6f7fb; border-radius: 8px; padding: 10px 12px; margin: 4px 16px 16px; }
