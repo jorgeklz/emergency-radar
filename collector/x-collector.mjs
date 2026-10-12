@@ -121,17 +121,37 @@ const ESCRITURA_PROPIA = new Map(
   CIUDADES.filter((c) => c.ambiguo).map((c) => [c.nombre, new RegExp(`(^|[^\\p{L}])#?${c.nombre}(?=$|[^\\p{L}])`, "u")])
 );
 
+// ¿El texto (ya normalizado, con espacios a los lados) menciona Ecuador o la provincia?
+// ¿Se llama igual (o casi) que su provincia? (Santa Elena, Cañar, Loja, Esmeraldas, Zamora, Santo Domingo...)
+function comoSuProvincia(c) {
+  const n = normalizar(c.nombre), p = normalizar(c.provincia);
+  return p === n || p.startsWith(n + " ");
+}
+// ¿El texto (ya normalizado, con espacios a los lados) da contexto ecuatoriano a la ciudad c?
+// Vale "Ecuador", "ecuatoriano", el ECU 911 o su provincia; si la ciudad se llama como su
+// provincia, nombrar la provincia no prueba nada y hace falta lo demás.
+function tieneContexto(t, c) {
+  if (/ecuador|ecuatorian|ecu ?911/.test(t)) return true;
+  if (comoSuProvincia(c)) return false;
+  const p = normalizar(c.provincia);
+  return t.includes(" " + p + " ") || t.includes("#" + p.replace(/ /g, "") + " ");
+}
+
 export function ciudadEnTexto(texto) {
   const t = " " + normalizar(texto).replace(/[^a-z0-9#@ ]/g, " ") + " ";
+  let respaldo = null;
   for (const c of CIUDADES) {
     if (c.ambiguo && !ESCRITURA_PROPIA.get(c.nombre).test(String(texto || ""))) continue;
-    // Nombres que existen en otros países: hace falta que el post mencione la provincia o Ecuador.
-    if (c.contexto && !t.includes(" " + normalizar(c.provincia) + " ") && !/ecuador|ecuatorian/.test(t)) continue;
-    for (const alias of c.alias) {
-      if (t.includes(" " + alias + " ") || t.includes("#" + alias.replace(/ /g, "") + " ")) return c;
-    }
+    // Toda ciudad necesita contexto ecuatoriano, salvo las pocas cuyo nombre solo existe en
+    // Ecuador (marcadas "unico" en el catálogo).
+    if (!c.unico && !tieneContexto(t, c)) continue;
+    if (!c.alias.some((a) => t.includes(" " + a + " ") || t.includes("#" + a.replace(/ /g, "") + " "))) continue;
+    // Si el nombre coincide con el de la provincia ("provincia de Cañar"), se prefiere otra
+    // ciudad más concreta que aparezca en el mismo texto (Azogues).
+    if (comoSuProvincia(c)) { respaldo = respaldo || c; continue; }
+    return c;
   }
-  return null;
+  return respaldo;
 }
 
 /*

@@ -13,7 +13,7 @@ test("clasifica por palabras clave", () => {
 });
 
 test("ubica por ciudad mencionada, lugar o coordenadas", () => {
-  const a = ubicar({ id: "1", text: "Asalto en Durán, cuidado" }, null);
+  const a = ubicar({ id: "1", text: "Asalto en Durán, Guayas, cuidado" }, null);
   assert.equal(a.ciudad, "Durán");
   assert.ok(Math.abs(a.lat - -2.172) < 0.05);
   const b = ubicar({ id: "2", text: "Choque fuerte" }, { name: "Portoviejo", full_name: "Portoviejo, Ecuador", country_code: "EC", geo: { bbox: [-80.5, -1.1, -80.4, -1.0] } });
@@ -25,8 +25,13 @@ test("ubica por ciudad mencionada, lugar o coordenadas", () => {
   assert.equal(ubicar({ id: "5", text: "Robo en #Guayaquil hoy" }, null).ciudad, "Guayaquil");
   // Nombres ambiguos: solo cuentan con mayúscula inicial.
   assert.equal(ubicar({ id: "6", text: "Sismo fuerte, es un milagro que no haya víctimas" }, null).ciudad, "Sin ubicación");
-  assert.equal(ubicar({ id: "7", text: "Choque en la vía a Milagro esta mañana" }, null).ciudad, "Milagro");
-  assert.equal(ubicar({ id: "8", text: "Incendio en #Manta, bomberos en camino" }, null).ciudad, "Manta");
+  assert.equal(ubicar({ id: "7", text: "Choque en la vía a Milagro, Guayas, esta mañana" }, null).ciudad, "Milagro");
+  // Sin provincia ni Ecuador, un nombre que existe en otros países (o es apellido) no se ubica.
+  assert.equal(ubicar({ id: "11", text: "Puebla despide a Rutilio Cerón Durán tras el choque" }, null).ciudad, "Sin ubicación");
+  assert.equal(ubicar({ id: "12", text: "Accidente en Santo Domingo, Bonao" }, null).ciudad, "Sin ubicación");
+  assert.equal(ubicar({ id: "13", text: "Choque en Riobamba y Centenario" }, null).ciudad, "Sin ubicación");
+  assert.equal(ubicar({ id: "14", text: "#ECU911 coordina atención de choque en Riobamba" }, null).ciudad, "Riobamba");
+  assert.equal(ubicar({ id: "8", text: "Incendio en #Manta, #Manabí, bomberos en camino" }, null).ciudad, "Manta");
   assert.equal(ubicar({ id: "9", text: "Le quitó la comida y me quito el sombrero" }, null).ciudad, "Sin ubicación");
   assert.equal(ubicar({ id: "10", text: "Operativo en Quito: aprehenden a sospechoso" }, null).ciudad, "Quito");
 });
@@ -110,7 +115,7 @@ test("reubica por texto los posts sin ubicación con el catálogo actual", async
   const m = await import("./x-collector.mjs");
   const ps = [
     { id: "1", texto: "Choque en la vía a Ambato deja dos heridos", ciudad: "Sin ubicación", lat: null, lng: null },
-    { id: "2", texto: "Incendio en Nueva Loja", ciudad: "Sin ubicación", lat: null, lng: null },
+    { id: "2", texto: "Incendio en Nueva Loja, Sucumbíos", ciudad: "Sin ubicación", lat: null, lng: null },
     { id: "3", texto: "Robo en un local", ciudad: "Sin ubicación", lat: null, lng: null }
   ];
   assert.equal(m.reubicar(ps), 2);
@@ -141,4 +146,11 @@ test("Puerto López de Colombia (Meta) no se ubica en Manabí", async () => {
   assert.equal(m.ciudadEnTexto("Accidente en la vía Villavicencio–Puerto López deja un muerto"), null);
   assert.equal(m.deOtroPais("Accidente en la vía Villavicencio–Puerto López deja un muerto"), true);
   assert.equal(m.ciudadEnTexto("Choque en Puerto López, Manabí").nombre, "Puerto López");
+});
+
+test("ciudades con el nombre de su provincia necesitan Ecuador y ceden ante otra más concreta", async () => {
+  const m = await import("./x-collector.mjs");
+  assert.equal(m.ciudadEnTexto("500 familias en Altos de Santa Elena, al sur de Cali"), null);
+  assert.equal(m.ciudadEnTexto("Accidente en Santa Elena, Ecuador").nombre, "Santa Elena");
+  assert.equal(m.ciudadEnTexto("Incendio forestal en el cantón Azogues, provincia de Cañar").nombre, "Azogues");
 });
