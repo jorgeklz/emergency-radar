@@ -128,23 +128,24 @@
     sel.value = hf.ciudad;
   }
 
-  // Aviso con los filtros activos de esta vista, con el mismo formato que el de Principal.
+  // Aviso con todos los filtros activos de esta vista como pastillas; cada una se quita con su ×.
   function pintarAviso() {
-    var fecha = !porDefecto(hf), otros = [];
-    if (hf.categoria) otros.push(D.categoria(hf.categoria).nombre);
-    if (hf.ciudad) otros.push(hf.ciudad);
-    if (hf.clasificacion !== "emergencias") otros.push(hf.clasificacion === "todas" ? "incluye descartadas por el modelo" : "solo descartadas por el modelo");
+    var chips = [];
+    var chip = function (clave, etiqueta, valor) {
+      chips.push('<button type="button" class="filtro-chip" data-quitar="' + clave + '" title="Quitar este filtro"><small>' + etiqueta + "</small>" +
+        ER.escapar(valor) + window.icon("x") + "</button>");
+    };
+    if (!porDefecto(hf)) chip("fechas", "Fechas", ER.fmtFechaCorta(hf.desde) + " al " + ER.fmtFechaCorta(hf.hasta));
+    if (hf.categoria) chip("categoria", "Categoría", D.categoria(hf.categoria).nombre);
+    if (hf.ciudad) chip("ciudad", "Ciudad", hf.ciudad);
+    if (hf.clasificacion !== "emergencias") chip("clasificacion", "Modelo", hf.clasificacion === "todas" ? "incluye descartadas" : "solo descartadas");
     var q = val("histBuscar").trim();
-    if (q) otros.push("búsqueda «" + q + "»");
-    var hay = fecha || otros.length;
-    document.getElementById("avisoHist").hidden = !hay;
-    if (!hay) return;
-    var rango = ER.fmtFechaCorta(hf.desde) + " al " + ER.fmtFechaCorta(hf.hasta);
-    var titulo = fecha && !otros.length ? "Filtro de fechas aplicado:" : "Filtros aplicados:";
-    var detalle = (fecha ? rango : "") + (fecha && otros.length ? " · " : "") + otros.join(" · ");
-    document.getElementById("avisoHistTexto").innerHTML = "<b>" + titulo + "</b> " + ER.escapar(detalle) +
-      ". El gráfico de publicaciones por día y el registro de publicaciones muestran solo " + (fecha && !otros.length ? "ese periodo." : "esas publicaciones.");
-    document.getElementById("btnQuitarHistTxt").textContent = fecha && !otros.length ? "Quitar filtro" : "Quitar filtros";
+    if (q) chip("busqueda", "Búsqueda", "«" + q + "»");
+    document.getElementById("avisoHist").hidden = !chips.length;
+    if (!chips.length) return;
+    document.getElementById("avisoHistTexto").innerHTML = '<span class="filtros-chips"><b>' + (chips.length === 1 ? "Filtro aplicado:" : "Filtros aplicados:") +
+      "</b>" + chips.join("") + "</span>";
+    document.getElementById("btnQuitarHistTxt").textContent = chips.length === 1 ? "Quitar filtro" : "Quitar filtros";
   }
 
   function pintarTodo() {
@@ -211,6 +212,17 @@
       var reiniciar = function () { st.pagina = 0; pintarTodo(); };
       var t;
       document.getElementById("histBuscar").addEventListener("input", function () { clearTimeout(t); t = setTimeout(reiniciar, 200); });
+      document.getElementById("avisoHist").addEventListener("click", function (ev) {
+        var b = ev.target.closest("[data-quitar]");
+        if (!b) return;
+        var k = b.getAttribute("data-quitar"), ini = filtrosIniciales();
+        if (k === "fechas") { hf.desde = ini.desde; hf.hasta = ini.hasta; ER.pintarRango(); }
+        else if (k === "categoria") hf.categoria = "";
+        else if (k === "ciudad") hf.ciudad = "";
+        else if (k === "clasificacion") hf.clasificacion = "emergencias";
+        else if (k === "busqueda") document.getElementById("histBuscar").value = "";
+        reiniciar();
+      });
       document.getElementById("btnQuitarHist").addEventListener("click", function () {
         document.getElementById("histBuscar").value = "";
         hf = filtrosIniciales();

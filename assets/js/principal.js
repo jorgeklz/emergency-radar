@@ -382,6 +382,21 @@
       c.bindTooltip(tarjeta(info.post, info.total, info.porCat), { direction: "top", className: "er-card", offset: [0, -30] }).openTooltip();
     });
     capaGrupos.on("clustermouseout", cerrarTarjetaGrupo);
+    // Durante el zoom los grupos se rearman y las etiquetas podían quedar dibujadas fuera de lugar
+    // un instante (en una esquina): se ocultan mientras dura la animación y se recrean al final.
+    var contenedor = mapa.getContainer(), finZoom;
+    mapa.on("zoomstart", function () {
+      clearTimeout(finZoom);
+      contenedor.classList.add("en-zoom");
+      spotlights.forEach(function (capa) { capa.unbindTooltip(); capa._erSpot = false; });
+      spotlights = [];
+    });
+    var mostrarEtiquetas = function () {
+      clearTimeout(finZoom);
+      finZoom = setTimeout(function () { contenedor.classList.remove("en-zoom"); programarSpotlights(); }, 350);
+    };
+    mapa.on("zoomend", mostrarEtiquetas);
+    capaGrupos.on("animationend", mostrarEtiquetas);
     capaGrupos.on("animationstart spiderfied unspiderfied", cerrarTarjetaGrupo);
     mapa.on("zoomstart movestart popupopen", cerrarTarjetaGrupo);
     mapa.getContainer().addEventListener("mouseleave", cerrarTarjetaGrupo);
