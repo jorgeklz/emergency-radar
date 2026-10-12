@@ -924,10 +924,18 @@
   var refrescoTimer;
   function refrescoDiferido() {
     clearTimeout(refrescoTimer);
-    refrescoTimer = setTimeout(function () { pintarResumen(); pintarAlertas(); pintarFrecuencia(); }, 400);
+    refrescoTimer = setTimeout(function () { pintarActualizacion(); pintarResumen(); pintarAlertas(); pintarFrecuencia(); }, 400);
+  }
+
+  // Fecha y hora (Ecuador) de la última actualización de posts, en el mapa y en Posts recientes.
+  function pintarActualizacion() {
+    var a = D.actualizado();
+    var txt = a ? " · actualizado " + ER.fmtLarga(a) : "";
+    document.querySelectorAll(".act-posts").forEach(function (el) { el.textContent = txt; el.title = a ? "Última captura de posts de X (hora de Ecuador)" : ""; });
   }
 
   function pintarTodo(ajustar) {
+    pintarActualizacion();
     pintarChips();
     pintarResumen();
     pintarMapa(ajustar);
@@ -952,6 +960,8 @@
         if (t && !ev.target.closest("a")) t.classList.toggle("completo");
       });
       pintarTodo(true);
+      // En vivo el archivo se relee cada minuto: la fecha de actualización se refresca a la par.
+      setInterval(pintarActualizacion, 60000);
     },
     mostrar: function () {
       var ajustar = this._pendiente;

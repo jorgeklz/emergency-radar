@@ -716,6 +716,8 @@ body[data-vista="estadisticas"] .anchor-rango { display: none; }
 .pie a { color: var(--indigo); font-weight: 700; word-break: break-all; }
 .pie-meta { margin-top: 4px; color: var(--muted); font-size: 11.5px; }
 .pie-autor { margin-top: 8px; font-weight: 700; color: var(--ink); }
+.pie-autor a { color: var(--ink); text-decoration: none; word-break: normal; }
+.pie-autor a:hover { color: var(--indigo); text-decoration: underline; }
 
 .acerca-paper { margin-top: 12px; padding: 12px 14px; border-radius: 10px; background: #f4f5fb; border-left: 3px solid var(--indigo); }
 .acerca-paper p { margin: 0 0 6px; color: var(--ink-2); font-size: 13.5px; }

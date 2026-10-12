@@ -14,7 +14,7 @@
   <link href="https://fonts.googleapis.com/css2?family=Nunito+Sans:opsz,wght@6..12,400;6..12,600;6..12,700;6..12,800&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="assets/vendor/leaflet/leaflet.css">
   <link rel="stylesheet" href="assets/vendor/leaflet/MarkerCluster.css">
-  <link rel="stylesheet" href="assets/css/styles.css?v=20261012-0300">
+  <link rel="stylesheet" href="assets/css/styles.css?v=20261012-0330">
 </head>
 <body>
   <header class="topbar">
@@ -83,7 +83,7 @@
         <section class="resumen" id="resumen" aria-label="Resumen de las últimas 24 horas" aria-live="polite"></section>
         <article class="card card-map">
           <div class="card-toolbar">
-            <div class="titulo-con-sub"><h2 class="map-titulo">Geolocalización de posts</h2><span class="hint">Solo las emergencias de las últimas 48 horas</span></div>
+            <div class="titulo-con-sub"><h2 class="map-titulo">Geolocalización de posts</h2><span class="hint">Solo las emergencias de las últimas 48 horas<span class="act-posts"></span></span></div>
             <div class="toolbar-right">
               <span class="toolbar-label">Estás viendo</span>
               <div class="popover-anchor">
@@ -130,7 +130,7 @@
       <div class="col-side">
         <article class="card card-posts">
           <div class="card-head">
-            <div class="titulo-con-sub"><h2>Posts recientes</h2><span class="hint" id="conteoPosts"></span></div>
+            <div class="titulo-con-sub"><h2>Posts recientes</h2><span class="hint"><span id="conteoPosts"></span><span class="act-posts"></span></span></div>
             <button type="button" class="btn-soft" id="btnVerTodo">Ver todo</button>
           </div>
           <div class="posts-wrap">
@@ -298,8 +298,9 @@
       Big Data Research, 45, 100630.
       <a href="https://doi.org/10.1016/j.bdr.2026.100630" target="_blank" rel="noopener">https://doi.org/10.1016/j.bdr.2026.100630</a>
     </div>
-    <div class="pie-meta">Datos: publicaciones públicas de X. Mapas: © colaboradores de OpenStreetMap, HOT y Esri.</div>
-    <div class="pie-autor">Jorge Párraga-Álava, Ph.D.</div>
+    <div class="pie-meta">Datos: publicaciones públicas de X.</div>
+    <div class="pie-meta">Mapas: © colaboradores de OpenStreetMap, HOT y Esri.</div>
+    <div class="pie-autor"><a href="https://jorgeklz.github.io/research/es/index.html" target="_blank" rel="noopener">Jorge Párraga-Álava, Ph.D.</a></div>
   </footer>
 
   <!-- Modal genérico -->
@@ -319,16 +320,16 @@
   <script src="assets/vendor/leaflet/leaflet.js"></script>
   <script src="assets/vendor/leaflet/leaflet.markercluster.js"></script>
   <script src="assets/vendor/chartjs/chart.umd.js"></script>
-  <script src="assets/js/icons.js?v=20261012-0300"></script>
-  <script src="assets/js/catalogo.js?v=20261012-0300"></script>
-  <script src="assets/js/data.js?v=20261012-0300"></script>
-  <script src="assets/js/alertas.js?v=20261012-0300"></script>
-  <script src="assets/js/app.js?v=20261012-0300"></script>
-  <script src="assets/js/principal.js?v=20261012-0300"></script>
-  <script src="assets/js/historico.js?v=20261012-0300"></script>
-  <script src="assets/js/estadisticas.js?v=20261012-0300"></script>
-  <script src="assets/js/config.js?v=20261012-0300"></script>
-  <script src="assets/js/visitas.js?v=20261012-0300"></script>
-  <script src="assets/js/inicio.js?v=20261012-0300"></script>
+  <script src="assets/js/icons.js?v=20261012-0330"></script>
+  <script src="assets/js/catalogo.js?v=20261012-0330"></script>
+  <script src="assets/js/data.js?v=20261012-0330"></script>
+  <script src="assets/js/alertas.js?v=20261012-0330"></script>
+  <script src="assets/js/app.js?v=20261012-0330"></script>
+  <script src="assets/js/principal.js?v=20261012-0330"></script>
+  <script src="assets/js/historico.js?v=20261012-0330"></script>
+  <script src="assets/js/estadisticas.js?v=20261012-0330"></script>
+  <script src="assets/js/config.js?v=20261012-0330"></script>
+  <script src="assets/js/visitas.js?v=20261012-0330"></script>
+  <script src="assets/js/inicio.js?v=20261012-0330"></script>
 </body>
 </html>
