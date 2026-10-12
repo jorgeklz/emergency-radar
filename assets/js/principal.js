@@ -384,7 +384,7 @@
     if (typeof total === "number") pintarLeyendaMapa._t = total;
     total = pintarLeyendaMapa._t || 0;
     var el = document.getElementById("mapLegend");
-    var base = "<span>" + ER.fmtNum(total) + " publicaciones geolocalizadas en el periodo</span>";
+    var base = "<span>" + ER.fmtNum(total) + " publicaciones geolocalizadas en las últimas 48 horas</span>";
     var G = ER.CALOR;
     var escala = '<span class="ley-grav"><b>Gravedad</b>' + [G.baja, G.media, G.alta].map(function (g) {
       return '<span><i class="dot-grav" style="background:' + g.color + '"></i>' + g.corto + "</span>";
@@ -396,8 +396,12 @@
   }
 
   // `ajustar`: centra el mapa en los resultados (al cambiar filtros o fechas, no con cada publicación en vivo).
+  // El mapa muestra solo las emergencias de las últimas 48 horas (dentro del rango elegido).
+  var MAPA_HORAS = 48;
   function pintarMapa(ajustar) {
     var f = filtroBase(); f.soloGeo = true;
+    var fin = Math.min(Date.now(), +ER.estado.hasta);
+    f.desde = new Date(Math.max(+ER.estado.desde, fin - MAPA_HORAS * 3600000));
     var posts = D.filtrar(f);
     if (ajustar && posts.length) {
       mapa.fitBounds(L.latLngBounds(posts.map(function (p) { return [p.lat, p.lng]; })), { padding: [60, 60], maxZoom: 12 });

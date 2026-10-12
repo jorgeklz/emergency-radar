@@ -44,7 +44,7 @@ const TERMINOS = [
   "Samborondón", "Daule", "Milagro", "\"Santa Elena\"", "Babahoyo", "Quevedo", "Chone", "Esmeraldas",
   "Riobamba", "Loja", "Ibarra", "Latacunga", "Tulcán", "Azogues", "Guaranda", "Otavalo",
   "Tena", "Puyo", "Macas", "\"Lago Agrio\"", "\"El Coca\"", "Galápagos", "Sucumbíos", "Orellana", "Pastaza", "Napo",
-  "Montecristi", "Jaramijó", "Rocafuerte", "Tosagua", "\"Bahía de Caráquez\"", "Calceta", "Paján", "\"Puerto López\"",
+  "Montecristi", "Jaramijó", "Rocafuerte", "Tosagua", "\"Bahía de Caráquez\"", "Calceta", "Paján",
   "Pedernales", "\"Flavio Alfaro\"", "Jipijapa",
   "Machachi", "Cayambe", "Tabacundo", "Sangolquí", "\"San Miguel de los Bancos\"", "\"Puerto Quito\"",
   "Jujan", "Balao", "Balzar", "Colimes", "\"El Empalme\"", "\"Pedro Carbo\"", "Naranjal", "Naranjito", "Nobol",
@@ -151,7 +151,7 @@ const EXTRANJERO = new RegExp("(^|[^a-z])(" + [
   "panama", "peru", "colombia", "mexico", "costa rica", "venezuela", "chile", "argentina", "bolivia", "guatemala",
   "honduras", "el salvador", "nicaragua", "cuba", "republica dominicana", "puerto rico", "espana", "estados unidos",
   "eeuu", "ee uu", "brasil", "uruguay", "paraguay", "bogota", "medellin", "pereira", "lima", "caracas", "buenos aires",
-  "cdmx", "ciudad de mexico", "puebla", "tlaxcala", "jalisco", "madrid", "miami", "nueva york", "california", "texas", "florida"
+  "villavicencio", "cdmx", "ciudad de mexico", "puebla", "tlaxcala", "jalisco", "madrid", "miami", "nueva york", "california", "texas", "florida"
 ].join("|") + ")([^a-z]|$)");
 export function deOtroPais(texto) {
   const t = normalizar(texto);

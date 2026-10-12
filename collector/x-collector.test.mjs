@@ -129,3 +129,10 @@ test("descarta emergencias de otros países salvo que mencionen Ecuador", async 
   assert.equal(m.deOtroPais("El sismo de Panamá se sintió en Guayaquil"), false);
   assert.equal(m.deOtroPais("Choque en la vía a Daule"), false);
 });
+
+test("Puerto López de Colombia (Meta) no se ubica en Manabí", async () => {
+  const m = await import("./x-collector.mjs");
+  assert.equal(m.ciudadEnTexto("Accidente en la vía Villavicencio–Puerto López deja un muerto"), null);
+  assert.equal(m.deOtroPais("Accidente en la vía Villavicencio–Puerto López deja un muerto"), true);
+  assert.equal(m.ciudadEnTexto("Choque en Puerto López, Manabí").nombre, "Puerto López");
+});

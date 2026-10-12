@@ -70,7 +70,7 @@
     { nombre: "Santa Ana", provincia: "Manabí", lat: -1.205, lng: -80.373, peso: 1, radio: 0.015, ambiguo: true, contexto: true, alias: ["santa ana"] },
     { nombre: "Olmedo", provincia: "Manabí", lat: -1.398, lng: -80.211, peso: 1, radio: 0.015, ambiguo: true, contexto: true, alias: ["olmedo"] },
     { nombre: "Paján", provincia: "Manabí", lat: -1.555, lng: -80.425, peso: 1, radio: 0.015, alias: ["pajan"] },
-    { nombre: "Puerto López", provincia: "Manabí", lat: -1.559, lng: -80.811, peso: 1, radio: 0.015, alias: ["puerto lopez"] },
+    { nombre: "Puerto López", provincia: "Manabí", lat: -1.559, lng: -80.811, peso: 1, radio: 0.015, contexto: true, alias: ["puerto lopez"] },
     { nombre: "Jama", provincia: "Manabí", lat: -0.200, lng: -80.267, peso: 1, radio: 0.015, ambiguo: true, contexto: true, alias: ["jama"] },
     { nombre: "Pedernales", provincia: "Manabí", lat: 0.071, lng: -80.054, peso: 2, radio: 0.015, alias: ["pedernales"] },
     { nombre: "Flavio Alfaro", provincia: "Manabí", lat: -0.402, lng: -79.904, peso: 1, radio: 0.015, alias: ["flavio alfaro"] },
