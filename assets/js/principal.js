@@ -357,19 +357,34 @@
       iconCreateFunction: iconoGrupo
     });
     // Al pasar el cursor por un grupo aparece el detalle breve; al salir vuelve la etiqueta mínima (o nada).
+    // Tarjeta al pasar el cursor por un grupo. Se cierra siempre al salir, al mover o hacer zoom y
+    // cuando los grupos se reorganizan: así no queda "huérfana" dibujada en una esquina del mapa.
+    var grupoHover = null;
+    function cerrarTarjetaGrupo() {
+      var c = grupoHover;
+      grupoHover = null;
+      if (c) {
+        c.unbindTooltip();
+        if (c._erSpot && c._icon) {
+          var info = ultimoDe(c);
+          c.bindTooltip(etiquetaGrupo(info), { permanent: true, direction: "top", className: "er-mini er-fija", offset: [0, -28] }).openTooltip();
+        }
+      }
+      document.querySelectorAll("#map .leaflet-tooltip.er-card").forEach(function (el) { el.remove(); });
+    }
     capaGrupos.on("clustermouseover", function (e) {
-      var c = e.layer, info = ultimoDe(c);
+      var c = e.layer;
+      cerrarTarjetaGrupo();
+      if (!c._icon || !mapa.hasLayer(c)) return;
+      var info = ultimoDe(c);
       if (c._erSpot) { c.unbindTooltip(); }
+      grupoHover = c;
       c.bindTooltip(tarjeta(info.post, info.total, info.porCat), { direction: "top", className: "er-card", offset: [0, -30] }).openTooltip();
     });
-    capaGrupos.on("clustermouseout", function (e) {
-      var c = e.layer;
-      c.unbindTooltip();
-      if (c._erSpot) {
-        var info = ultimoDe(c);
-        c.bindTooltip(etiquetaGrupo(info), { permanent: true, direction: "top", className: "er-mini er-fija", offset: [0, -28] }).openTooltip();
-      }
-    });
+    capaGrupos.on("clustermouseout", cerrarTarjetaGrupo);
+    capaGrupos.on("animationstart spiderfied unspiderfied", cerrarTarjetaGrupo);
+    mapa.on("zoomstart movestart popupopen", cerrarTarjetaGrupo);
+    mapa.getContainer().addEventListener("mouseleave", cerrarTarjetaGrupo);
     capaGrupos.on("animationend", programarSpotlights);
     mapa.on("moveend", programarSpotlights);
 
