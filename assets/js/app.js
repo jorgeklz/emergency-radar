@@ -112,6 +112,8 @@
 
     // ---------- UI común ----------
     toast: function (msg) {
+      // En Histórico no se muestran mensajes temporales: los filtros ya se ven en su aviso.
+      if (ER.estado.vista === "historico") return;
       var t = document.getElementById("toast");
       t.textContent = msg;
       t.hidden = false;

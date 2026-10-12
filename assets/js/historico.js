@@ -19,19 +19,17 @@
   // Filtros propios de Histórico. Por defecto: últimos 7 días, todo, solo emergencias.
   function filtrosIniciales() {
     var hoy = new Date();
-    return { desde: ER.inicioDia(ER.sumarDias(hoy, -6)), hasta: ER.finDia(hoy), categoria: "", ciudad: "", clasificacion: "emergencias" };
+    return { desde: ER.inicioDia(ER.sumarDias(hoy, -6)), hasta: ER.finDia(hoy), categoria: "", ciudad: "", clasificacion: "emergencias", fechaElegida: false };
   }
   var hf = filtrosIniciales();
-  function porDefecto(f) {
-    var i = filtrosIniciales();
-    return ER.isoDia(f.desde) === ER.isoDia(i.desde) && ER.isoDia(f.hasta) === ER.isoDia(i.hasta);
-  }
+  // Hay filtro de fechas cuando se eligió un rango en el selector (aunque coincida con los 7 días por defecto).
+  function porDefecto(f) { return !f.fechaElegida; }
 
   // El selector de fechas de la barra superior, en esta pestaña, usa el rango propio de Histórico.
   ER.proveedoresRango.historico = {
     get: function () { return { desde: hf.desde, hasta: hf.hasta, personalizado: !porDefecto(hf) }; },
     aplicar: function (desde, hasta) {
-      hf.desde = ER.inicioDia(desde); hf.hasta = ER.finDia(hasta);
+      hf.desde = ER.inicioDia(desde); hf.hasta = ER.finDia(hasta); hf.fechaElegida = true;
       st.pagina = 0; pintarTodo();
     }
   };
@@ -216,7 +214,7 @@
         var b = ev.target.closest("[data-quitar]");
         if (!b) return;
         var k = b.getAttribute("data-quitar"), ini = filtrosIniciales();
-        if (k === "fechas") { hf.desde = ini.desde; hf.hasta = ini.hasta; ER.pintarRango(); }
+        if (k === "fechas") { hf.desde = ini.desde; hf.hasta = ini.hasta; hf.fechaElegida = false; ER.pintarRango(); }
         else if (k === "categoria") hf.categoria = "";
         else if (k === "ciudad") hf.ciudad = "";
         else if (k === "clasificacion") hf.clasificacion = "emergencias";
@@ -228,7 +226,6 @@
         hf = filtrosIniciales();
         ER.pintarRango();
         reiniciar();
-        ER.toast("Se quitaron los filtros de Histórico");
       });
       document.getElementById("histCategoria").addEventListener("change", function () { hf.categoria = this.value; reiniciar(); });
       document.getElementById("histCiudad").addEventListener("change", function () { hf.ciudad = this.value; reiniciar(); });
