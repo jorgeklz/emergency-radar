@@ -203,7 +203,7 @@
     ER.emitir("nueva", p);
   }
   // En vivo: cada minuto se vuelve a leer data/posts.json (que el recolector actualiza cada
-  // 45 minutos) y lo nuevo entra al mapa, al resumen, a Pre-alertas, a Frecuencia y a la
+  // 30 minutos) y lo nuevo entra al mapa, al resumen, a Pre-alertas, a Frecuencia y a la
   // píldora "N posts nuevos". En pausa la pantalla queda fija para analizarla con calma.
   // No afecta la captura en X, que corre en GitHub Actions de todos modos.
   var proximaRevision = null;
@@ -394,7 +394,7 @@
         "<p class='acerca-sub'>Categorías</p><ul class='acerca-cats'>" + D.CATEGORIAS.map(function (c) {
           return "<li>" + window.icon(c.icono) + "<div><b>" + c.nombre + "</b><span>" + ER.escapar(c.descripcion || "") + "</span></div></li>";
         }).join("") + "</ul>" +
-        "<p>Los posts se capturan cada 45 minutos. Un modelo decide si cada uno es una emergencia y se ubica por la ciudad que menciona. " +
+        "<p>Los posts se capturan cada 30 minutos. Un modelo decide si cada uno es una emergencia y se ubica por la ciudad que menciona. " +
         "Todas las fechas y horas están en hora de Ecuador (GMT-5).</p>" +
         "<p class='acerca-sub'>Visitas</p>" +
         "<p>Cada persona cuenta una vez cada 6 horas. No se guarda la IP, solo una huella cifrada, el país y la ciudad aproximados.</p>" +

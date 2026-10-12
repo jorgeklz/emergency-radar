@@ -4,7 +4,7 @@ Prototipo funcional del panel **Emergency Radar**, que monitorea publicaciones d
 
 Es un sitio estático (HTML, CSS y JavaScript sin compilación), listo para publicarse en GitHub Pages. Todas las librerías están incluidas en `assets/vendor`, así que no depende de CDNs para funcionar.
 
-Todo lo que muestra el sitio son **publicaciones reales de X** que un recolector captura cada 45 minutos. No hay datos simulados: si todavía no hay capturas, las secciones aparecen vacías con un aviso.
+Todo lo que muestra el sitio son **publicaciones reales de X** que un recolector captura cada 30 minutos. No hay datos simulados: si todavía no hay capturas, las secciones aparecen vacías con un aviso.
 
 ## Secciones
 
@@ -48,7 +48,7 @@ La API key **no va en el código del sitio**. GitHub Pages publica todos los arc
 Por eso la captura funciona así:
 
 ```
-GitHub Actions (cada 45 min)          Repositorio              GitHub Pages
+GitHub Actions (cada 30 min)          Repositorio              GitHub Pages
 collector/x-collector.mjs  ──escribe──▶ data/posts.json ──publica──▶ el sitio lee el JSON
    usa el secreto X_BEARER_TOKEN                                     y lo relee cada minuto
 ```
@@ -57,7 +57,7 @@ collector/x-collector.mjs  ──escribe──▶ data/posts.json ──publica�
 
 1. En el portal de desarrolladores de X crea una app y copia su **Bearer Token**. Tu plan debe incluir el endpoint de búsqueda reciente (`GET /2/tweets/search/recent`).
 2. En GitHub ve a *Settings → Secrets and variables → Actions → New repository secret*. Nombre: `X_BEARER_TOKEN`. Valor: el token.
-3. Ve a la pestaña *Actions*, abre **Captura continua cada 45 minutos** y pulsa *Run workflow*. Desde ahí captura sola cada 45 minutos.
+3. Ve a la pestaña *Actions*, abre **Captura continua cada 30 minutos** y pulsa *Run workflow*. Desde ahí captura sola cada 30 minutos.
 
 El token nunca se escribe en el repositorio ni en los registros de Actions: GitHub lo enmascara.
 
@@ -71,18 +71,18 @@ En *Settings → Secrets and variables → Actions → Variables* puedes crear:
 | `X_MAX_PAGES` | Páginas de 100 resultados por ejecución (controla el consumo de la API) | `2` |
 | `X_RETENCION_DIAS` | Días que se guardan en `data/posts.json` | `30` |
 
-### Captura automática cada 45 minutos
+### Captura automática cada 30 minutos
 
-El `cron` de GitHub se salta ejecuciones cuando hay carga, así que la captura automática no depende de él. El workflow **Captura continua cada 45 minutos** (`.github/workflows/captura-continua.yml`) corre unas 5,5 horas, captura cada 45 minutos y al terminar se vuelve a lanzar solo. Su `cron` es solo un respaldo que reinicia la cadena si alguna vez se corta; nunca corren dos a la vez. En repositorios públicos los minutos de GitHub Actions son gratuitos.
+El `cron` de GitHub se salta ejecuciones cuando hay carga, así que la captura automática no depende de él. El workflow **Captura continua cada 30 minutos** (`.github/workflows/captura-continua.yml`) corre unas 5,5 horas, captura cada 30 minutos y al terminar se vuelve a lanzar solo. Su `cron` es solo un respaldo que reinicia la cadena si alguna vez se corta; nunca corren dos a la vez. En repositorios públicos los minutos de GitHub Actions son gratuitos.
 
-- **Cambiar el intervalo:** en `captura-continua.yml`, el número `2700` (segundos) del cálculo de la próxima captura, y el mismo valor en `INTERVALO_MS` de `collector/x-collector.mjs` (en milisegundos) para que el turno de grupos cambie a la par.
+- **Cambiar el intervalo:** en `captura-continua.yml`, el número `1800` (segundos) del cálculo de la próxima captura, y el mismo valor en `INTERVALO_MS` de `collector/x-collector.mjs` (en milisegundos) para que el turno de grupos cambie a la par.
 - **Captura puntual:** workflow **Captura de publicaciones de X** (`collect.yml`) > *Run workflow*.
-- **Detener la captura automática:** *Actions* > **Captura continua cada 45 minutos** > "..." > *Disable workflow*. Cancelar una ejecución a mano también corta la cadena; para retomarla, *Run workflow*.
+- **Detener la captura automática:** *Actions* > **Captura continua cada 30 minutos** > "..." > *Disable workflow*. Cancelar una ejecución a mano también corta la cadena; para retomarla, *Run workflow*.
 - Los pasos de cada captura están en `scripts/captura.sh` (X, modelo, commit y publicación en Pages).
 
 Cada captura pide solo lo nuevo desde la anterior (`since_id`), con un tope de `X_MAX_PAGES` páginas de 100 posts. Ten en cuenta los límites y costos de tu plan de X: son hasta 48 capturas por día.
 
-Para cubrir todo Ecuador sin gastar más, los lugares (las 24 provincias y las cabeceras cantonales de todo el país) se reparten automáticamente en grupos cuya consulta no pase de 512 caracteres (hoy son seis). Cada captura, cada 45 minutos, consulta siempre el primer grupo (Ecuador y las ciudades grandes) y uno de los demás por turno; como cada consulta pide solo lo nuevo, el consumo depende de cuántos posts nuevos hay, no de cuántas consultas se hacen. Los cantones cuyo nombre existe en otros países o es una palabra común (Santa Ana, El Carmen, San Vicente, Palestina, Puerto López, Baños, Pasaje, Valencia...) no se buscan por nombre y solo se ubican si el post menciona también su provincia o Ecuador. Cada grupo guarda su propio `since_id` en `ultimosIds`, así nada se descarga dos veces, y un grupo nuevo empieza desde el último post ya capturado para no bajar los 7 días anteriores. Para llenar de una vez los últimos 7 días de todos los grupos, lanza a mano "Captura de publicaciones de X" con la opción **descarga_completa** (hasta unas 600 lecturas, una sola vez). Al guardar, los posts sin ubicación se vuelven a ubicar por el texto con el catálogo actual, y se descartan los de emergencias de otros países: los que mencionan un país o ciudad extranjera (Panamá, Perú, Colombia, México, Madrid, Puebla...) y ningún lugar de Ecuador ni la palabra "Ecuador".
+Para cubrir todo Ecuador sin gastar más, los lugares (las 24 provincias y las cabeceras cantonales de todo el país) se reparten automáticamente en grupos cuya consulta no pase de 512 caracteres (hoy son dos prioritarios y cuatro del resto). Hay dos niveles: Ecuador y las provincias de Guayas, Pichincha, Manabí y Azuay con todos sus cantones se consultan en cada captura (cada 30 minutos); el resto del país, en una captura sí y otra no (cada 60 minutos); como cada consulta pide solo lo nuevo, el consumo depende de cuántos posts nuevos hay, no de cuántas consultas se hacen. Los cantones cuyo nombre existe en otros países o es una palabra común (Santa Ana, El Carmen, San Vicente, Palestina, Puerto López, Baños, Pasaje, Valencia...) no se buscan por nombre y solo se ubican si el post menciona también su provincia o Ecuador. Cada grupo guarda su propio `since_id` en `ultimosIds`, así nada se descarga dos veces, y un grupo nuevo empieza desde el último post ya capturado para no bajar los 7 días anteriores. Para llenar de una vez los últimos 7 días de todos los grupos, lanza a mano "Captura de publicaciones de X" con la opción **descarga_completa** (hasta unas 600 lecturas, una sola vez). Al guardar, los posts sin ubicación se vuelven a ubicar por el texto con el catálogo actual, y se descartan los de emergencias de otros países: los que mencionan un país o ciudad extranjera (Panamá, Perú, Colombia, México, Madrid, Puebla...) y ningún lugar de Ecuador ni la palabra "Ecuador".
 
 ### Cómo se procesa cada publicación
 
@@ -92,7 +92,7 @@ Para cubrir todo Ecuador sin gastar más, los lugares (las 24 provincias y las c
 
 ### Sobre el "tiempo real"
 
-Con GitHub Pages el retraso real es de varios minutos: se captura cada 45 minutos, Pages tarda alrededor de un minuto en republicar y el sitio relee el archivo cada minuto. Para algo inmediato hace falta un servidor propio conectado al *filtered stream* de X que empuje los datos al navegador.
+Con GitHub Pages el retraso real es de varios minutos: se captura cada 30 minutos, Pages tarda alrededor de un minuto en republicar y el sitio relee el archivo cada minuto. Para algo inmediato hace falta un servidor propio conectado al *filtered stream* de X que empuje los datos al navegador.
 
 ### Ejecutar el recolector en tu equipo
 
@@ -204,7 +204,7 @@ assets/vendor/              Leaflet, Leaflet.markercluster y Chart.js
 collector/                  Recolector de X (Node 20, sin dependencias) y sus pruebas
 modelo/                     Modelo LSI + kNN en Python: corpus, preprocesamiento, evaluación y clasificación
 data/posts.json             Publicaciones capturadas (lo actualiza GitHub Actions)
-.github/workflows/          captura-continua.yml (cada 45 min), collect.yml (captura manual) y pages.yml
+.github/workflows/          captura-continua.yml (cada 30 min), collect.yml (captura manual) y pages.yml
 scripts/captura.sh          Una captura completa: X, modelo, commit y publicación en Pages
 ```
 

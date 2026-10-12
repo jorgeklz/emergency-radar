@@ -28,7 +28,7 @@ export const ENDPOINT = "https://api.x.com/2/tweets/search/recent";
 export const MAX_PUBLICACIONES = 5000;
 
 // Para cubrir todo Ecuador sin gastar más de la API, los lugares se reparten en grupos que
-// se turnan: cada captura (cada 45 min) consulta el grupo de las ciudades grandes y otro por turno, con el límite de
+// se turnan (ver GRUPOS_PRIORITARIOS y GRUPOS_RESTO), con el límite de
 // páginas de siempre. Cada grupo guarda su propio since_id, así nunca se baja dos veces lo
 // mismo. Cada consulta cabe en el límite de 512 caracteres del plan básico de X.
 const PALABRAS =
@@ -55,7 +55,7 @@ const TERMINOS = [
 ];
 const LIMITE_CONSULTA = 512;
 // Reparte los términos en grupos cuya consulta completa no pase del límite de X.
-function armarGrupos(terminos) {
+function armarGrupos(terminos, prefijo) {
   const grupos = [];
   let actual = [];
   for (const t of terminos) {
@@ -64,20 +64,28 @@ function armarGrupos(terminos) {
     else actual = prueba;
   }
   if (actual.length) grupos.push(actual);
-  return grupos.map((lugares, i) => ({ id: "g" + (i + 1), lugares }));
+  return grupos.map((lugares, i) => ({ id: prefijo + (i + 1), lugares }));
 }
 function consultaDe(lugares) { return PALABRAS + " (" + lugares.join(" OR ") + ") " + SUFIJO; }
-export const GRUPOS_CONSULTA = armarGrupos(TERMINOS);
-export function consultaDeGrupo(g) { return consultaDe(g.lugares); }
-// Turno por reloj (no necesita guardar estado): cambia con cada captura (cada 45 minutos).
-export const INTERVALO_MS = 45 * 60000;
-// El primer grupo (Ecuador y ciudades grandes) va en todas las capturas; los demás se turnan.
-export function turnoDeGrupos(ahora = new Date()) {
-  const resto = GRUPOS_CONSULTA.slice(1);
-  if (!resto.length) return GRUPOS_CONSULTA.slice(0, 1);
-  return [GRUPOS_CONSULTA[0], resto[Math.floor(ahora.getTime() / INTERVALO_MS) % resto.length]];
+// Prioridad: Ecuador, Guayas, Pichincha, Manabí y Azuay (provincias y sus cantones) se consultan
+// en cada captura (cada 30 min); el resto del país, en una captura sí y otra no (cada 60 min).
+const PROVINCIAS_PRIORITARIAS = ["guayas", "pichincha", "manabi", "azuay"];
+function esPrioritario(termino) {
+  const t = normalizar(termino.replace(/"/g, ""));
+  if (t === "ecuador" || PROVINCIAS_PRIORITARIAS.includes(t)) return true;
+  const c = CIUDADES.find((x) => normalizar(x.nombre) === t || x.alias.includes(t));
+  return !!c && PROVINCIAS_PRIORITARIAS.includes(normalizar(c.provincia));
 }
-export function grupoDelTurno(ahora = new Date()) { return turnoDeGrupos(ahora)[1] || GRUPOS_CONSULTA[0]; }
+export const GRUPOS_PRIORITARIOS = armarGrupos(TERMINOS.filter(esPrioritario), "p");
+export const GRUPOS_RESTO = armarGrupos(TERMINOS.filter((t) => !esPrioritario(t)), "r");
+export const GRUPOS_CONSULTA = GRUPOS_PRIORITARIOS.concat(GRUPOS_RESTO);
+export function consultaDeGrupo(g) { return consultaDe(g.lugares); }
+// Turno por reloj (no necesita guardar estado).
+export const INTERVALO_MS = 30 * 60000;
+export function turnoDeGrupos(ahora = new Date()) {
+  const franja = Math.floor(ahora.getTime() / INTERVALO_MS);
+  return franja % 2 === 0 ? GRUPOS_PRIORITARIOS.concat(GRUPOS_RESTO) : GRUPOS_PRIORITARIOS.slice();
+}
 // Se mantiene por compatibilidad: la consulta del primer grupo.
 export const CONSULTA_POR_DEFECTO = consultaDeGrupo(GRUPOS_CONSULTA[0]);
 
