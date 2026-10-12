@@ -187,6 +187,14 @@
   };
   // Texto corto del rango elegido, por ejemplo "05/10/2026 al 08/10/2026".
   ER.textoRango = function () { return ER.fmtFechaCorta(ER.estado.desde) + " al " + ER.fmtFechaCorta(ER.estado.hasta); };
+  // Marca el atajo que corresponde al rango aplicado (si hay uno).
+  function marcarAtajo() {
+    var h = ER.isoDia(new Date()), d = ER.isoDia(ER.estado.desde), fin = ER.isoDia(ER.estado.hasta), hp = ec(new Date());
+    var cual = !ER.estado.personalizado || fin !== h ? null :
+      d === h ? "hoy" : d === ER.isoDia(sumarDias(new Date(), -6)) ? "7" : d === ER.isoDia(sumarDias(new Date(), -29)) ? "30" :
+      d === ER.isoDia(desdeEc(hp.y, hp.m, 1)) ? "mes" : null;
+    document.querySelectorAll("#popRango [data-preset]").forEach(function (b) { b.classList.toggle("active", b.getAttribute("data-preset") === cual); });
+  }
   function iniciarRango() {
     var inDesde = document.getElementById("inDesde");
     var inHasta = document.getElementById("inHasta");
@@ -196,8 +204,11 @@
     enlazarPopover("btnRango", "popRango", function () {
       inDesde.value = ER.isoDia(ER.estado.desde);
       inHasta.value = ER.isoDia(ER.estado.hasta);
+      marcarAtajo();
     });
-    document.querySelectorAll("[data-preset]").forEach(function (b) {
+    // Atajos: un clic aplica el rango de inmediato y queda marcado. Solo los del popover de
+    // fechas (Estadísticas tiene sus propios botones con data-preset).
+    document.querySelectorAll("#popRango [data-preset]").forEach(function (b) {
       b.addEventListener("click", function () {
         var p = b.getAttribute("data-preset");
         var h = new Date(), d;
@@ -206,6 +217,9 @@
         else d = sumarDias(h, -(parseInt(p, 10) - 1));
         inDesde.value = ER.isoDia(d);
         inHasta.value = ER.isoDia(h);
+        aplicarRango(d, h);
+        cerrarPopovers();
+        ER.toast("Filtro de fechas aplicado: " + ER.textoRango());
       });
     });
     document.getElementById("btnAplicarRango").addEventListener("click", function () {

@@ -133,6 +133,7 @@ a { color: inherit; }
   padding: 4px 10px; font-size: 12px; font-weight: 600; color: var(--ink-2);
 }
 .presets button:hover { border-color: var(--blue); color: var(--blue); }
+.presets button.active { background: var(--indigo); border-color: var(--indigo); color: #fff; }
 .field { display: flex; flex-direction: column; gap: 4px; margin-bottom: 10px; font-size: 12px; font-weight: 700; color: var(--ink-2); }
 .field input, .field select, .filters select, .search input {
   height: 36px; padding: 0 10px;
