@@ -253,36 +253,59 @@
   }
 
   // Muestra tarjetas fijas sobre los grupos donde ocurrieron los reportes más recientes.
+  // Etiquetas y tarjetas sobre los grupos se dibujan en una capa propia, ubicadas con la posición
+  // real del ícono en pantalla (las de Leaflet podían quedar en una esquina con los grupos).
+  var capaEtiquetas = null;
+  function posicionar(el, icono, alto) {
+    if (!icono || !icono.isConnected) { el.style.display = "none"; return false; }
+    var r = icono.getBoundingClientRect(), c = mapa.getContainer().getBoundingClientRect();
+    if (!r.width) { el.style.display = "none"; return false; }
+    el.style.display = "";
+    // Se centra con el tamaño real de la etiqueta (sin transform, que las animaciones pisaban).
+    el.style.left = Math.round(r.left - c.left + r.width / 2 - el.offsetWidth / 2) + "px";
+    el.style.top = Math.round(r.top - c.top + r.height / 2 - alto - el.offsetHeight) + "px";
+    return true;
+  }
+  function etiquetaFlotante(clase, html) {
+    var el = document.createElement("div");
+    el.className = "er-et " + clase;
+    el.innerHTML = html;
+    capaEtiquetas.appendChild(el);
+    return el;
+  }
+  function reposicionarEtiquetas() {
+    spotlights.forEach(function (s) { posicionar(s.el, s.capa._icon, 24); });
+    if (tarjetaHover) posicionar(tarjetaHover.el, tarjetaHover.capa._icon, 26);
+  }
+  var tarjetaHover = null;
+
   function refrescarSpotlights() {
-    spotlights.forEach(function (capa) { capa.unbindTooltip(); capa._erSpot = false; });
+    spotlights.forEach(function (s) { s.el.remove(); s.capa._erSpot = false; });
     spotlights = [];
-    if (!mapa) return;
+    if (!mapa || !capaEtiquetas || mapa.getContainer().classList.contains("en-zoom")) return;
     var limites = mapa.getBounds().pad(-0.08);
     var vistos = [];
     var marcadores = capaGrupos.getLayers().slice().sort(function (a, b) { return b._erPost.fecha - a._erPost.fecha; });
     for (var i = 0; i < marcadores.length && spotlights.length < 5; i++) {
       var padre = capaGrupos.getVisibleParent(marcadores[i]);
       if (!padre || vistos.indexOf(padre) >= 0) continue;
-      // Solo grupos o puntos dibujados en el mapa: si no, la etiqueta no tiene dónde ubicarse.
-      if (!padre._icon || !mapa.hasLayer(padre) || mapa.getContainer().classList.contains("en-zoom")) continue;
+      // Solo grupos o puntos dibujados en el mapa.
+      if (!padre._icon || !mapa.hasLayer(padre)) continue;
       var ll = padre.getLatLng();
       if (!limites.contains(ll)) continue;
       var pt = mapa.latLngToContainerPoint(ll);
       if (pt.y < 60) continue;
       // La etiqueta ocupa unos 60 x 20 px por encima del punto: se evita que choque con otra.
       var choca = spotlights.some(function (s) {
-        var q = mapa.latLngToContainerPoint(s.getLatLng());
+        var q = mapa.latLngToContainerPoint(s.capa.getLatLng());
         return Math.abs(q.x - pt.x) < 70 && Math.abs(q.y - pt.y) < 30;
       });
       vistos.push(padre);
       if (choca) continue;
-      var info = ultimoDe(padre);
-      // Las tarjetas fijas van compactas; el desglose por categoría se ve al pasar el cursor.
-      padre.bindTooltip(etiquetaGrupo(info), {
-        permanent: true, direction: "top", className: "er-mini er-fija", offset: [0, -28], interactive: false
-      }).openTooltip();
+      var el = etiquetaFlotante("er-mini er-fija", etiquetaGrupo(ultimoDe(padre)));
+      if (!posicionar(el, padre._icon, 24)) { el.remove(); continue; }
       padre._erSpot = true;
-      spotlights.push(padre);
+      spotlights.push({ capa: padre, el: el });
     }
   }
   var spotTimer;
@@ -361,27 +384,21 @@
     // Al pasar el cursor por un grupo aparece el detalle breve; al salir vuelve la etiqueta mínima (o nada).
     // Tarjeta al pasar el cursor por un grupo. Se cierra siempre al salir, al mover o hacer zoom y
     // cuando los grupos se reorganizan: así no queda "huérfana" dibujada en una esquina del mapa.
-    var grupoHover = null;
+    capaEtiquetas = L.DomUtil.create("div", "er-etiquetas", mapa.getContainer());
     function cerrarTarjetaGrupo() {
-      var c = grupoHover;
-      grupoHover = null;
-      if (c) {
-        c.unbindTooltip();
-        if (c._erSpot && c._icon) {
-          var info = ultimoDe(c);
-          c.bindTooltip(etiquetaGrupo(info), { permanent: true, direction: "top", className: "er-mini er-fija", offset: [0, -28] }).openTooltip();
-        }
-      }
-      document.querySelectorAll("#map .leaflet-tooltip.er-card").forEach(function (el) { el.remove(); });
+      if (tarjetaHover) { tarjetaHover.el.remove(); tarjetaHover = null; }
+      spotlights.forEach(function (s) { s.el.style.visibility = ""; });
     }
     capaGrupos.on("clustermouseover", function (e) {
       var c = e.layer;
       cerrarTarjetaGrupo();
       if (!c._icon || !mapa.hasLayer(c)) return;
       var info = ultimoDe(c);
-      if (c._erSpot) { c.unbindTooltip(); }
-      grupoHover = c;
-      c.bindTooltip(tarjeta(info.post, info.total, info.porCat), { direction: "top", className: "er-card", offset: [0, -30] }).openTooltip();
+      var el = etiquetaFlotante("er-card", tarjeta(info.post, info.total, info.porCat));
+      if (!posicionar(el, c._icon, 26)) { el.remove(); return; }
+      tarjetaHover = { capa: c, el: el };
+      // La etiqueta fija de ese grupo se oculta mientras se ve la tarjeta.
+      spotlights.forEach(function (s) { if (s.capa === c) s.el.style.visibility = "hidden"; });
     });
     capaGrupos.on("clustermouseout", cerrarTarjetaGrupo);
     // Durante el zoom los grupos se rearman y las etiquetas podían quedar dibujadas fuera de lugar
@@ -390,7 +407,8 @@
     mapa.on("zoomstart", function () {
       clearTimeout(finZoom);
       contenedor.classList.add("en-zoom");
-      spotlights.forEach(function (capa) { capa.unbindTooltip(); capa._erSpot = false; });
+      cerrarTarjetaGrupo();
+      spotlights.forEach(function (s) { s.el.remove(); s.capa._erSpot = false; });
       spotlights = [];
     });
     var mostrarEtiquetas = function () {
@@ -400,7 +418,12 @@
     mapa.on("zoomend", mostrarEtiquetas);
     capaGrupos.on("animationend", mostrarEtiquetas);
     capaGrupos.on("animationstart spiderfied unspiderfied", cerrarTarjetaGrupo);
-    mapa.on("zoomstart movestart popupopen", cerrarTarjetaGrupo);
+    mapa.on("zoomstart popupopen", cerrarTarjetaGrupo);
+    // Al arrastrar el mapa las etiquetas acompañan a sus grupos. Además se reajustan cada
+    // 200 ms porque los grupos terminan de acomodarse un poco después de cada zoom.
+    mapa.on("move", reposicionarEtiquetas);
+    capaGrupos.on("animationend", reposicionarEtiquetas);
+    setInterval(function () { if (!document.hidden && (spotlights.length || tarjetaHover)) reposicionarEtiquetas(); }, 200);
     mapa.getContainer().addEventListener("mouseleave", cerrarTarjetaGrupo);
     capaGrupos.on("animationend", programarSpotlights);
     mapa.on("moveend", programarSpotlights);
@@ -443,8 +466,9 @@
     if (ajustar && posts.length) {
       mapa.fitBounds(L.latLngBounds(posts.map(function (p) { return [p.lat, p.lng]; })), { padding: [60, 60], maxZoom: 12 });
     }
-    spotlights.forEach(function (c) { c.unbindTooltip(); c._erSpot = false; });
+    spotlights.forEach(function (s) { s.el.remove(); s.capa._erSpot = false; });
     spotlights = [];
+    if (tarjetaHover) { tarjetaHover.el.remove(); tarjetaHover = null; }
     capaGrupos.clearLayers();
     capaGrupos.addLayers(posts.map(function (p) { return crearMarcador(p, false); }));
     pintarLeyendaMapa(posts.length);

@@ -277,7 +277,12 @@ a { color: inherit; }
 .er-nuevo b { color: var(--blue); }
 @media (prefers-reduced-motion: reduce) { .er-ping span { animation: none; transform: scale(.7); opacity: .6; } }
 
-.map.en-zoom .leaflet-tooltip-pane { visibility: hidden; }
+.map.en-zoom .leaflet-tooltip-pane, .map.en-zoom .er-etiquetas { visibility: hidden; }
+/* Capa propia de etiquetas y tarjetas de grupos (ver principal.js). */
+.er-etiquetas { position: absolute; inset: 0; z-index: 650; pointer-events: none; overflow: hidden; }
+.er-et { position: absolute; pointer-events: none; }
+.er-et.er-mini, .er-et.er-card { animation: aparecer-et .2s ease-out; }
+@keyframes aparecer-et { from { opacity: 0; } to { opacity: 1; } }
 /* Una etiqueta que Leaflet no llegó a ubicar queda en el origen (esquina del mapa): se oculta. */
 .map .leaflet-tooltip:not([style*="transform"]):not([style*="left"]) { display: none !important; }
 
@@ -293,7 +298,7 @@ a { color: inherit; }
 
 /* Tarjetas sobre el mapa (tooltips y popups) */
 /* Etiqueta mínima fija y al pasar por un punto: una línea, translúcida. */
-.leaflet-tooltip.er-mini {
+.leaflet-tooltip.er-mini, .er-et.er-mini {
   display: inline-flex; align-items: center; gap: 4px;
   padding: 2px 7px 2px 2px; border: 0; border-radius: 999px;
   background: rgba(255,255,255,.88); backdrop-filter: blur(4px);
@@ -313,7 +318,7 @@ a { color: inherit; }
 @keyframes aparecer-mini { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: none; } }
 
 /* Detalle breve al pasar el cursor por un grupo. */
-.leaflet-tooltip.er-card {
+.leaflet-tooltip.er-card, .er-et.er-card {
   padding: 6px 8px; border: 0; border-radius: 8px; width: 190px; white-space: normal;
   background: rgba(255,255,255,.96); box-shadow: 0 6px 18px rgba(20,24,60,.16);
   font-family: var(--font); font-size: 12px; color: var(--ink);
