@@ -278,6 +278,8 @@ a { color: inherit; }
 @media (prefers-reduced-motion: reduce) { .er-ping span { animation: none; transform: scale(.7); opacity: .6; } }
 
 .map.en-zoom .leaflet-tooltip-pane { visibility: hidden; }
+/* Una etiqueta que Leaflet no llegó a ubicar queda en el origen (esquina del mapa): se oculta. */
+.map .leaflet-tooltip:not([style*="transform"]):not([style*="left"]) { display: none !important; }
 
 /* Botón de ubicación actual */
 .ctl-ubicacion { width: 34px; height: 34px; display: flex; align-items: center; justify-content: center; background: #fff; color: var(--ink); cursor: pointer; border: 0; padding: 0; }

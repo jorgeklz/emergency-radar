@@ -263,6 +263,8 @@
     for (var i = 0; i < marcadores.length && spotlights.length < 5; i++) {
       var padre = capaGrupos.getVisibleParent(marcadores[i]);
       if (!padre || vistos.indexOf(padre) >= 0) continue;
+      // Solo grupos o puntos dibujados en el mapa: si no, la etiqueta no tiene dónde ubicarse.
+      if (!padre._icon || !mapa.hasLayer(padre) || mapa.getContainer().classList.contains("en-zoom")) continue;
       var ll = padre.getLatLng();
       if (!limites.contains(ll)) continue;
       var pt = mapa.latLngToContainerPoint(ll);
