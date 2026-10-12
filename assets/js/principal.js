@@ -930,7 +930,7 @@
   // Fecha y hora (Ecuador) de la última actualización de posts, en el mapa y en Posts recientes.
   function pintarActualizacion() {
     var a = D.actualizado();
-    var txt = a ? " · actualizado " + ER.fmtLarga(a) : "";
+    var txt = a ? " · actualizado " + ER.fmtLarga(a) + " (hora de Ecuador)" : "";
     document.querySelectorAll(".act-posts").forEach(function (el) { el.textContent = txt; el.title = a ? "Última captura de posts de X (hora de Ecuador)" : ""; });
   }
 
