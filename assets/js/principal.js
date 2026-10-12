@@ -384,7 +384,7 @@
     if (typeof total === "number") pintarLeyendaMapa._t = total;
     total = pintarLeyendaMapa._t || 0;
     var el = document.getElementById("mapLegend");
-    var base = "<span>" + ER.fmtNum(total) + " publicaciones geolocalizadas en las últimas 48 horas</span>";
+    var base = "<span>" + ER.fmtNum(total) + (ER.estado.personalizado ? " publicaciones geolocalizadas en el periodo elegido" : " publicaciones geolocalizadas en las últimas 48 horas") + "</span>";
     var G = ER.CALOR;
     var escala = '<span class="ley-grav"><b>Gravedad</b>' + [G.baja, G.media, G.alta].map(function (g) {
       return '<span><i class="dot-grav" style="background:' + g.color + '"></i>' + g.corto + "</span>";
@@ -400,8 +400,13 @@
   var MAPA_HORAS = 48;
   function pintarMapa(ajustar) {
     var f = filtroBase(); f.soloGeo = true;
-    var fin = Math.min(Date.now(), +ER.estado.hasta);
-    f.desde = new Date(Math.max(+ER.estado.desde, fin - MAPA_HORAS * 3600000));
+    // Con un rango de fechas elegido se muestra todo ese periodo; si no, las últimas 48 horas.
+    if (!ER.estado.personalizado) {
+      var fin = Math.min(Date.now(), +ER.estado.hasta);
+      f.desde = new Date(Math.max(+ER.estado.desde, fin - MAPA_HORAS * 3600000));
+    }
+    document.getElementById("mapaSub").textContent = ER.estado.personalizado
+      ? "Emergencias del " + ER.textoRango() + " (filtro de fechas)" : "Solo las emergencias de las últimas 48 horas";
     var posts = D.filtrar(f);
     if (ajustar && posts.length) {
       mapa.fitBounds(L.latLngBounds(posts.map(function (p) { return [p.lat, p.lng]; })), { padding: [60, 60], maxZoom: 12 });
@@ -419,13 +424,14 @@
   function pintarPosts() {
     var excluidos = {};
     st.pendientes.forEach(function (p) { excluidos[p.id] = true; });
-    var v = ER.ventana24h();
-    var todos = D.filtrar(ER.consulta({ desde: v.desde, hasta: v.hasta }));
+    // Con un rango de fechas elegido se listan los posts de todo ese periodo; si no, las últimas 24 horas.
+    var pers = ER.estado.personalizado, v = ER.ventana24h();
+    var todos = D.filtrar(pers ? ER.consulta() : ER.consulta({ desde: v.desde, hasta: v.hasta }));
     var lista = todos.filter(function (p) { return !excluidos[p.id]; });
     var cont = document.getElementById("posts");
     cont.innerHTML = lista.length ? lista.slice(0, 150).map(function (p) { return htmlPost(p); }).join("") :
-      '<div class="empty">' + ER.mensajeSinDatos("No hubo posts en las últimas 24 horas con estos filtros.") + "</div>";
-    document.getElementById("conteoPosts").textContent = ER.fmtNum(todos.length) + (todos.length === 1 ? " post" : " posts") + " · últimas 24 horas";
+      '<div class="empty">' + ER.mensajeSinDatos(pers ? "No hubo posts en el periodo elegido con estos filtros." : "No hubo posts en las últimas 24 horas con estos filtros.") + "</div>";
+    document.getElementById("conteoPosts").textContent = ER.fmtNum(todos.length) + (todos.length === 1 ? " post" : " posts") + (pers ? " · del " + ER.textoRango() : " · últimas 24 horas");
     pintarPildora();
   }
 
@@ -518,7 +524,8 @@
       categorias: D.CATEGORIAS.filter(function (c) { return ER.filtros.categorias.indexOf(c.id) >= 0; }),
       sinUbicacion: D.SIN_UBICACION
     });
-    document.getElementById("alertasSub").textContent = (horas === 1 ? "Última hora" : "Últimas " + horas + " horas") + " frente a lo habitual";
+    document.getElementById("alertasSub").textContent = (horas === 1 ? "Última hora" : "Últimas " + horas + " horas") +
+      (ER.estado.personalizado ? " hasta el " + ER.fmtLarga(ER.ventana24h().hasta) : "") + " frente a lo habitual";
     document.querySelectorAll("#ventanaAlertas button").forEach(function (b) {
       var on = +b.getAttribute("data-horas") === horas;
       b.classList.toggle("active", on);
@@ -957,6 +964,7 @@
       iniciarAlertas();
       iniciarFrecuencia();
       document.getElementById("pillNuevos").addEventListener("click", mostrarPendientes);
+      document.getElementById("btnQuitarRango").addEventListener("click", function () { ER.quitarRango(); });
       document.getElementById("btnVerTodo").addEventListener("click", verTodo);
       // Clic en el texto de un post: lo muestra completo o lo vuelve a recortar.
       document.addEventListener("click", function (ev) {
@@ -977,6 +985,12 @@
       }, 0);
     },
     actualizar: function (tipo, p) {
+      if (tipo === "rango") {
+        // Frecuencia de posts sigue al filtro de fechas: con un rango elegido muestra ese periodo.
+        if (ER.estado.personalizado) { freq.rango = "periodo"; freq.porRango = true; }
+        else if (freq.porRango) { freq.rango = "24h"; freq.porRango = false; }
+        freq.sel = null;
+      }
       if (tipo === "rango" || tipo === "filtros") { pintarTodo(true); return; }
       if (tipo === "nueva") {
         st.pendientes.unshift(p);

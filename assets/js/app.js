@@ -35,6 +35,8 @@
       desde: inicioDia(sumarDias(hoy, -6)),
       hasta: finDia(hoy),
       enVivo: true,
+      // true cuando la persona eligió un rango de fechas: se aplica a todos los paneles.
+      personalizado: false,
       vista: "principal"
     },
     vistas: {},
@@ -157,15 +159,34 @@
   function pintarRango() {
     document.getElementById("rangoDesde").textContent = ER.fmtFecha(ER.estado.desde);
     document.getElementById("rangoHasta").textContent = ER.fmtFecha(ER.estado.hasta);
-    document.getElementById("btnRango").title = "Rango de fechas: " + ER.fmtFecha(ER.estado.desde) + " a " + ER.fmtFecha(ER.estado.hasta);
+    var btn = document.getElementById("btnRango");
+    btn.title = (ER.estado.personalizado ? "Filtro de fechas aplicado: " : "Rango de fechas: ") + ER.fmtFecha(ER.estado.desde) + " a " + ER.fmtFecha(ER.estado.hasta);
+    btn.classList.toggle("aplicado", !!ER.estado.personalizado);
+    var aviso = document.getElementById("avisoRango");
+    if (aviso) {
+      aviso.hidden = !ER.estado.personalizado;
+      document.getElementById("avisoRangoTexto").textContent = ER.textoRango();
+    }
   }
   function aplicarRango(desde, hasta) {
     if (hasta < desde) { var t = desde; desde = hasta; hasta = t; }
     ER.estado.desde = inicioDia(desde);
     ER.estado.hasta = finDia(hasta);
+    ER.estado.personalizado = true;
     pintarRango();
     ER.emitir("rango");
   }
+  // Vuelve al rango por defecto (últimos 7 días) y a las ventanas habituales de cada panel.
+  ER.quitarRango = function () {
+    var ahora = new Date();
+    ER.estado.desde = inicioDia(sumarDias(ahora, -6));
+    ER.estado.hasta = finDia(ahora);
+    ER.estado.personalizado = false;
+    pintarRango();
+    ER.emitir("rango");
+  };
+  // Texto corto del rango elegido, por ejemplo "05/10/2026 al 08/10/2026".
+  ER.textoRango = function () { return ER.fmtFechaCorta(ER.estado.desde) + " al " + ER.fmtFechaCorta(ER.estado.hasta); };
   function iniciarRango() {
     var inDesde = document.getElementById("inDesde");
     var inHasta = document.getElementById("inHasta");
