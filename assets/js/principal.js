@@ -550,8 +550,8 @@
       var abierta = !!st.alertas.abiertas[c.categoria.id];
       var titulo = c.observado + " posts en " + nombreVentana(horas) + "; " + textoBase(c.base, horas) +
         (c.z !== null ? ". Puntaje z = " + fmtDecimal(c.z) : "");
+      // Detalle corto: lo habitual en una línea y hace cuánto llegó el último post en la siguiente.
       var meta = [textoBase(c.base, horas)];
-      if (c.zonas.length) meta.push(c.zonas.slice(0, 2).map(function (z) { return ER.escapar(z.ciudad) + " " + z.n; }).join(", "));
       if (c.ultimo) meta.push("último " + ER.htmlHace(c.ultimo));
       var senales = "";
       if (c.aceleracion.acelera) senales += '<span class="senal senal-acelera" title="' + c.aceleracion.ultimo + ' posts en los últimos ' + c.aceleracion.minutos +
@@ -567,7 +567,7 @@
       return '<li class="alerta-fila alerta-' + c.nivel.id + (abierta ? " abierta" : "") + '" data-cat="' + c.categoria.id + '">' +
         '<button type="button" class="alerta-cabecera" aria-expanded="' + abierta + '">' +
           '<span class="alerta-icono" title="' + c.categoria.nombre + '">' + window.icon(c.categoria.icono) + "</span>" +
-          '<span class="alerta-nombre"><b>' + c.categoria.nombre + '</b><small>' + meta.join(" · ") + "</small></span>" +
+          '<span class="alerta-nombre"><b>' + c.categoria.nombre + '</b><small>' + meta.join("<br>") + "</small></span>" +
           sparkline(c.serie, c.categoria.color, horas) +
           '<span class="alerta-n">' + ER.fmtNum(c.observado) + "<small>posts</small></span>" +
           pastilla(c.nivel, titulo) +
@@ -930,7 +930,7 @@
   // Fecha y hora (Ecuador) de la última actualización de posts, en el mapa y en Posts recientes.
   function pintarActualizacion() {
     var a = D.actualizado();
-    var txt = a ? " · actualizado " + ER.fmtLarga(a) + " (hora de Ecuador)" : "";
+    var txt = a ? "Actualizado " + ER.fmtLarga(a) + " (hora de Ecuador)" : "";
     document.querySelectorAll(".act-posts").forEach(function (el) { el.textContent = txt; el.title = a ? "Última captura de posts de X (hora de Ecuador)" : ""; });
   }
 

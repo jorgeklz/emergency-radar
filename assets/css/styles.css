@@ -359,6 +359,8 @@ a { color: inherit; }
 .r-sub .baja { color: #0f766e; }
 .titulo-con-sub { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
 .titulo-con-sub .hint { margin: 0; max-width: none; }
+.act-posts { display: block; }
+.act-posts:empty { display: none; }
 .spark { flex: none; margin-right: 4px; }
 
 /* ---------------- Frecuencia ---------------- */
