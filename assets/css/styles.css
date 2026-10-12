@@ -766,7 +766,7 @@ body[data-vista="estadisticas"] .anchor-rango { display: none; }
 .aviso-rango { display: flex; align-items: center; gap: 10px; padding: 10px 14px; border-radius: var(--radius); background: #fff8db;
   border: 1px solid #f1dd9b; color: #5c4a14; font-size: 13px; line-height: 1.4; }
 .aviso-rango[hidden] { display: none; }
-.aviso-rango > .ic-wrap .ic { width: 20px; height: 20px; color: #7a5c00; }
+.aviso-rango > .ic-wrap .ic { width: 20px; height: 20px; color: #000; }
 .aviso-rango b { color: #4a3a00; }
 .aviso-rango .btn-soft { background: #fbeeb8; color: #5c4a14; border: 1px solid #efd98a; }
 .aviso-rango .btn-soft:hover { background: #f7e39a; }
