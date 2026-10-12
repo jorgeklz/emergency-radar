@@ -12,7 +12,7 @@ Todo lo que muestra el sitio son **publicaciones reales de X** que un recolector
 
 **Histórico.** Publicaciones por día apiladas por categoría y un registro de 10 en 10 con búsqueda, filtros, resultado del modelo, enlace a cada publicación en X y exportación a CSV.
 
-Los filtros (categorías, ciudad y clasificación del modelo) se comparten entre Principal e Histórico: lo que eliges en "Estás viendo", en Pre-alertas o en Histórico se aplica en ambas, y el mapa se centra en los resultados. Estadísticas tiene sus propios filtros.
+Cada pestaña tiene sus propios filtros, independientes: en Principal, los de "Estás viendo", Pre-alertas y el rango de fechas de la barra superior; Histórico y Estadísticas tienen los suyos (con sus propias fechas), y en esas pestañas el rango de la barra superior se oculta.
 
 **Estadísticas.** Filtros propios e independientes del resto del sitio: periodo rápido (24 h, 7 días, 30 días o todo), fecha y hora de inicio y de fin, categoría, ciudad y clasificación del modelo. Muestra indicadores generales, distribución por categoría, ciudades con más reportes, actividad por día y hora, cuántas publicaciones se pudieron ubicar, autores más activos y el desempeño del modelo de clasificación.
 

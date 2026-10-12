@@ -43,8 +43,8 @@
     _oyentes: [],
 
     // ---------- filtros globales ----------
-    // Estado compartido por Principal e Histórico: lo que se elige en "Estás viendo",
-    // en Pre-alertas o en Histórico aplica en ambas. Estadísticas tiene sus propios filtros.
+    // Filtros de Principal: lo que se elige en "Estás viendo" o en Pre-alertas aplica en toda
+    // la pestaña Principal. Histórico y Estadísticas tienen sus propios filtros.
     filtros: {
       categorias: D.CATEGORIAS.map(function (c) { return c.id; }),
       ciudad: "",

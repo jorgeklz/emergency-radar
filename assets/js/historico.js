@@ -1,7 +1,8 @@
 /*
  * Emergency Radar · vista Histórico
  * Publicaciones por día (barras apiladas por categoría) y registro paginado con exportación CSV.
- * Categoría, ciudad y clasificación son los filtros globales (ER.filtros); la búsqueda es propia de esta vista.
+ * Tiene sus propios filtros (fechas, búsqueda, categoría, ciudad y clasificación), independientes
+ * de Principal y de Estadísticas.
  */
 (function () {
   "use strict";
@@ -14,33 +15,36 @@
 
   function val(id) { return document.getElementById(id).value; }
 
-  function filtrar() {
-    return D.filtrar(ER.consulta({ texto: val("histBuscar").trim() }));
+  // Filtros propios de Histórico. Por defecto: últimos 7 días, todo, solo emergencias.
+  function filtrosIniciales() {
+    var hoy = new Date();
+    return { desde: ER.inicioDia(ER.sumarDias(hoy, -6)), hasta: ER.finDia(hoy), categoria: "", ciudad: "", clasificacion: "emergencias" };
+  }
+  var hf = filtrosIniciales();
+  function porDefecto(f) {
+    var i = filtrosIniciales();
+    return ER.isoDia(f.desde) === ER.isoDia(i.desde) && ER.isoDia(f.hasta) === ER.isoDia(i.hasta);
   }
 
-  // Refleja los filtros globales en los selectores de esta vista.
+  function filtrar() {
+    return D.filtrar({
+      desde: hf.desde, hasta: hf.hasta, ciudad: hf.ciudad || null, clasificacion: hf.clasificacion,
+      categorias: hf.categoria ? [hf.categoria] : D.CATEGORIAS.map(function (c) { return c.id; }),
+      texto: val("histBuscar").trim()
+    });
+  }
+
+  // Refleja los filtros de esta vista en sus controles.
   function sincronizarSelectores() {
-    var f = ER.filtros;
-    var selCat = document.getElementById("histCategoria");
-    // La opción "N categorías elegidas" solo existe mientras hay una selección parcial
-    // (hecha en el mapa). Algunos navegadores muestran las opciones ocultas como una línea vacía.
-    var parcial = selCat.querySelector('option[value="__sel"]');
-    if (parcial) parcial.remove();
-    if (f.categorias.length === D.CATEGORIAS.length) selCat.value = "";
-    else if (f.categorias.length === 1) selCat.value = f.categorias[0];
-    else {
-      parcial = document.createElement("option");
-      parcial.value = "__sel";
-      parcial.textContent = f.categorias.length + " categorías elegidas";
-      selCat.appendChild(parcial);
-      selCat.value = "__sel";
-    }
-    document.getElementById("histClase").value = f.clasificacion;
+    document.getElementById("histDesde").value = ER.isoDia(hf.desde);
+    document.getElementById("histHasta").value = ER.isoDia(hf.hasta);
+    document.getElementById("histCategoria").value = hf.categoria;
+    document.getElementById("histClase").value = hf.clasificacion;
   }
 
   function pintarGrafico(posts) {
     var dias = [], indice = {};
-    for (var d = ER.inicioDia(ER.estado.desde); d <= ER.estado.hasta; d = ER.sumarDias(d, 1)) {
+    for (var d = ER.inicioDia(hf.desde); d <= hf.hasta; d = ER.sumarDias(d, 1)) {
       indice[ER.isoDia(d)] = dias.length;
       dias.push(new Date(d));
     }
@@ -113,17 +117,16 @@
     sel.innerHTML = '<option value="">Todas las ciudades</option>' + D.ciudadesPresentes().map(function (c) {
       return '<option value="' + ER.escapar(c.nombre) + '">' + ER.escapar(c.nombre) + " (" + c.total + ")</option>";
     }).join("");
-    sel.value = ER.filtros.ciudad;
+    sel.value = hf.ciudad;
   }
 
-  // Aviso con los filtros activos (fechas, categorías, ciudad, modelo y búsqueda).
+  // Aviso con los filtros activos de esta vista.
   function pintarAviso() {
-    var f = ER.filtros, partes = [];
-    if (ER.estado.personalizado) partes.push("fechas del " + ER.textoRango());
-    if (f.categorias.length !== D.CATEGORIAS.length)
-      partes.push(f.categorias.length ? f.categorias.map(function (id) { return D.categoria(id).nombre; }).join(", ") : "ninguna categoría");
-    if (f.ciudad) partes.push(f.ciudad);
-    if (f.clasificacion !== "emergencias") partes.push(f.clasificacion === "todas" ? "incluye descartadas por el modelo" : "solo descartadas por el modelo");
+    var partes = [];
+    if (!porDefecto(hf)) partes.push("fechas del " + ER.fmtFechaCorta(hf.desde) + " al " + ER.fmtFechaCorta(hf.hasta));
+    if (hf.categoria) partes.push(D.categoria(hf.categoria).nombre);
+    if (hf.ciudad) partes.push(hf.ciudad);
+    if (hf.clasificacion !== "emergencias") partes.push(hf.clasificacion === "todas" ? "incluye descartadas por el modelo" : "solo descartadas por el modelo");
     var q = val("histBuscar").trim();
     if (q) partes.push("búsqueda «" + q + "»");
     document.getElementById("avisoHist").hidden = !partes.length;
@@ -150,7 +153,7 @@
     var blob = new Blob(["﻿" + lineas.join("\n")], { type: "text/csv;charset=utf-8" });
     var a = document.createElement("a");
     a.href = URL.createObjectURL(blob);
-    a.download = "emergency-radar_" + ER.isoDia(ER.estado.desde) + "_" + ER.isoDia(ER.estado.hasta) + ".csv";
+    a.download = "emergency-radar_" + ER.isoDia(hf.desde) + "_" + ER.isoDia(hf.hasta) + ".csv";
     document.body.appendChild(a); a.click(); a.remove();
     setTimeout(function () { URL.revokeObjectURL(a.href); }, 1000);
     ER.toast("Se exportaron " + ER.fmtNum(st.resultados.length) + " publicaciones");
@@ -196,18 +199,23 @@
       document.getElementById("histBuscar").addEventListener("input", function () { clearTimeout(t); t = setTimeout(reiniciar, 200); });
       document.getElementById("btnQuitarHist").addEventListener("click", function () {
         document.getElementById("histBuscar").value = "";
-        ER.cambiarFiltros({ categorias: D.CATEGORIAS.map(function (c) { return c.id; }), ciudad: "", clasificacion: "emergencias" });
-        if (ER.estado.personalizado) ER.quitarRango();
-        ER.toast("Se quitaron los filtros");
+        hf = filtrosIniciales();
+        reiniciar();
+        ER.toast("Se quitaron los filtros de Histórico");
       });
-      // Estos selectores cambian los filtros globales: aplican también en Principal y Estadísticas.
-      document.getElementById("histCategoria").addEventListener("change", function () {
-        var v = this.value;
-        if (v === "__sel") return;
-        ER.cambiarFiltros({ categorias: v ? [v] : D.CATEGORIAS.map(function (c) { return c.id; }) });
+      ["histDesde", "histHasta"].forEach(function (id) {
+        document.getElementById(id).addEventListener("change", function () {
+          var a = document.getElementById("histDesde").value, b = document.getElementById("histHasta").value;
+          if (!a || !b) return;
+          var d = ER.deIsoDia(a), h = ER.deIsoDia(b);
+          if (d > h) { var t2 = d; d = h; h = t2; }
+          hf.desde = ER.inicioDia(d); hf.hasta = ER.finDia(h);
+          reiniciar();
+        });
       });
-      document.getElementById("histCiudad").addEventListener("change", function () { ER.cambiarFiltros({ ciudad: this.value }); });
-      document.getElementById("histClase").addEventListener("change", function () { ER.cambiarFiltros({ clasificacion: this.value }); });
+      document.getElementById("histCategoria").addEventListener("change", function () { hf.categoria = this.value; reiniciar(); });
+      document.getElementById("histCiudad").addEventListener("change", function () { hf.ciudad = this.value; reiniciar(); });
+      document.getElementById("histClase").addEventListener("change", function () { hf.clasificacion = this.value; reiniciar(); });
       document.getElementById("histPrev").addEventListener("click", function () { st.pagina--; pintarTabla(); });
       document.getElementById("histNext").addEventListener("click", function () { st.pagina++; pintarTabla(); });
       document.getElementById("histExportar").addEventListener("click", exportarCSV);
@@ -217,6 +225,8 @@
       if (this._pendiente) { this._pendiente = false; pintarTodo(); }
     },
     actualizar: function (tipo) {
+      // Los filtros de Principal y el rango de la barra superior no afectan a esta vista.
+      if (tipo === "filtros" || tipo === "rango") return;
       // Las publicaciones en vivo no reinician la página que el usuario está leyendo.
       if (tipo === "nueva") { clearTimeout(this._t); this._t = setTimeout(function () { opcionesCiudad(); st.resultados = filtrar(); pintarGrafico(st.resultados); pintarTabla(); }, 800); }
       else { st.pagina = 0; pintarTodo(); }
