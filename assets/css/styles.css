@@ -751,13 +751,16 @@ body[data-vista="estadisticas"] .anchor-rango { display: none; }
 }
 
 /* ---------------- Filtro de fechas aplicado ---------------- */
-.date-range.aplicado { border-color: var(--blue); background: #eef4fe; color: var(--indigo); box-shadow: 0 0 0 2px var(--blue-soft); font-weight: 700; }
-.date-range.aplicado .ic { color: var(--blue); }
-.aviso-rango { display: flex; align-items: center; gap: 10px; padding: 10px 14px; border-radius: var(--radius); background: #eef4fe;
-  border: 1px solid #c9dcf8; color: var(--ink-2); font-size: 13px; line-height: 1.4; }
+.date-range.aplicado { border-color: #e6c75a; background: #fff8db; color: #3d3000; box-shadow: 0 0 0 2px rgba(241, 221, 155, .6); font-weight: 700; }
+.date-range.aplicado .ic { color: #a07400; }
+/* Amarillo pastel: señala que hay filtros aplicados (Principal e Histórico). */
+.aviso-rango { display: flex; align-items: center; gap: 10px; padding: 10px 14px; border-radius: var(--radius); background: #fff8db;
+  border: 1px solid #f1dd9b; color: #5c4a14; font-size: 13px; line-height: 1.4; }
 .aviso-rango[hidden] { display: none; }
-.aviso-rango > .ic-wrap .ic { width: 20px; height: 20px; color: var(--blue); }
-.aviso-rango b { color: var(--indigo); }
+.aviso-rango > .ic-wrap .ic { width: 20px; height: 20px; color: #a07400; }
+.aviso-rango b { color: #3d3000; }
+.aviso-rango .btn-soft { background: #fdeeb5; color: #5c4a14; }
+.aviso-rango .btn-soft:hover { background: #f8e18e; }
 .aviso-rango .btn-soft { margin-left: auto; white-space: nowrap; display: inline-flex; align-items: center; gap: 4px; }
 .aviso-rango .btn-soft .ic { width: 14px; height: 14px; }
 @media (max-width: 1100px) { .aviso-rango { order: 0; } }

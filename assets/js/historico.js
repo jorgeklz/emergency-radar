@@ -128,17 +128,23 @@
     sel.value = hf.ciudad;
   }
 
-  // Aviso con los filtros activos de esta vista.
+  // Aviso con los filtros activos de esta vista, con el mismo formato que el de Principal.
   function pintarAviso() {
-    var partes = [];
-    if (!porDefecto(hf)) partes.push("fechas del " + ER.fmtFechaCorta(hf.desde) + " al " + ER.fmtFechaCorta(hf.hasta));
-    if (hf.categoria) partes.push(D.categoria(hf.categoria).nombre);
-    if (hf.ciudad) partes.push(hf.ciudad);
-    if (hf.clasificacion !== "emergencias") partes.push(hf.clasificacion === "todas" ? "incluye descartadas por el modelo" : "solo descartadas por el modelo");
+    var fecha = !porDefecto(hf), otros = [];
+    if (hf.categoria) otros.push(D.categoria(hf.categoria).nombre);
+    if (hf.ciudad) otros.push(hf.ciudad);
+    if (hf.clasificacion !== "emergencias") otros.push(hf.clasificacion === "todas" ? "incluye descartadas por el modelo" : "solo descartadas por el modelo");
     var q = val("histBuscar").trim();
-    if (q) partes.push("búsqueda «" + q + "»");
-    document.getElementById("avisoHist").hidden = !partes.length;
-    document.getElementById("avisoHistTexto").textContent = partes.join(" · ");
+    if (q) otros.push("búsqueda «" + q + "»");
+    var hay = fecha || otros.length;
+    document.getElementById("avisoHist").hidden = !hay;
+    if (!hay) return;
+    var rango = ER.fmtFechaCorta(hf.desde) + " al " + ER.fmtFechaCorta(hf.hasta);
+    var titulo = fecha && !otros.length ? "Filtro de fechas aplicado:" : "Filtros aplicados:";
+    var detalle = (fecha ? rango : "") + (fecha && otros.length ? " · " : "") + otros.join(" · ");
+    document.getElementById("avisoHistTexto").innerHTML = "<b>" + titulo + "</b> " + ER.escapar(detalle) +
+      ". El gráfico de publicaciones por día y el registro de publicaciones muestran solo " + (fecha && !otros.length ? "ese periodo." : "esas publicaciones.");
+    document.getElementById("btnQuitarHistTxt").textContent = fecha && !otros.length ? "Quitar filtro" : "Quitar filtros";
   }
 
   function pintarTodo() {
