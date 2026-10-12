@@ -14,7 +14,7 @@
   <link href="https://fonts.googleapis.com/css2?family=Nunito+Sans:opsz,wght@6..12,400;6..12,600;6..12,700;6..12,800&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="assets/vendor/leaflet/leaflet.css">
   <link rel="stylesheet" href="assets/vendor/leaflet/MarkerCluster.css">
-  <link rel="stylesheet" href="assets/css/styles.css?v=20261012-0600">
+  <link rel="stylesheet" href="assets/css/styles.css?v=20261012-0630">
 </head>
 <body>
   <header class="topbar">
@@ -189,6 +189,11 @@
 
     <!-- ============ HISTÓRICO ============ -->
     <section class="view view-historico" data-view="historico" hidden>
+      <div class="aviso-rango" id="avisoHist" hidden role="status">
+        <span class="ic-wrap" data-icon="filter"></span>
+        <span><b>Filtros aplicados:</b> <span id="avisoHistTexto"></span>. El gráfico y el registro muestran solo esas publicaciones.</span>
+        <button type="button" class="btn-soft" id="btnQuitarHist"><span class="ic-wrap" data-icon="x"></span>Quitar filtros</button>
+      </div>
       <article class="card">
         <div class="card-head">
           <h2>Publicaciones por día</h2>
@@ -325,16 +330,16 @@
   <script src="assets/vendor/leaflet/leaflet.js"></script>
   <script src="assets/vendor/leaflet/leaflet.markercluster.js"></script>
   <script src="assets/vendor/chartjs/chart.umd.js"></script>
-  <script src="assets/js/icons.js?v=20261012-0600"></script>
-  <script src="assets/js/catalogo.js?v=20261012-0600"></script>
-  <script src="assets/js/data.js?v=20261012-0600"></script>
-  <script src="assets/js/alertas.js?v=20261012-0600"></script>
-  <script src="assets/js/app.js?v=20261012-0600"></script>
-  <script src="assets/js/principal.js?v=20261012-0600"></script>
-  <script src="assets/js/historico.js?v=20261012-0600"></script>
-  <script src="assets/js/estadisticas.js?v=20261012-0600"></script>
-  <script src="assets/js/config.js?v=20261012-0600"></script>
-  <script src="assets/js/visitas.js?v=20261012-0600"></script>
-  <script src="assets/js/inicio.js?v=20261012-0600"></script>
+  <script src="assets/js/icons.js?v=20261012-0630"></script>
+  <script src="assets/js/catalogo.js?v=20261012-0630"></script>
+  <script src="assets/js/data.js?v=20261012-0630"></script>
+  <script src="assets/js/alertas.js?v=20261012-0630"></script>
+  <script src="assets/js/app.js?v=20261012-0630"></script>
+  <script src="assets/js/principal.js?v=20261012-0630"></script>
+  <script src="assets/js/historico.js?v=20261012-0630"></script>
+  <script src="assets/js/estadisticas.js?v=20261012-0630"></script>
+  <script src="assets/js/config.js?v=20261012-0630"></script>
+  <script src="assets/js/visitas.js?v=20261012-0630"></script>
+  <script src="assets/js/inicio.js?v=20261012-0630"></script>
 </body>
 </html>

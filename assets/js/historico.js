@@ -116,9 +116,24 @@
     sel.value = ER.filtros.ciudad;
   }
 
+  // Aviso con los filtros activos (fechas, categorías, ciudad, modelo y búsqueda).
+  function pintarAviso() {
+    var f = ER.filtros, partes = [];
+    if (ER.estado.personalizado) partes.push("fechas del " + ER.textoRango());
+    if (f.categorias.length !== D.CATEGORIAS.length)
+      partes.push(f.categorias.length ? f.categorias.map(function (id) { return D.categoria(id).nombre; }).join(", ") : "ninguna categoría");
+    if (f.ciudad) partes.push(f.ciudad);
+    if (f.clasificacion !== "emergencias") partes.push(f.clasificacion === "todas" ? "incluye descartadas por el modelo" : "solo descartadas por el modelo");
+    var q = val("histBuscar").trim();
+    if (q) partes.push("búsqueda «" + q + "»");
+    document.getElementById("avisoHist").hidden = !partes.length;
+    document.getElementById("avisoHistTexto").textContent = partes.join(" · ");
+  }
+
   function pintarTodo() {
     opcionesCiudad();
     sincronizarSelectores();
+    pintarAviso();
     st.resultados = filtrar();
     pintarGrafico(st.resultados);
     pintarTabla();
@@ -179,6 +194,12 @@
       var reiniciar = function () { st.pagina = 0; pintarTodo(); };
       var t;
       document.getElementById("histBuscar").addEventListener("input", function () { clearTimeout(t); t = setTimeout(reiniciar, 200); });
+      document.getElementById("btnQuitarHist").addEventListener("click", function () {
+        document.getElementById("histBuscar").value = "";
+        ER.cambiarFiltros({ categorias: D.CATEGORIAS.map(function (c) { return c.id; }), ciudad: "", clasificacion: "emergencias" });
+        if (ER.estado.personalizado) ER.quitarRango();
+        ER.toast("Se quitaron los filtros");
+      });
       // Estos selectores cambian los filtros globales: aplican también en Principal y Estadísticas.
       document.getElementById("histCategoria").addEventListener("change", function () {
         var v = this.value;
