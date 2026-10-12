@@ -479,16 +479,20 @@
   // El cálculo de niveles vive en alertas.js (window.ER_ALERTAS); aquí solo se dibuja.
   var A = window.ER_ALERTAS;
 
-  // Mini gráfico de barras de la ventana (24 tramos).
+  // Mini gráfico de líneas de la ventana (24 tramos), con el área bajo la línea en tono suave.
   function sparkline(serie, color, horas) {
     var max = Math.max.apply(null, serie) || 1;
-    var barras = serie.map(function (n, i) {
-      var h = n ? Math.max(2, Math.round(n / max * 20)) : 1;
-      return '<rect x="' + (i * 3) + '" y="' + (22 - h) + '" width="2" height="' + h + '" rx="1" fill="' + (n ? color : "#d9dde7") + '"/>';
-    }).join("");
+    var paso = 72 / (serie.length - 1 || 1);
+    var pts = serie.map(function (n, i) { return [+(i * paso).toFixed(2), +(20.5 - n / max * 18).toFixed(2)]; });
+    var linea = pts.map(function (p, i) { return (i ? "L" : "M") + p[0] + " " + p[1]; }).join(" ");
+    var area = linea + " L72 22 L0 22 Z";
+    var ult = pts[pts.length - 1];
     var tramo = horas * 60 / 24;
     return '<svg class="spark" viewBox="0 0 72 22" width="58" height="22" preserveAspectRatio="none" role="img" aria-label="Posts por tramo de ' +
-      Math.round(tramo) + ' minutos"><title>Posts por tramo de ' + Math.round(tramo) + " minutos (máximo " + max + ")</title>" + barras + "</svg>";
+      Math.round(tramo) + ' minutos"><title>Posts por tramo de ' + Math.round(tramo) + " minutos (máximo " + max + ")</title>" +
+      '<path d="' + area + '" fill="' + color + '" fill-opacity=".12"/>' +
+      '<path d="' + linea + '" fill="none" stroke="' + color + '" stroke-width="1.6" stroke-linejoin="round" stroke-linecap="round" vector-effect="non-scaling-stroke"/>' +
+      '<circle cx="' + ult[0] + '" cy="' + ult[1] + '" r="1.8" fill="' + color + '"/></svg>';
   }
 
   function pastilla(nivel, titulo) {
