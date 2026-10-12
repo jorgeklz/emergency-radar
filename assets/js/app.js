@@ -156,41 +156,57 @@
   ER.cerrarPopovers = cerrarPopovers;
 
   // ---------- Rango de fechas ----------
+  // El selector de fechas de la barra superior actúa sobre el rango de la pestaña activa: cada
+  // pestaña guarda el suyo (Principal en ER.estado; Histórico registra su propio proveedor).
+  var rangoPrincipal = {
+    get: function () { return { desde: ER.estado.desde, hasta: ER.estado.hasta, personalizado: ER.estado.personalizado }; },
+    aplicar: function (desde, hasta) {
+      ER.estado.desde = inicioDia(desde);
+      ER.estado.hasta = finDia(hasta);
+      ER.estado.personalizado = true;
+      pintarRango();
+      ER.emitir("rango");
+    },
+    quitar: function () {
+      var ahora = new Date();
+      ER.estado.desde = inicioDia(sumarDias(ahora, -6));
+      ER.estado.hasta = finDia(ahora);
+      ER.estado.personalizado = false;
+      pintarRango();
+      ER.emitir("rango");
+    }
+  };
+  ER.proveedoresRango = {};
+  function proveedor() { return ER.proveedoresRango[ER.estado.vista] || rangoPrincipal; }
+
   function pintarRango() {
-    document.getElementById("rangoDesde").textContent = ER.fmtFecha(ER.estado.desde);
-    document.getElementById("rangoHasta").textContent = ER.fmtFecha(ER.estado.hasta);
+    var r = proveedor().get();
+    document.getElementById("rangoDesde").textContent = ER.fmtFecha(r.desde);
+    document.getElementById("rangoHasta").textContent = ER.fmtFecha(r.hasta);
     var btn = document.getElementById("btnRango");
-    btn.title = (ER.estado.personalizado ? "Filtro de fechas aplicado: " : "Rango de fechas: ") + ER.fmtFecha(ER.estado.desde) + " a " + ER.fmtFecha(ER.estado.hasta);
-    btn.classList.toggle("aplicado", !!ER.estado.personalizado);
+    btn.title = (r.personalizado ? "Filtro de fechas aplicado: " : "Rango de fechas: ") + ER.fmtFecha(r.desde) + " a " + ER.fmtFecha(r.hasta);
+    btn.classList.toggle("aplicado", !!r.personalizado);
     var aviso = document.getElementById("avisoRango");
     if (aviso) {
       aviso.hidden = !ER.estado.personalizado;
       document.getElementById("avisoRangoTexto").textContent = ER.textoRango();
     }
   }
+  ER.pintarRango = pintarRango;
   function aplicarRango(desde, hasta) {
     if (hasta < desde) { var t = desde; desde = hasta; hasta = t; }
-    ER.estado.desde = inicioDia(desde);
-    ER.estado.hasta = finDia(hasta);
-    ER.estado.personalizado = true;
+    proveedor().aplicar(desde, hasta);
     pintarRango();
-    ER.emitir("rango");
   }
-  // Vuelve al rango por defecto (últimos 7 días) y a las ventanas habituales de cada panel.
-  ER.quitarRango = function () {
-    var ahora = new Date();
-    ER.estado.desde = inicioDia(sumarDias(ahora, -6));
-    ER.estado.hasta = finDia(ahora);
-    ER.estado.personalizado = false;
-    pintarRango();
-    ER.emitir("rango");
-  };
-  // Texto corto del rango elegido, por ejemplo "05/10/2026 al 08/10/2026".
-  ER.textoRango = function () { return ER.fmtFechaCorta(ER.estado.desde) + " al " + ER.fmtFechaCorta(ER.estado.hasta); };
+  // Vuelve al rango por defecto (últimos 7 días) de Principal.
+  ER.quitarRango = function () { rangoPrincipal.quitar(); };
+  // Texto corto de un rango (por defecto, el de Principal), por ejemplo "05/10/2026 al 08/10/2026".
+  ER.textoRango = function (r) { r = r || ER.estado; return ER.fmtFechaCorta(r.desde) + " al " + ER.fmtFechaCorta(r.hasta); };
   // Marca el atajo que corresponde al rango aplicado (si hay uno).
   function marcarAtajo() {
-    var h = ER.isoDia(new Date()), d = ER.isoDia(ER.estado.desde), fin = ER.isoDia(ER.estado.hasta), hp = ec(new Date());
-    var cual = !ER.estado.personalizado || fin !== h ? null :
+    var r = proveedor().get();
+    var h = ER.isoDia(new Date()), d = ER.isoDia(r.desde), fin = ER.isoDia(r.hasta), hp = ec(new Date());
+    var cual = !r.personalizado || fin !== h ? null :
       d === h ? "hoy" : d === ER.isoDia(sumarDias(new Date(), -6)) ? "7" : d === ER.isoDia(sumarDias(new Date(), -29)) ? "30" :
       d === ER.isoDia(desdeEc(hp.y, hp.m, 1)) ? "mes" : null;
     document.querySelectorAll("#popRango [data-preset]").forEach(function (b) { b.classList.toggle("active", b.getAttribute("data-preset") === cual); });
@@ -202,8 +218,9 @@
     inDesde.min = inHasta.min = ER.isoDia(disp.desde);
     inDesde.max = inHasta.max = ER.isoDia(new Date());
     enlazarPopover("btnRango", "popRango", function () {
-      inDesde.value = ER.isoDia(ER.estado.desde);
-      inHasta.value = ER.isoDia(ER.estado.hasta);
+      var r = proveedor().get();
+      inDesde.value = ER.isoDia(r.desde);
+      inHasta.value = ER.isoDia(r.hasta);
       marcarAtajo();
     });
     // Atajos: un clic aplica el rango de inmediato y queda marcado. Solo los del popover de
@@ -219,7 +236,7 @@
         inHasta.value = ER.isoDia(h);
         aplicarRango(d, h);
         cerrarPopovers();
-        ER.toast("Filtro de fechas aplicado: " + ER.textoRango());
+        ER.toast("Filtro de fechas aplicado: " + ER.textoRango(proveedor().get()));
       });
     });
     document.getElementById("btnAplicarRango").addEventListener("click", function () {
@@ -405,6 +422,7 @@
       if (on) a.setAttribute("aria-current", "page"); else a.removeAttribute("aria-current");
     });
     cerrarPopovers();
+    pintarRango();
     var v = ER.vistas[ruta];
     if (!v._iniciada) { v.iniciar(); v._iniciada = true; }
     v.mostrar();

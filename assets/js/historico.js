@@ -2,7 +2,8 @@
  * Emergency Radar · vista Histórico
  * Publicaciones por día (barras apiladas por categoría) y registro paginado con exportación CSV.
  * Tiene sus propios filtros (fechas, búsqueda, categoría, ciudad y clasificación), independientes
- * de Principal y de Estadísticas.
+ * de Principal y de Estadísticas. Las fechas se eligen con el selector de la barra superior, que en
+ * esta pestaña guarda y muestra el rango de Histórico.
  */
 (function () {
   "use strict";
@@ -26,6 +27,15 @@
     return ER.isoDia(f.desde) === ER.isoDia(i.desde) && ER.isoDia(f.hasta) === ER.isoDia(i.hasta);
   }
 
+  // El selector de fechas de la barra superior, en esta pestaña, usa el rango propio de Histórico.
+  ER.proveedoresRango.historico = {
+    get: function () { return { desde: hf.desde, hasta: hf.hasta, personalizado: !porDefecto(hf) }; },
+    aplicar: function (desde, hasta) {
+      hf.desde = ER.inicioDia(desde); hf.hasta = ER.finDia(hasta);
+      st.pagina = 0; pintarTodo();
+    }
+  };
+
   function filtrar() {
     return D.filtrar({
       desde: hf.desde, hasta: hf.hasta, ciudad: hf.ciudad || null, clasificacion: hf.clasificacion,
@@ -36,8 +46,6 @@
 
   // Refleja los filtros de esta vista en sus controles.
   function sincronizarSelectores() {
-    document.getElementById("histDesde").value = ER.isoDia(hf.desde);
-    document.getElementById("histHasta").value = ER.isoDia(hf.hasta);
     document.getElementById("histCategoria").value = hf.categoria;
     document.getElementById("histClase").value = hf.clasificacion;
   }
@@ -200,18 +208,9 @@
       document.getElementById("btnQuitarHist").addEventListener("click", function () {
         document.getElementById("histBuscar").value = "";
         hf = filtrosIniciales();
+        ER.pintarRango();
         reiniciar();
         ER.toast("Se quitaron los filtros de Histórico");
-      });
-      ["histDesde", "histHasta"].forEach(function (id) {
-        document.getElementById(id).addEventListener("change", function () {
-          var a = document.getElementById("histDesde").value, b = document.getElementById("histHasta").value;
-          if (!a || !b) return;
-          var d = ER.deIsoDia(a), h = ER.deIsoDia(b);
-          if (d > h) { var t2 = d; d = h; h = t2; }
-          hf.desde = ER.inicioDia(d); hf.hasta = ER.finDia(h);
-          reiniciar();
-        });
       });
       document.getElementById("histCategoria").addEventListener("change", function () { hf.categoria = this.value; reiniciar(); });
       document.getElementById("histCiudad").addEventListener("change", function () { hf.ciudad = this.value; reiniciar(); });

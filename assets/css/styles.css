@@ -674,9 +674,7 @@ a { color: inherit; }
 /* ---------------- Modelo de clasificación ---------------- */
 .resumen-filtros { margin: -6px 0 -6px; font-size: 13px; color: var(--ink-2); }
 /* Filtros propios de Estadísticas; el rango de la barra superior no aplica en esta pestaña. */
-body[data-vista="estadisticas"] .anchor-rango, body[data-vista="historico"] .anchor-rango { display: none; }
-.hist-fecha { display: inline-flex; align-items: center; gap: 6px; font-size: 12px; font-weight: 700; color: var(--muted); }
-.hist-fecha input { height: 36px; padding: 0 8px; border: 1px solid var(--line-2); border-radius: 6px; background: #fff; font: inherit; font-weight: 400; font-size: 14px; color: var(--ink); min-width: 0; }
+body[data-vista="estadisticas"] .anchor-rango { display: none; }
 .est-filtros { padding: 14px 20px 12px; display: flex; flex-direction: column; gap: 10px; }
 .est-cab { display: flex; align-items: center; justify-content: space-between; gap: 10px; flex-wrap: wrap; }
 .est-titulo { display: inline-flex; align-items: center; gap: 6px; font-weight: 800; color: var(--indigo); font-size: 15px; }
