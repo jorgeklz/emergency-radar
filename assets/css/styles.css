@@ -791,8 +791,6 @@ body[data-vista="estadisticas"] .anchor-rango { display: none; }
 .vis-reciente[hidden] { display: none; }
 .vis-reciente .vis-lugar { overflow: hidden; text-overflow: ellipsis; color: var(--ink); }
 .vis-reciente small { color: var(--muted); font-size: 11px; }
-.vis-reciente.entra .vis-lugar, .vis-reciente.entra small, .vis-reciente.entra .vis-bandera { animation: vis-entra .35s ease-out; }
-@keyframes vis-entra { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: none; } }
 .vis-bandera { width: 18px; height: 13px; border-radius: 2px; object-fit: cover; flex: none; box-shadow: 0 0 0 1px rgba(0, 0, 0, .08); }
 .vis-bandera.vacia { display: inline-flex; align-items: center; justify-content: center; box-shadow: none; }
 .vis-bandera.vacia .ic { width: 15px; height: 15px; color: var(--muted); }

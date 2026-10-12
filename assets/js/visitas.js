@@ -1,6 +1,7 @@
 /*
  * Emergency Radar · contador de visitas
  * ------------------------------------------------------------------
+ * La pastilla junto al contador muestra fija la visita más reciente.
  * Cada carga de la página llama a registrar_visita en Supabase. El servidor toma la IP
  * del encabezado de la petición, guarda solo su huella cifrada y decide si es una visita
  * nueva (la misma IP cuenta otra vez recién después de 6 horas). Así, recargar no suma.
@@ -14,13 +15,12 @@
   if (!cfg.url || !cfg.clave) return;
 
   var REFRESCO_MS = 120000;     // el resumen se actualiza cada 2 minutos
-  var ROTACION_MS = 5000;       // la pastilla de "recientes" cambia cada 5 segundos
   var GEO_URL = "https://get.geojs.io/v1/ip/geo.json";
   var base = cfg.url.replace(/\/+$/, "") + "/rest/v1/rpc/";
   var nombres = null;
   try { nombres = new Intl.DisplayNames(["es"], { type: "region" }); } catch (e) { /* navegador antiguo */ }
 
-  var datos = null, giro = 0, timerGiro = null;
+  var datos = null;
 
   // La clave nueva (sb_publishable_...) va solo en "apikey"; la antigua "anon" es un JWT y
   // también se envía como Authorization.
@@ -91,24 +91,18 @@
       }).join("") + "</div>" : "") +
       '<p class="vis-nota">Cada persona cuenta una vez cada 6 horas. No guardamos tu IP: solo una huella cifrada para no contar recargas, y el país y la ciudad aproximados.</p>';
 
-    girar(true);
+    girar();
   }
 
-  // Pastilla con la visita más reciente; va rotando entre las últimas.
-  function girar(reiniciar) {
+  // Pastilla fija con la visita más reciente (se actualiza solo cuando llega una nueva).
+  function girar() {
     var el = document.getElementById("visReciente");
     var lista = datos && datos.recientes || [];
     if (!lista.length) { el.hidden = true; return; }
-    if (reiniciar) giro = 0;
-    var v = lista[giro % lista.length];
+    var v = lista[0];
     el.hidden = false;
-    el.classList.remove("entra");
-    void el.offsetWidth;
     el.innerHTML = bandera(v.codigo) + '<span class="vis-lugar">' + lugar(v) + "</span><small>" + ER.haceCorto(v.fecha) + "</small>";
-    el.title = "Visita reciente desde " + el.querySelector(".vis-lugar").textContent + " · " + ER.hace(v.fecha);
-    el.classList.add("entra");
-    clearTimeout(timerGiro);
-    if (lista.length > 1) timerGiro = setTimeout(function () { giro++; girar(); }, ROTACION_MS);
+    el.title = "Visita más reciente desde " + el.querySelector(".vis-lugar").textContent + " · " + ER.hace(v.fecha);
   }
 
   function refrescar() {

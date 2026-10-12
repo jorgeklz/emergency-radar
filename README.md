@@ -145,7 +145,7 @@ python -m unittest modelo.test_modelo
 
 ## Contador de visitas
 
-Al final de la barra superior hay un contador de visitas y, en pantallas anchas, una pastilla que va mostrando desde dónde llegaron las últimas visitas (bandera, ciudad y país). Al hacer clic se abre el detalle: total, visitas de las últimas 24 h, países, visitas recientes y países con más visitas.
+Al final de la barra superior hay un contador de visitas y, en pantallas anchas, una pastilla fija con la visita más reciente (bandera, ciudad y país). Al hacer clic se abre el detalle: total, visitas de las últimas 24 h, países, visitas recientes y países con más visitas.
 
 GitHub Pages solo sirve archivos estáticos, así que el conteo vive en [Supabase](https://supabase.com) (plan gratuito):
 
