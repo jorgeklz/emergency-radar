@@ -1,14 +1,15 @@
-name: Captura continua cada 30 minutos
+name: Captura continua cada 45 minutos
 
 # El "cron" de GitHub se salta ejecuciones cuando hay carga, así que la captura
-# automática no depende de él: este workflow corre unas 5,5 horas, captura en cada
-# :00 y :30 (hora UTC) y al terminar se vuelve a lanzar a sí mismo.
+# automática no depende de él: este workflow corre unas 5,5 horas, captura cada 45
+# minutos (en múltiplos exactos de 45 min desde la medianoche UTC) y al terminar se
+# vuelve a lanzar a sí mismo.
 #
 # El cron de abajo es solo un respaldo: si la cadena se cortara, la reinicia. Si ya
 # hay una ejecución en curso, la nueva queda en espera y la reemplaza al terminar
 # (nunca corren dos a la vez).
 #
-# Para detener la captura automática: Actions > "Captura continua cada 30 minutos" >
+# Para detener la captura automática: Actions > "Captura continua cada 45 minutos" >
 # "..." > Disable workflow. Cancelar una ejecución a mano también corta la cadena.
 on:
   workflow_dispatch:
@@ -49,7 +50,7 @@ jobs:
           node --test collector/*.test.mjs tests/*.test.mjs
           python -m unittest modelo.test_modelo
 
-      - name: Capturar cada 30 minutos (unas 5,5 horas)
+      - name: Capturar cada 45 minutos (unas 5,5 horas)
         env:
           X_BEARER_TOKEN: ${{ secrets.X_BEARER_TOKEN }}
           X_MAX_PAGES: ${{ vars.X_MAX_PAGES }}
@@ -64,8 +65,8 @@ jobs:
             bash scripts/captura.sh || echo "::warning::La captura terminó con errores; se reintenta en la próxima franja"
             echo "::endgroup::"
             ahora=$(date +%s)
-            # Siguiente :00 o :30 exacto.
-            proxima=$(( (ahora / 1800 + 1) * 1800 ))
+            # Siguiente múltiplo exacto de 45 minutos (coincide con el turno de grupos del recolector).
+            proxima=$(( (ahora / 2700 + 1) * 2700 ))
             if [ "$proxima" -ge "$fin" ]; then break; fi
             echo "Próxima captura a las $(date -u -d @"$proxima" +%H:%M) UTC"
             sleep $(( proxima - ahora ))

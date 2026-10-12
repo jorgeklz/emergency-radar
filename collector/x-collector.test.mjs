@@ -96,8 +96,10 @@ test("reparte los lugares en grupos que se turnan y caben en 512 caracteres", as
   const m = await import("./x-collector.mjs");
   for (const g of m.GRUPOS_CONSULTA) assert.ok(m.consultaDeGrupo(g).length <= 512, g.id);
   const t0 = new Date("2026-10-11T00:00:00Z");
-  const vistos = new Set([0, 1, 2].map((k) => m.grupoDelTurno(new Date(t0.getTime() + k * 1800000)).id));
-  assert.equal(vistos.size, m.GRUPOS_CONSULTA.length);
+  const n = m.GRUPOS_CONSULTA.length - 1;
+  const turnos = [...Array(n).keys()].map((k) => m.turnoDeGrupos(new Date(t0.getTime() + k * m.INTERVALO_MS)));
+  assert.ok(turnos.every((t) => t[0].id === m.GRUPOS_CONSULTA[0].id), "el grupo principal va siempre");
+  assert.equal(new Set(turnos.map((t) => t[1].id)).size, n, "los demás se turnan sin repetirse");
 });
 
 test("reubica por texto los posts sin ubicación con el catálogo actual", async () => {

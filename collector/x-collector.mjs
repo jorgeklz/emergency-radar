@@ -28,7 +28,7 @@ export const ENDPOINT = "https://api.x.com/2/tweets/search/recent";
 export const MAX_PUBLICACIONES = 5000;
 
 // Para cubrir todo Ecuador sin gastar más de la API, los lugares se reparten en grupos que
-// se turnan: cada captura (cada 30 min) consulta un solo grupo, con el mismo límite de
+// se turnan: cada captura (cada 45 min) consulta el grupo de las ciudades grandes y otro por turno, con el límite de
 // páginas de siempre. Cada grupo guarda su propio since_id, así nunca se baja dos veces lo
 // mismo. Cada consulta cabe en el límite de 512 caracteres del plan básico de X.
 const PALABRAS =
@@ -49,7 +49,9 @@ const TERMINOS = [
   "Machachi", "Cayambe", "Tabacundo", "Sangolquí", "\"San Miguel de los Bancos\"", "\"Puerto Quito\"",
   "Jujan", "Balao", "Balzar", "Colimes", "\"El Empalme\"", "\"Pedro Carbo\"", "Naranjal", "Naranjito", "Nobol",
   "Yaguachi", "Bucay", "\"Lomas de Sargentillo\"", "\"Isidro Ayora\"",
-  "Gualaceo", "Paute", "Sígsig", "Chordeleg", "Nabón", "Guachapala", "\"Sevilla de Oro\"", "\"Ponce Enríquez\""
+  "Gualaceo", "Paute", "Sígsig", "Chordeleg", "Nabón", "Guachapala", "\"Sevilla de Oro\"", "\"Ponce Enríquez\"",
+  // Provincias y cantones del resto del país.
+  "\"El Oro\"", "\"Los Ríos\"", "Imbabura", "Carchi", "Cotopaxi", "Tungurahua", "Chimborazo", "Cañar", "\"Morona Santiago\"", "\"Zamora Chinchipe\"", "Arenillas", "\"El Guabo\"", "Huaquillas", "Marcabelí", "Portovelo", "Zaruma", "Mocache", "Puebloviejo", "Quinsaloma", "Catarama", "Atacames", "Muisne", "Quinindé", "Atuntaqui", "Cotacachi", "Pimampiro", "Urcuquí", "\"La Maná\"", "Pujilí", "Saquisilí", "Sigchos", "Patate", "Pelileo", "Píllaro", "Tisaleo", "Alausí", "Chambo", "Chunchi", "Cumandá", "Guamote", "Pallatanga", "Penipe", "Caluma", "Chillanes", "Echeandía", "Biblián", "\"La Troncal\"", "Catamayo", "Cariamanga", "Catacocha", "Celica", "Macará", "Saraguro", "Zapotillo", "Alamor", "Gonzanamá", "Amaluza", "Chaguarpamba", "Pindal", "Yantzaza", "\"El Pangui\"", "Gualaquiza", "Sucúa", "Taisha", "Palora", "Arajuno", "\"Joya de los Sachas\"", "Shushufindi", "Lumbaquí", "\"Puerto Villamil\""
 ];
 const LIMITE_CONSULTA = 512;
 // Reparte los términos en grupos cuya consulta completa no pase del límite de X.
@@ -67,10 +69,15 @@ function armarGrupos(terminos) {
 function consultaDe(lugares) { return PALABRAS + " (" + lugares.join(" OR ") + ") " + SUFIJO; }
 export const GRUPOS_CONSULTA = armarGrupos(TERMINOS);
 export function consultaDeGrupo(g) { return consultaDe(g.lugares); }
-// Turno por reloj (no necesita guardar estado): cambia cada 30 minutos.
-export function grupoDelTurno(ahora = new Date()) {
-  return GRUPOS_CONSULTA[Math.floor(ahora.getTime() / 1800000) % GRUPOS_CONSULTA.length];
+// Turno por reloj (no necesita guardar estado): cambia con cada captura (cada 45 minutos).
+export const INTERVALO_MS = 45 * 60000;
+// El primer grupo (Ecuador y ciudades grandes) va en todas las capturas; los demás se turnan.
+export function turnoDeGrupos(ahora = new Date()) {
+  const resto = GRUPOS_CONSULTA.slice(1);
+  if (!resto.length) return GRUPOS_CONSULTA.slice(0, 1);
+  return [GRUPOS_CONSULTA[0], resto[Math.floor(ahora.getTime() / INTERVALO_MS) % resto.length]];
 }
+export function grupoDelTurno(ahora = new Date()) { return turnoDeGrupos(ahora)[1] || GRUPOS_CONSULTA[0]; }
 // Se mantiene por compatibilidad: la consulta del primer grupo.
 export const CONSULTA_POR_DEFECTO = consultaDeGrupo(GRUPOS_CONSULTA[0]);
 
@@ -268,8 +275,6 @@ export async function main(env = process.env) {
   }
   // Con X_QUERY definida se usa esa sola consulta; si no, el grupo que toca en este turno.
   const propia = (env.X_QUERY || "").trim();
-  const grupo = propia ? null : grupoDelTurno();
-  const consulta = propia || consultaDeGrupo(grupo);
   const maxPaginas = Math.max(1, parseInt(env.X_MAX_PAGES || "2", 10) || 2);
   const retencion = Math.max(1, parseInt(env.X_RETENCION_DIAS || "30", 10) || 30);
 
@@ -292,37 +297,51 @@ export async function main(env = process.env) {
     }
     return guardar(previo, nuevas, ids, retencion, "descarga completa de 7 días");
   }
-  // Un grupo nuevo arranca desde el último post ya capturado: no se descargan los 7 días
-  // anteriores, así la primera vuelta no gasta lecturas extra.
-  const sinceId = grupo ? (ids[grupo.id] || previo.ultimoId || null) : (previo.ultimoId || null);
-  if (grupo) console.log(`Grupo de lugares en este turno: ${grupo.id}.`);
-  let resultado;
-  try {
-    resultado = await buscar({ token, consulta, sinceId, maxPaginas });
-  } catch (e) {
-    if (e instanceof ErrorAPI && e.estado === 429) {
-      const cuando = e.reinicio ? new Date(+e.reinicio * 1000).toISOString() : "más tarde";
-      console.log(`::warning::Límite de solicitudes de X alcanzado. Se reintentará en la próxima ejecución (reinicio: ${cuando}).`);
-      return { cambios: 0 };
+
+  // Consultas de esta captura: con X_QUERY, solo esa; si no, el grupo de las ciudades grandes
+  // (siempre) y uno de los demás por turno. Cada una pide solo lo nuevo desde su since_id.
+  const tareas = propia
+    ? [{ id: null, consulta: propia, sinceId: previo.ultimoId || null }]
+    : turnoDeGrupos().map((g) => ({
+        id: g.id, consulta: consultaDeGrupo(g),
+        // Un grupo nuevo arranca desde el último post ya capturado: no baja los 7 días anteriores.
+        sinceId: ids[g.id] || previo.ultimoId || null
+      }));
+  if (!propia) console.log(`Grupos en este turno: ${tareas.map((t) => t.id).join(", ")}.`);
+
+  let nuevas = [], hubo = false, ultimoId = null;
+  for (const t of tareas) {
+    let r;
+    try {
+      r = await buscar({ token, consulta: t.consulta, sinceId: t.sinceId, maxPaginas });
+    } catch (e) {
+      if (e instanceof ErrorAPI && e.estado === 429) {
+        const cuando = e.reinicio ? new Date(+e.reinicio * 1000).toISOString() : "más tarde";
+        console.log(`::warning::Límite de solicitudes de X alcanzado. Se reintentará en la próxima ejecución (reinicio: ${cuando}).`);
+        break;
+      }
+      // Sin créditos la ejecución no falla: así no llega un correo de error en cada captura.
+      if (e instanceof ErrorAPI && e.estado === 402) {
+        console.log(`::warning::${e.message}. La cuenta de X no tiene créditos disponibles; recárgalos en el portal de desarrolladores de X. No se capturó nada.`);
+        break;
+      }
+      if (e instanceof ErrorAPI && (e.estado === 401 || e.estado === 403)) {
+        console.log(`::error::${e.message}. Revisa que el token sea válido y que tu plan de la API de X permita la búsqueda reciente.`);
+      }
+      throw e;
     }
-    // Sin créditos la ejecución no falla: así no llega un correo de error en cada captura.
-    if (e instanceof ErrorAPI && e.estado === 402) {
-      console.log(`::warning::${e.message}. La cuenta de X no tiene créditos disponibles; recárgalos en el portal de desarrolladores de X. No se capturó nada.`);
-      return { cambios: 0 };
-    }
-    if (e instanceof ErrorAPI && (e.estado === 401 || e.estado === 403)) {
-      console.log(`::error::${e.message}. Revisa que el token sea válido y que tu plan de la API de X permita la búsqueda reciente.`);
-    }
-    throw e;
+    if (!r.masReciente || r.masReciente === t.sinceId) continue;
+    hubo = true;
+    nuevas = nuevas.concat(r.publicaciones);
+    if (t.id) ids[t.id] = r.masReciente; else ultimoId = r.masReciente;
   }
 
   // Sin publicaciones nuevas en X no se reescribe el archivo, así no hay commits vacíos.
-  if (!resultado.masReciente || resultado.masReciente === sinceId) {
+  if (!hubo) {
     console.log("No hay publicaciones nuevas en X desde la última captura.");
     return { cambios: 0 };
   }
-  if (grupo) ids[grupo.id] = resultado.masReciente;
-  return guardar(previo, resultado.publicaciones, ids, retencion, consulta, grupo ? null : resultado.masReciente);
+  return guardar(previo, nuevas, ids, retencion, propia || tareas.map((t) => t.id).join("+"), ultimoId);
 }
 
 async function guardar(previo, nuevas, ids, retencion, consulta, ultimoId = null) {
