@@ -4,7 +4,7 @@ Prototipo funcional del panel **Emergency Radar**, que monitorea publicaciones d
 
 Es un sitio estático (HTML, CSS y JavaScript sin compilación), listo para publicarse en GitHub Pages. Todas las librerías están incluidas en `assets/vendor`, así que no depende de CDNs para funcionar.
 
-Todo lo que muestra el sitio son **publicaciones reales de X** que un recolector captura una vez al día (07:46, hora de Ecuador). No hay datos simulados: si todavía no hay capturas, las secciones aparecen vacías con un aviso.
+Todo lo que muestra el sitio son **publicaciones reales de X** que un recolector captura cada 12 horas (07:46 y 19:46, hora de Ecuador). No hay datos simulados: si todavía no hay capturas, las secciones aparecen vacías con un aviso.
 
 ## Secciones
 
@@ -48,7 +48,7 @@ La API key **no va en el código del sitio**. GitHub Pages publica todos los arc
 Por eso la captura funciona así:
 
 ```
-GitHub Actions (1 vez al día)         Repositorio              GitHub Pages
+GitHub Actions (cada 12 h)           Repositorio              GitHub Pages
 collector/x-collector.mjs  ──escribe──▶ data/posts.json ──publica──▶ el sitio lee el JSON
    usa el secreto X_BEARER_TOKEN                                     y lo relee cada minuto
 ```
@@ -57,7 +57,7 @@ collector/x-collector.mjs  ──escribe──▶ data/posts.json ──publica�
 
 1. En el portal de desarrolladores de X crea una app y copia su **Bearer Token**. Tu plan debe incluir el endpoint de búsqueda reciente (`GET /2/tweets/search/recent`).
 2. En GitHub ve a *Settings → Secrets and variables → Actions → New repository secret*. Nombre: `X_BEARER_TOKEN`. Valor: el token.
-3. Ve a la pestaña *Actions*, abre **Captura diaria de X** y pulsa *Run workflow* para una primera captura. Desde ahí captura sola una vez al día.
+3. Ve a la pestaña *Actions*, abre **Captura de X cada 12 horas** y pulsa *Run workflow* para una primera captura. Desde ahí captura sola cada 12 horas.
 
 El token nunca se escribe en el repositorio ni en los registros de Actions: GitHub lo enmascara.
 
@@ -71,18 +71,18 @@ En *Settings → Secrets and variables → Actions → Variables* puedes crear:
 | `X_MAX_PAGES` | Páginas de 100 resultados por ejecución (controla el consumo de la API) | `2` |
 | `X_RETENCION_DIAS` | Días que se guardan en `data/posts.json` | `30` |
 
-### Captura automática una vez al día
+### Captura automática cada 12 horas
 
-Para reducir el consumo de la API de X, el workflow **Captura diaria de X** (`.github/workflows/captura-continua.yml`) captura una sola vez al día, a las 07:46 en Ecuador (12:46 UTC). En esa captura consulta todos los grupos de lugares; cada uno pide solo lo nuevo desde su última captura (`since_id`), con hasta 5 páginas de 100 posts por grupo. El `cron` de GitHub puede retrasarse unos minutos cuando hay carga.
+Para reducir el consumo de la API de X, el workflow **Captura de X cada 12 horas** (`.github/workflows/captura-continua.yml`) captura dos veces al día, a las 07:46 y 19:46 en Ecuador (12:46 y 00:46 UTC). En cada captura consulta todos los grupos de lugares; cada uno pide solo lo nuevo desde su última captura (`since_id`), con hasta 5 páginas de 100 posts por grupo. El `cron` de GitHub puede retrasarse unos minutos cuando hay carga.
 
 - **Cambiar la hora:** el `cron` de `captura-continua.yml` (en hora UTC; Ecuador es UTC−5).
-- **Captura puntual:** *Actions* > **Captura diaria de X** (o **Captura de publicaciones de X**) > *Run workflow*.
-- **Detener la captura automática:** *Actions* > **Captura diaria de X** > "..." > *Disable workflow*.
+- **Captura puntual:** *Actions* > **Captura de X cada 12 horas** (o **Captura de publicaciones de X**) > *Run workflow*.
+- **Detener la captura automática:** *Actions* > **Captura de X cada 12 horas** > "..." > *Disable workflow*.
 - Los pasos de cada captura están en `scripts/captura.sh` (X, modelo, commit y publicación en Pages).
 
 Cada captura pide solo lo nuevo desde la anterior (`since_id`), con un tope de `X_MAX_PAGES` páginas de 100 posts. Ten en cuenta los límites y costos de tu plan de X: son hasta 48 capturas por día.
 
-Para cubrir todo Ecuador sin gastar más, los lugares (las 24 provincias y las cabeceras cantonales de todo el país) se reparten automáticamente en grupos cuya consulta no pase de 512 caracteres (hoy son dos prioritarios y cuatro del resto). En la captura diaria se consultan todos los grupos; como cada consulta pide solo lo nuevo, el consumo depende de cuántos posts nuevos hay, no de cuántas consultas se hacen. Para ubicar un post en una ciudad, el texto debe mencionar también su provincia, "Ecuador" (o "ecuatoriano") o el ECU 911; si no, se asume que puede ser otro país (Santo Domingo, Durán, Riobamba, Cuenca o Santa Elena existen fuera de Ecuador o son apellidos). Solo se exceptúan 25 nombres que únicamente existen en Ecuador (Guayaquil, Quito, Portoviejo, Machala, Ambato, Latacunga, Azogues...). Si la ciudad se llama igual que su provincia (Santa Elena, Cañar, Loja, Esmeraldas), nombrar la provincia no basta, y si en el texto aparece otra ciudad más concreta ("Azogues, provincia de Cañar"), se usa esa. Los nombres comunes o de otros países (Santa Ana, El Carmen, Puerto López, Baños, Pasaje...) tampoco se buscan por nombre en X. Cada grupo guarda su propio `since_id` en `ultimosIds`, así nada se descarga dos veces, y un grupo nuevo empieza desde el último post ya capturado para no bajar los 7 días anteriores. Para llenar de una vez los últimos 7 días de todos los grupos, lanza a mano "Captura de publicaciones de X" con la opción **descarga_completa** (hasta unas 600 lecturas, una sola vez). Al guardar, los posts sin ubicación se vuelven a ubicar por el texto con el catálogo actual, y se descartan los de emergencias de otros países: los que mencionan un país o ciudad extranjera (Panamá, Perú, Colombia, México, Madrid, Puebla...) y ningún lugar de Ecuador ni la palabra "Ecuador".
+Para cubrir todo Ecuador sin gastar más, los lugares (las 24 provincias y las cabeceras cantonales de todo el país) se reparten automáticamente en grupos cuya consulta no pase de 512 caracteres (hoy son dos prioritarios y cuatro del resto). En cada captura se consultan todos los grupos; como cada consulta pide solo lo nuevo, el consumo depende de cuántos posts nuevos hay, no de cuántas consultas se hacen. Para ubicar un post en una ciudad, el texto debe mencionar también su provincia, "Ecuador" (o "ecuatoriano") o el ECU 911; si no, se asume que puede ser otro país (Santo Domingo, Durán, Riobamba, Cuenca o Santa Elena existen fuera de Ecuador o son apellidos). Solo se exceptúan 25 nombres que únicamente existen en Ecuador (Guayaquil, Quito, Portoviejo, Machala, Ambato, Latacunga, Azogues...). Si la ciudad se llama igual que su provincia (Santa Elena, Cañar, Loja, Esmeraldas), nombrar la provincia no basta, y si en el texto aparece otra ciudad más concreta ("Azogues, provincia de Cañar"), se usa esa. Los nombres comunes o de otros países (Santa Ana, El Carmen, Puerto López, Baños, Pasaje...) tampoco se buscan por nombre en X. Cada grupo guarda su propio `since_id` en `ultimosIds`, así nada se descarga dos veces, y un grupo nuevo empieza desde el último post ya capturado para no bajar los 7 días anteriores. Para llenar de una vez los últimos 7 días de todos los grupos, lanza a mano "Captura de publicaciones de X" con la opción **descarga_completa** (hasta unas 600 lecturas, una sola vez). Al guardar, los posts sin ubicación se vuelven a ubicar por el texto con el catálogo actual, y se descartan los de emergencias de otros países: los que mencionan un país o ciudad extranjera (Panamá, Perú, Colombia, México, Madrid, Puebla...) y ningún lugar de Ecuador ni la palabra "Ecuador".
 
 ### Cómo se procesa cada publicación
 
@@ -92,7 +92,7 @@ Para cubrir todo Ecuador sin gastar más, los lugares (las 24 provincias y las c
 
 ### Sobre el "tiempo real"
 
-Con GitHub Pages el retraso real es de varios minutos: se captura una vez al día, Pages tarda alrededor de un minuto en republicar y el sitio relee el archivo cada minuto. Para algo inmediato hace falta un servidor propio conectado al *filtered stream* de X que empuje los datos al navegador.
+Con GitHub Pages el retraso real es de varios minutos: se captura cada 12 horas, Pages tarda alrededor de un minuto en republicar y el sitio relee el archivo cada minuto. Para algo inmediato hace falta un servidor propio conectado al *filtered stream* de X que empuje los datos al navegador.
 
 ### Ejecutar el recolector en tu equipo
 
@@ -204,7 +204,7 @@ assets/vendor/              Leaflet, Leaflet.markercluster y Chart.js
 collector/                  Recolector de X (Node 20, sin dependencias) y sus pruebas
 modelo/                     Modelo LSI + kNN en Python: corpus, preprocesamiento, evaluación y clasificación
 data/posts.json             Publicaciones capturadas (lo actualiza GitHub Actions)
-.github/workflows/          captura-continua.yml (1 vez al día), collect.yml (captura manual) y pages.yml
+.github/workflows/          captura-continua.yml (cada 12 h), collect.yml (captura manual) y pages.yml
 scripts/captura.sh          Una captura completa: X, modelo, commit y publicación en Pages
 ```
 

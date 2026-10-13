@@ -1,13 +1,13 @@
-name: Captura diaria de X
+name: Captura de X cada 12 horas
 
-# Una captura al día para reducir el consumo de la API de X. Consulta todos los grupos de
-# lugares (cada uno pide solo lo nuevo desde su última captura, hasta X_MAX_PAGES páginas).
-# Hora: 07:46 en Ecuador (12:46 UTC). Para cambiarla, edita el cron de abajo (hora UTC).
-# También se puede lanzar a mano: Actions > "Captura diaria de X" > Run workflow.
+# Una captura cada 12 horas para reducir el consumo de la API de X. Consulta todos los grupos
+# de lugares (cada uno pide solo lo nuevo desde su última captura, hasta X_MAX_PAGES páginas).
+# Horas: 07:46 y 19:46 en Ecuador (12:46 y 00:46 UTC). Para cambiarlas, edita el cron (UTC).
+# También se puede lanzar a mano: Actions > "Captura de X cada 12 horas" > Run workflow.
 on:
   workflow_dispatch:
   schedule:
-    - cron: "46 12 * * *"
+    - cron: "46 0,12 * * *"
 
 permissions:
   contents: write
@@ -45,7 +45,7 @@ jobs:
       - name: Capturar una vez (todos los grupos de lugares)
         env:
           X_BEARER_TOKEN: ${{ secrets.X_BEARER_TOKEN }}
-          # Un día de posts puede superar 200 por grupo: hasta 5 páginas de 100 por grupo.
+          # En 12 horas puede haber más de 200 posts por grupo: hasta 5 páginas de 100 por grupo.
           X_MAX_PAGES: ${{ vars.X_MAX_PAGES || '5' }}
           X_RETENCION_DIAS: ${{ vars.X_RETENCION_DIAS }}
           X_TODOS_LOS_GRUPOS: "1"
