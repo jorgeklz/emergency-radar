@@ -330,7 +330,7 @@ export async function main(env = process.env) {
   // (siempre) y uno de los demás por turno. Cada una pide solo lo nuevo desde su since_id.
   const tareas = propia
     ? [{ id: null, consulta: propia, sinceId: previo.ultimoId || null }]
-    : turnoDeGrupos().map((g) => ({
+    : (/^(1|true|si|sí)$/i.test(env.X_TODOS_LOS_GRUPOS || "") ? GRUPOS_CONSULTA : turnoDeGrupos()).map((g) => ({
         id: g.id, consulta: consultaDeGrupo(g),
         // Un grupo nuevo arranca desde el último post ya capturado: no baja los 7 días anteriores.
         sinceId: ids[g.id] || previo.ultimoId || null

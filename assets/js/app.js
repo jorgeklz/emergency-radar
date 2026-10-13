@@ -449,7 +449,7 @@
         "<p class='acerca-sub'>Categorías</p><ul class='acerca-cats'>" + D.CATEGORIAS.map(function (c) {
           return "<li>" + window.icon(c.icono) + "<div><b>" + c.nombre + "</b><span>" + ER.escapar(c.descripcion || "") + "</span></div></li>";
         }).join("") + "</ul>" +
-        "<p>Los posts se capturan cada 30 minutos. Un modelo decide si cada uno es una emergencia y se ubica por la ciudad que menciona. " +
+        "<p>Los posts se capturan una vez al día. Un modelo decide si cada uno es una emergencia y se ubica por la ciudad que menciona. " +
         "Todas las fechas y horas están en hora de Ecuador (GMT-5).</p>" +
         "<p class='acerca-sub'>Visitas</p>" +
         "<p>Cada persona cuenta una vez cada 6 horas. No se guarda la IP, solo una huella cifrada, el país y la ciudad aproximados.</p>" +

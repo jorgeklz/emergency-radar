@@ -1,25 +1,17 @@
-name: Captura continua cada 30 minutos
+name: Captura diaria de X
 
-# El "cron" de GitHub se salta ejecuciones cuando hay carga, así que la captura
-# automática no depende de él: este workflow corre unas 5,5 horas, captura en cada :00
-# y :30 (hora UTC) y al terminar se vuelve a lanzar a sí mismo. Guayas, Pichincha,
-# Manabí y Azuay se consultan en cada captura; el resto del país, en las de :00.
-#
-# El cron de abajo es solo un respaldo: si la cadena se cortara, la reinicia. Si ya
-# hay una ejecución en curso, la nueva queda en espera y la reemplaza al terminar
-# (nunca corren dos a la vez).
-#
-# Para detener la captura automática: Actions > "Captura continua cada 30 minutos" >
-# "..." > Disable workflow. Cancelar una ejecución a mano también corta la cadena.
+# Una captura al día para reducir el consumo de la API de X. Consulta todos los grupos de
+# lugares (cada uno pide solo lo nuevo desde su última captura, hasta X_MAX_PAGES páginas).
+# Hora: 07:46 en Ecuador (12:46 UTC). Para cambiarla, edita el cron de abajo (hora UTC).
+# También se puede lanzar a mano: Actions > "Captura diaria de X" > Run workflow.
 on:
   workflow_dispatch:
   schedule:
-    - cron: "7,37 * * * *"
+    - cron: "46 12 * * *"
 
 permissions:
   contents: write
   pages: write
-  actions: write
 
 concurrency:
   group: captura-continua
@@ -28,7 +20,7 @@ concurrency:
 jobs:
   capturar:
     runs-on: ubuntu-latest
-    timeout-minutes: 358
+    timeout-minutes: 20
     steps:
       - uses: actions/checkout@v4
 
@@ -50,31 +42,15 @@ jobs:
           node --test collector/*.test.mjs tests/*.test.mjs
           python -m unittest modelo.test_modelo
 
-      - name: Capturar cada 30 minutos (unas 5,5 horas)
+      - name: Capturar una vez (todos los grupos de lugares)
         env:
           X_BEARER_TOKEN: ${{ secrets.X_BEARER_TOKEN }}
-          X_MAX_PAGES: ${{ vars.X_MAX_PAGES }}
+          # Un día de posts puede superar 200 por grupo: hasta 5 páginas de 100 por grupo.
+          X_MAX_PAGES: ${{ vars.X_MAX_PAGES || '5' }}
           X_RETENCION_DIAS: ${{ vars.X_RETENCION_DIAS }}
+          X_TODOS_LOS_GRUPOS: "1"
           GH_TOKEN: ${{ github.token }}
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          fin=$(( $(date +%s) + 330 * 60 ))
-          while :; do
-            echo "::group::Captura de las $(date -u +%H:%M) UTC"
-            bash scripts/captura.sh || echo "::warning::La captura terminó con errores; se reintenta en la próxima franja"
-            echo "::endgroup::"
-            ahora=$(date +%s)
-            # Siguiente :00 o :30 exacto (coincide con el turno de grupos del recolector).
-            proxima=$(( (ahora / 1800 + 1) * 1800 ))
-            if [ "$proxima" -ge "$fin" ]; then break; fi
-            echo "Próxima captura a las $(date -u -d @"$proxima" +%H:%M) UTC"
-            sleep $(( proxima - ahora ))
-          done
-
-      # Se encadena la siguiente ejecución (también si algo falló, pero no si se canceló a mano).
-      - name: Encadenar la siguiente ejecución
-        if: success() || failure()
-        env:
-          GH_TOKEN: ${{ github.token }}
-        run: gh workflow run captura-continua.yml --ref "${GITHUB_REF_NAME}"
+          bash scripts/captura.sh
