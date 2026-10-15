@@ -157,7 +157,11 @@
 
   function exportarCSV() {
     var cab = ["id", "fecha", "categoria", "ciudad", "lat", "lng", "autor", "usuario", "texto", "url", "emergencia_modelo", "prob_emergencia"];
-    var lineas = [cab.join(",")].concat(st.resultados.map(function (p) {
+    // Sin filtros aplicados en esta pestaña se descarga el historial completo;
+    // con filtros, solo lo que muestran los filtros.
+    var hayFiltros = !porDefecto(hf) || hf.categoria || hf.ciudad || hf.clasificacion !== "emergencias" || val("histBuscar").trim();
+    var filas = hayFiltros ? st.resultados : D.filtrar({ clasificacion: "todas" }).slice().sort(function (a, b) { return b.fecha - a.fecha; });
+    var lineas = [cab.join(",")].concat(filas.map(function (p) {
       return [p.id, p.fecha.toISOString(), D.categoria(p.categoria).nombre, p.ciudad, p.lat === null ? "" : p.lat.toFixed(5),
         p.lng === null ? "" : p.lng.toFixed(5), p.autor.nombre, p.autor.usuario, p.texto, p.url || "",
         p.emergencia === null ? "" : (p.emergencia ? "si" : "no"), p.prob === null ? "" : p.prob]
@@ -166,10 +170,11 @@
     var blob = new Blob(["﻿" + lineas.join("\n")], { type: "text/csv;charset=utf-8" });
     var a = document.createElement("a");
     a.href = URL.createObjectURL(blob);
-    a.download = "emergency-radar_" + ER.isoDia(hf.desde) + "_" + ER.isoDia(hf.hasta) + ".csv";
+    a.download = hayFiltros ? "emergency-radar_" + ER.isoDia(hf.desde) + "_" + ER.isoDia(hf.hasta) + ".csv"
+      : "emergency-radar_historial-completo_" + ER.isoDia(new Date()) + ".csv";
     document.body.appendChild(a); a.click(); a.remove();
     setTimeout(function () { URL.revokeObjectURL(a.href); }, 1000);
-    ER.toast("Se exportaron " + ER.fmtNum(st.resultados.length) + " publicaciones");
+    ER.toast("Se exportaron " + ER.fmtNum(filas.length) + " publicaciones");
   }
 
   ER.registrarVista("historico", {
